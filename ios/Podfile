@@ -1,19 +1,18 @@
 platform :ios, '15.0'
 
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+
+flutter_ios_podfile_setup
+
 target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
-  # Flutter Pods
-  pod 'Flutter', :path => '../flutter'
-  
-  # Add other pods here as needed, e.g., cloud_firestore
-end
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 
-post_install do |installer|
-  installer.pods_project.targets.each do |target|
-    target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+  post_install do |installer|
+    installer.pods_project.targets.each do |target|
+      flutter_additional_ios_build_settings(target)
     end
   end
 end
