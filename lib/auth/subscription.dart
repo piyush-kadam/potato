@@ -1,0 +1,242 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+class SubscriptionPage extends StatefulWidget {
+  const SubscriptionPage({super.key});
+
+  @override
+  State<SubscriptionPage> createState() => _SubscriptionPageState();
+}
+
+class _SubscriptionPageState extends State<SubscriptionPage> {
+  String _selectedPlan = '12'; // Default selection
+
+  final Map<String, Color> planColors = {
+    '30': Colors.green,
+    '12': Colors.redAccent,
+    'lifetime': Colors.amber,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedColor = planColors[_selectedPlan]!;
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            /// --- X (close) button on top right ---
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.black87, size: 26),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+
+            /// --- Centered Main Content ---
+            Center(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 20),
+
+                    /// Mascot image
+                    Image.asset(
+                      'assets/images/mascot3.png',
+                      width: 120,
+                      height: 130,
+                    ),
+
+                    /// Title
+                    Text(
+                      "MyPotato Pro",
+                      style: GoogleFonts.poppins(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    /// Subscription Plan Cards Row
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 28),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          /// 30 Days Plan
+                          Expanded(
+                            child: _buildPlanCard(
+                              title: "30",
+                              subtitle: "DAYS",
+                              price: "₹149",
+                              color: planColors['30']!,
+                              isSelected: _selectedPlan == '30',
+                              onTap: () => setState(() => _selectedPlan = '30'),
+                            ),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          /// 12 Months Plan (Center Red One)
+                          Expanded(
+                            child: _buildPlanCard(
+                              title: "12",
+                              subtitle: "Monts",
+                              price: "₹999",
+                              color: planColors['12']!,
+                              isSelected: _selectedPlan == '12',
+                              onTap: () => setState(() => _selectedPlan = '12'),
+                            ),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          /// Lifetime Plan (Yellow)
+                          Expanded(
+                            child: _buildPlanCard(
+                              title: "∞",
+                              subtitle: "LIFETIME",
+                              price: "₹1999",
+                              color: planColors['lifetime']!,
+                              isSelected: _selectedPlan == 'lifetime',
+                              onTap: () =>
+                                  setState(() => _selectedPlan = 'lifetime'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 60),
+
+                    /// Subscribe Button
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color: selectedColor.withOpacity(0.3),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: selectedColor,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            "Subscribe",
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    Text(
+                      "Cancel anytime",
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.grey[400],
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Reusable plan card widget
+  Widget _buildPlanCard({
+    required String title,
+    required String subtitle,
+    required String price,
+    required Color color,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        height: 140, // fixed equal height for all
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: isSelected ? color : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? color : Colors.grey[300]!,
+            width: 2,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: color.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 5),
+                  ),
+                ]
+              : [],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontSize: 30,
+                fontWeight: FontWeight.w700,
+                color: isSelected ? Colors.white : Colors.black87,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                letterSpacing: 0.5,
+                color: isSelected ? Colors.white70 : Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              price,
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.black87,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

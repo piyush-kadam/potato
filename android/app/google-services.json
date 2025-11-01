@@ -1,0 +1,62 @@
+{
+  "project_info": {
+    "project_number": "202409214260",
+    "project_id": "slideme-87da5",
+    "storage_bucket": "slideme-87da5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:202409214260:android:381eaede3a9195c166e561",
+        "android_client_info": {
+          "package_name": "com.example.slideme"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "202409214260-7kpje0jvfgitobslkcf92055s7hvm2mj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.slideme",
+            "certificate_hash": "82e07f7043427088e117a73bdc25596a3887cef4"
+          }
+        },
+        {
+          "client_id": "202409214260-s0ch0p229tuepivdlhjeou0199emkd11.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.slideme",
+            "certificate_hash": "ad031555d3581b2501579b51aba0d99f4a6940f4"
+          }
+        },
+        {
+          "client_id": "202409214260-v5qhif320l0eqev08p2a15b5rcaqeqau.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7QDp0pIj2IGw0Q15NrJAQPXLO7tAhE90"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "202409214260-v5qhif320l0eqev08p2a15b5rcaqeqau.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "202409214260-los88ld879r5r26ueamp1tfmkgvivr8k.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.slideme"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
