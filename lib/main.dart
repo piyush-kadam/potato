@@ -9,17 +9,6 @@ import 'firebase_options.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load .env safely
-  try {
-    await dotenv.load(fileName: ".env");
-    // Optional: print to verify the key
-    if (kDebugMode) {
-      print("OPENAI_API_KEY: ${dotenv.env['OPENAI_API_KEY']}");
-    }
-  } catch (e) {
-    print("Warning: .env file not loaded: $e");
-  }
-
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 

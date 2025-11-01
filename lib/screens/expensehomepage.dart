@@ -167,7 +167,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
         final gridHeight = availableHeight * 0.58;
         final analyticsHeight = availableHeight * 0.17;
 
-        // Calculate if scrolling is needed (more than 5 categories + 1 locked button = 6 items)
+        // Calculate if scrolling is needed
         bool needsScrolling = categories.length >= 5;
 
         return Scaffold(
@@ -260,7 +260,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                             ),
                           ),
                           const Spacer(),
-                          // Toggle section (unchanged)
+                          // Toggle section
                           Container(
                             padding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.01,
@@ -427,23 +427,17 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                       ),
                       child: LayoutBuilder(
                         builder: (context, constraints) {
-                          // Calculate the actual height needed for the grid
-                          int itemCount =
-                              categories.length + 1; // +1 for locked button
+                          int itemCount = categories.length + 1;
                           int rows = (itemCount / 2).ceil();
 
-                          // Calculate item dimensions
                           double itemWidth =
                               (constraints.maxWidth - screenWidth * 0.025) / 2;
                           double itemHeight = itemWidth / 1.3;
 
-                          // Calculate total height needed
                           double calculatedHeight =
                               (rows * itemHeight) +
                               ((rows - 1) * screenHeight * 0.015);
 
-                          // Use calculated height when 5 or less categories, but clamp to available space
-                          // Use fixed height for scrolling when more than 5 categories
                           double maxAvailableHeight = gridHeight.clamp(
                             280.0,
                             450.0,
@@ -520,22 +514,43 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                                         borderRadius: BorderRadius.circular(24),
                                         child: Stack(
                                           children: [
-                                            // Liquid fill (no glass effect here)
-                                            LiquidLinearProgressIndicator(
-                                              value: progress,
-                                              valueColor:
-                                                  AlwaysStoppedAnimation<Color>(
-                                                    liquidColor,
-                                                  ),
-                                              backgroundColor:
-                                                  Colors.transparent,
-                                              borderColor: Colors.transparent,
-                                              borderWidth: 0,
-                                              borderRadius: 24.0,
-                                              direction: Axis.vertical,
-                                              center: Container(),
+                                            // Animated Liquid fill
+                                            TweenAnimationBuilder<double>(
+                                              key: ValueKey(
+                                                '$categoryKey-$spentAmount',
+                                              ),
+                                              duration: const Duration(
+                                                milliseconds: 1500,
+                                              ),
+                                              curve: Curves.easeInOut,
+                                              tween: Tween<double>(
+                                                begin: 0.0,
+                                                end: progress,
+                                              ),
+                                              builder:
+                                                  (
+                                                    context,
+                                                    animatedProgress,
+                                                    child,
+                                                  ) {
+                                                    return LiquidLinearProgressIndicator(
+                                                      value: animatedProgress,
+                                                      valueColor:
+                                                          AlwaysStoppedAnimation<
+                                                            Color
+                                                          >(liquidColor),
+                                                      backgroundColor:
+                                                          Colors.transparent,
+                                                      borderColor:
+                                                          Colors.transparent,
+                                                      borderWidth: 0,
+                                                      borderRadius: 24.0,
+                                                      direction: Axis.vertical,
+                                                      center: Container(),
+                                                    );
+                                                  },
                                             ),
-                                            // Glass effect only on empty area
+                                            // Glass effect
                                             Positioned.fill(
                                               child: Container(
                                                 decoration: BoxDecoration(
@@ -549,10 +564,6 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                                                       Colors.white.withOpacity(
                                                         0.05,
                                                       ),
-                                                    ],
-                                                    stops: [
-                                                      0.0,
-                                                      1 - progress, // Glass effect stops where liquid starts
                                                     ],
                                                   ),
                                                 ),
@@ -722,7 +733,6 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                             ),
                           ),
                           SizedBox(height: screenHeight * 0.005),
-
                           SizedBox(height: screenHeight * 0.012),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,

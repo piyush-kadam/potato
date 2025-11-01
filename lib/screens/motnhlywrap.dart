@@ -120,16 +120,31 @@ class _MonthlyWrapScreenState extends State<MonthlyWrapScreen>
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            backgroundColor: Colors.black,
+            body: Center(child: CircularProgressIndicator(color: Colors.white)),
           );
         }
         if (snapshot.hasError) {
           return Scaffold(
-            body: Center(child: Text('Error: ${snapshot.error}')),
+            backgroundColor: Colors.black,
+            body: Center(
+              child: Text(
+                'Error: ${snapshot.error}',
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
           );
         }
         if (!snapshot.hasData) {
-          return const Scaffold(body: Center(child: Text('No data found')));
+          return const Scaffold(
+            backgroundColor: Colors.black,
+            body: Center(
+              child: Text(
+                'No data found',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          );
         }
 
         monthlyData = snapshot.data!;
@@ -174,12 +189,15 @@ class _MonthlyWrapScreenState extends State<MonthlyWrapScreen>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'Your $monthName Wrap',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                          Expanded(
+                            child: Text(
+                              'Your $monthName Wrap',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           IconButton(
@@ -275,77 +293,104 @@ class _MonthlyWrapScreenState extends State<MonthlyWrapScreen>
 
     return FadeTransition(
       opacity: _animationController,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Your top spending category',
-                style: TextStyle(color: Colors.white70, fontSize: 18),
-              ),
-              const SizedBox(height: 40),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32.0,
+                  vertical: 16.0,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Your top spending category',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: constraints.maxWidth * 0.045,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: constraints.maxHeight * 0.05),
 
-              // Category emoji in circle
-              Container(
-                width: 180,
-                height: 180,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.purple.withOpacity(0.3),
-                      Colors.pink.withOpacity(0.3),
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.purple.withOpacity(0.3),
-                      blurRadius: 40,
-                      spreadRadius: 10,
+                    // Category emoji in circle
+                    Container(
+                      width: constraints.maxWidth * 0.4,
+                      height: constraints.maxWidth * 0.4,
+                      constraints: const BoxConstraints(
+                        maxWidth: 180,
+                        maxHeight: 180,
+                      ),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.purple.withOpacity(0.3),
+                            Colors.pink.withOpacity(0.3),
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.purple.withOpacity(0.3),
+                            blurRadius: 40,
+                            spreadRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          category.key.split(' ')[0],
+                          style: TextStyle(
+                            fontSize: constraints.maxWidth * 0.2,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: constraints.maxHeight * 0.05),
+                    Text(
+                      category.key.substring(category.key.indexOf(' ') + 1),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: constraints.maxWidth * 0.09,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: constraints.maxHeight * 0.02),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '₹${category.value.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: constraints.maxWidth * 0.12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: constraints.maxHeight * 0.01),
+                    Text(
+                      '${percentage.toStringAsFixed(0)}% of budget used',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: constraints.maxWidth * 0.04,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
-                child: Center(
-                  child: Text(
-                    category.key.split(' ')[0],
-                    style: const TextStyle(fontSize: 80),
-                  ),
-                ),
               ),
-
-              const SizedBox(height: 40),
-              Text(
-                category.key.substring(category.key.indexOf(' ') + 1),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                '₹${category.value.toStringAsFixed(0)}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${percentage.toStringAsFixed(0)}% of budget used',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 16,
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -364,130 +409,150 @@ class _MonthlyWrapScreenState extends State<MonthlyWrapScreen>
 
     return FadeTransition(
       opacity: _animationController,
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20),
-            const Text(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+            child: Text(
               'Category Breakdown',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 28,
+                fontSize: MediaQuery.of(context).size.width * 0.07,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 32),
-            Expanded(
-              child: ListView.builder(
-                itemCount: sortedCategories.length,
-                itemBuilder: (context, index) {
-                  final category = sortedCategories[index];
-                  final budget =
-                      (budgets[category.key] as num?)?.toDouble() ?? 0.0;
-                  final percentage = budget > 0
-                      ? (category.value / budget * 100).clamp(0, 100)
-                      : 0.0;
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              itemCount: sortedCategories.length,
+              itemBuilder: (context, index) {
+                final category = sortedCategories[index];
+                final budget =
+                    (budgets[category.key] as num?)?.toDouble() ?? 0.0;
+                final percentage = budget > 0
+                    ? (category.value / budget * 100).clamp(0, 100)
+                    : 0.0;
 
-                  return TweenAnimationBuilder<double>(
-                    duration: Duration(milliseconds: 500 + (index * 100)),
-                    tween: Tween(begin: 0.0, end: 1.0),
-                    builder: (context, value, child) {
-                      return Opacity(
-                        opacity: value,
-                        child: Transform.translate(
-                          offset: Offset(0, 20 * (1 - value)),
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 20),
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.2),
-                                width: 1,
-                              ),
+                return TweenAnimationBuilder<double>(
+                  duration: Duration(milliseconds: 500 + (index * 100)),
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  builder: (context, value, child) {
+                    return Opacity(
+                      opacity: value,
+                      child: Transform.translate(
+                        offset: Offset(0, 20 * (1 - value)),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.2),
+                              width: 1,
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      category.key.split(' ')[0],
-                                      style: const TextStyle(fontSize: 32),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    category.key.split(' ')[0],
+                                    style: TextStyle(
+                                      fontSize:
+                                          MediaQuery.of(context).size.width *
+                                          0.08,
                                     ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            category.key.substring(
-                                              category.key.indexOf(' ') + 1,
-                                            ),
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w600,
-                                            ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          category.key.substring(
+                                            category.key.indexOf(' ') + 1,
                                           ),
-                                          Text(
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize:
+                                                MediaQuery.of(
+                                                  context,
+                                                ).size.width *
+                                                0.045,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          alignment: Alignment.centerLeft,
+                                          child: Text(
                                             '₹${category.value.toStringAsFixed(0)} of ₹${budget.toStringAsFixed(0)}',
                                             style: TextStyle(
                                               color: Colors.white.withOpacity(
                                                 0.6,
                                               ),
-                                              fontSize: 14,
+                                              fontSize:
+                                                  MediaQuery.of(
+                                                    context,
+                                                  ).size.width *
+                                                  0.035,
                                             ),
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
-                                    Text(
-                                      '${percentage.toStringAsFixed(0)}%',
-                                      style: TextStyle(
-                                        color: percentage > 90
-                                            ? Colors.red
-                                            : Colors.greenAccent,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: LinearProgressIndicator(
-                                    value:
-                                        (percentage / 100).clamp(0.0, 1.0) *
-                                        value,
-                                    backgroundColor: Colors.white.withOpacity(
-                                      0.1,
-                                    ),
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      percentage > 90
+                                  ),
+                                  Text(
+                                    '${percentage.toStringAsFixed(0)}%',
+                                    style: TextStyle(
+                                      color: percentage > 90
                                           ? Colors.red
                                           : Colors.greenAccent,
+                                      fontSize:
+                                          MediaQuery.of(context).size.width *
+                                          0.05,
+                                      fontWeight: FontWeight.bold,
                                     ),
-                                    minHeight: 8,
                                   ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: LinearProgressIndicator(
+                                  value:
+                                      (percentage / 100).clamp(0.0, 1.0) *
+                                      value,
+                                  backgroundColor: Colors.white.withOpacity(
+                                    0.1,
+                                  ),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    percentage > 90
+                                        ? Colors.red
+                                        : Colors.greenAccent,
+                                  ),
+                                  minHeight: 8,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
-                      );
-                    },
-                  );
-                },
-              ),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -499,110 +564,128 @@ class _MonthlyWrapScreenState extends State<MonthlyWrapScreen>
 
     return FadeTransition(
       opacity: _animationController,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Your Financial Summary',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 60),
-
-              _buildSummaryCard(
-                'Total Budget',
-                '₹${totalBudget.toStringAsFixed(0)}',
-                Icons.account_balance_wallet,
-                Colors.blue,
-              ),
-              const SizedBox(height: 20),
-
-              _buildSummaryCard(
-                'Total Spent',
-                '₹${totalSpent.toStringAsFixed(0)}',
-                Icons.trending_up,
-                Colors.orange,
-              ),
-              const SizedBox(height: 20),
-
-              _buildSummaryCard(
-                'Remaining',
-                '₹${remaining.toStringAsFixed(0)}',
-                Icons.savings,
-                remaining >= 0 ? Colors.green : Colors.red,
-              ),
-
-              const SizedBox(height: 40),
-
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.purple.withOpacity(0.3),
-                      Colors.pink.withOpacity(0.3),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 1,
-                  ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 16.0,
                 ),
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      remaining >= 0 ? '🎉 Great job!' : '⚠️ Over budget',
-                      style: const TextStyle(
+                      'Your Financial Summary',
+                      style: TextStyle(
                         color: Colors.white,
-                        fontSize: 24,
+                        fontSize: constraints.maxWidth * 0.07,
                         fontWeight: FontWeight.bold,
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      remaining >= 0
-                          ? 'You saved ${savingsPercentage.toStringAsFixed(0)}% of your budget!'
-                          : 'You went over budget by ₹${(-remaining).toStringAsFixed(0)}',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 16,
-                      ),
                       textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: constraints.maxHeight * 0.04),
+
+                    _buildSummaryCard(
+                      'Total Budget',
+                      '₹${totalBudget.toStringAsFixed(0)}',
+                      Icons.account_balance_wallet,
+                      Colors.blue,
+                      constraints,
+                    ),
+                    const SizedBox(height: 16),
+
+                    _buildSummaryCard(
+                      'Total Spent',
+                      '₹${totalSpent.toStringAsFixed(0)}',
+                      Icons.trending_up,
+                      Colors.orange,
+                      constraints,
+                    ),
+                    const SizedBox(height: 16),
+
+                    _buildSummaryCard(
+                      'Remaining',
+                      '₹${remaining.toStringAsFixed(0)}',
+                      Icons.savings,
+                      remaining >= 0 ? Colors.green : Colors.red,
+                      constraints,
+                    ),
+
+                    SizedBox(height: constraints.maxHeight * 0.03),
+
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.purple.withOpacity(0.3),
+                            Colors.pink.withOpacity(0.3),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            remaining >= 0 ? '🎉 Great job!' : '⚠️ Over budget',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: constraints.maxWidth * 0.06,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            remaining >= 0
+                                ? 'You saved ${savingsPercentage.toStringAsFixed(0)}% of your budget!'
+                                : 'You went over budget by ₹${(-remaining).toStringAsFixed(0)}',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: constraints.maxWidth * 0.04,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: constraints.maxHeight * 0.03),
+
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: constraints.maxWidth * 0.12,
+                          vertical: constraints.maxHeight * 0.02,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: Text(
+                        'Continue',
+                        style: TextStyle(
+                          fontSize: constraints.maxWidth * 0.045,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 40),
-
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 48,
-                    vertical: 16,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                child: const Text(
-                  'Continue',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -612,6 +695,7 @@ class _MonthlyWrapScreenState extends State<MonthlyWrapScreen>
     String amount,
     IconData icon,
     Color color,
+    BoxConstraints constraints,
   ) {
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 600),
@@ -620,7 +704,7 @@ class _MonthlyWrapScreenState extends State<MonthlyWrapScreen>
         return Transform.scale(
           scale: value,
           child: Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.1),
               borderRadius: BorderRadius.circular(16),
@@ -629,14 +713,18 @@ class _MonthlyWrapScreenState extends State<MonthlyWrapScreen>
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(icon, color: color, size: 28),
+                  child: Icon(
+                    icon,
+                    color: color,
+                    size: constraints.maxWidth * 0.07,
+                  ),
                 ),
-                const SizedBox(width: 20),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -645,16 +733,20 @@ class _MonthlyWrapScreenState extends State<MonthlyWrapScreen>
                         title,
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.7),
-                          fontSize: 14,
+                          fontSize: constraints.maxWidth * 0.035,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        amount,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          amount,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: constraints.maxWidth * 0.06,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],

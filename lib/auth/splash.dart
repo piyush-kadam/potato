@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:gif/gif.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:slideme/screens/motnhlywrap.dart';
 import 'package:slideme/auth/authgate.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -28,43 +26,29 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-  Future<void> _handleNavigationLogic() async {
-    final now = DateTime.now();
-    final isFirstDayOfMonth = now.day == 1;
-    final prefs = await SharedPreferences.getInstance();
-    final shownKey = "wrapper_shown_${now.year}_${now.month}";
-    final hasShownWrapper = prefs.getBool(shownKey) ?? false;
-
-    if (isFirstDayOfMonth && !hasShownWrapper) {
-      await prefs.setBool(shownKey, true);
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MonthlyWrapScreen()),
-      );
-    } else {
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const AuthGate()),
-      );
-    }
+  void _navigateToAuthGate() {
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const AuthGate()),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF5FB567), // Your brand green color
       body: SizedBox.expand(
-        // ensures it covers full screen
         child: Gif(
           controller: _gifController,
           image: const AssetImage('assets/images/splash.gif'),
           autostart: Autostart.once,
+
           onFetchCompleted: () {
-            // Navigate after the GIF completes
-            Timer(const Duration(seconds: 3), _handleNavigationLogic);
+            // Navigate 3 seconds after GIF starts
+            Timer(const Duration(seconds: 3), _navigateToAuthGate);
           },
-          fit: BoxFit.cover, // fills the screen, cropping if needed
+          fit: BoxFit.cover,
         ),
       ),
     );

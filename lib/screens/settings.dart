@@ -244,6 +244,17 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                     ],
                   ),
+                  GestureDetector(
+                    child: Text("wrapper", style: GoogleFonts.poppins()),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MonthlyWrapScreen(),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
