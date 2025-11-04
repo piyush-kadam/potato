@@ -1,4 +1,5 @@
-platform :ios, '13.0'
+platform :ios, '15.0'
+
 
 # Disable CocoaPods analytics to speed up build
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
