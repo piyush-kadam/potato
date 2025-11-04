@@ -15,7 +15,6 @@ class CategoryBudgetPage extends StatefulWidget {
 class _CategoryBudgetPageState extends State<CategoryBudgetPage> {
   double _monthlyBudget = 0;
   String _currencySymbol = '₹';
-  String _countryCode = 'IN';
 
   Map<String, double> _categories = {
     "🍔 Food": 0,
@@ -35,14 +34,66 @@ class _CategoryBudgetPageState extends State<CategoryBudgetPage> {
     "Savings": 0.25,
   };
 
+  // Currency mapping based on country names
   final Map<String, String> _currencyMap = {
-    'IN': '₹',
-    'US': '\$',
-    'GB': '£',
-    'EU': '€',
-    'JP': '¥',
-    'AU': 'A\$',
-    'CA': 'C\$',
+    'India': '₹',
+    'United States': '\$',
+    'United Kingdom': '£',
+    'Canada': 'C\$',
+    'Australia': 'A\$',
+    'Germany': '€',
+    'France': '€',
+    'Japan': '¥',
+    'China': '¥',
+    'Brazil': 'R\$',
+    'Mexico': 'MX\$',
+    'Spain': '€',
+    'Italy': '€',
+    'South Korea': '₩',
+    'Singapore': 'S\$',
+    'Netherlands': '€',
+    'Sweden': 'kr',
+    'Norway': 'kr',
+    'Denmark': 'kr',
+    'Switzerland': 'CHF',
+    'Russia': '₽',
+    'South Africa': 'R',
+    'New Zealand': 'NZ\$',
+    'Ireland': '€',
+    'United Arab Emirates': 'د.إ',
+    'Saudi Arabia': '﷼',
+    'Turkey': '₺',
+    'Argentina': 'AR\$',
+    'Chile': 'CL\$',
+    'Indonesia': 'Rp',
+    'Thailand': '฿',
+    'Philippines': '₱',
+    'Vietnam': '₫',
+    'Malaysia': 'RM',
+    'Pakistan': '₨',
+    'Bangladesh': '৳',
+    'Nepal': '₨',
+    'Sri Lanka': '₨',
+    'Nigeria': '₦',
+    'Kenya': 'KSh',
+    'Egypt': 'E£',
+    'Israel': '₪',
+    'Portugal': '€',
+    'Poland': 'zł',
+    'Finland': '€',
+    'Greece': '€',
+    'Austria': '€',
+    'Belgium': '€',
+    'Czech Republic': 'Kč',
+    'Hungary': 'Ft',
+    'Romania': 'lei',
+    'Colombia': 'COL\$',
+    'Peru': 'S/',
+    'Ukraine': '₴',
+    'Morocco': 'د.م.',
+    'Qatar': '﷼',
+    'Kuwait': 'د.ك',
+    'Oman': '﷼',
   };
 
   @override
@@ -63,11 +114,13 @@ class _CategoryBudgetPageState extends State<CategoryBudgetPage> {
     if (doc.exists && doc.data() != null) {
       final data = doc.data()!;
 
-      // Fetch country code and set currency
+      // Fetch country name and set currency symbol
       if (data["country"] != null) {
+        final country = data["country"] as String;
         setState(() {
-          _countryCode = data["country"];
-          _currencySymbol = _currencyMap[_countryCode] ?? '₹';
+          if (_currencyMap.containsKey(country)) {
+            _currencySymbol = _currencyMap[country]!;
+          }
         });
       }
 
@@ -417,7 +470,7 @@ class _CategoryBudgetPageState extends State<CategoryBudgetPage> {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          "$_currencySymbol${_categories[category]!.round()}k",
+                                          "$_currencySymbol${(_categories[category]! / 1000).toStringAsFixed(0)}k",
                                           style: GoogleFonts.poppins(
                                             fontSize: 12,
                                             color: Colors.grey[600],
@@ -470,7 +523,6 @@ class _CategoryBudgetPageState extends State<CategoryBudgetPage> {
 
                         const SizedBox(height: 16),
 
-                        /// Summary card
                         /// Summary card
                         Container(
                           padding: const EdgeInsets.symmetric(

@@ -19,13 +19,75 @@ class _BudgetPageState extends State<BudgetPage>
   bool _manualEntry = false;
   bool _isSaving = false;
   String? _username;
-  String? _currencySymbol = "₹";
+  String _currencySymbol = "₹";
 
   late AnimationController _controller;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
 
   int get _dailyBudget => (_budget / 30).round();
+
+  // Currency mapping based on country names
+  final Map<String, String> _currencyMap = {
+    'India': '₹',
+    'United States': '\$',
+    'United Kingdom': '£',
+    'Canada': 'C\$',
+    'Australia': 'A\$',
+    'Germany': '€',
+    'France': '€',
+    'Japan': '¥',
+    'China': '¥',
+    'Brazil': 'R\$',
+    'Mexico': 'MX\$',
+    'Spain': '€',
+    'Italy': '€',
+    'South Korea': '₩',
+    'Singapore': 'S\$',
+    'Netherlands': '€',
+    'Sweden': 'kr',
+    'Norway': 'kr',
+    'Denmark': 'kr',
+    'Switzerland': 'CHF',
+    'Russia': '₽',
+    'South Africa': 'R',
+    'New Zealand': 'NZ\$',
+    'Ireland': '€',
+    'United Arab Emirates': 'د.إ',
+    'Saudi Arabia': '﷼',
+    'Turkey': '₺',
+    'Argentina': 'AR\$',
+    'Chile': 'CL\$',
+    'Indonesia': 'Rp',
+    'Thailand': '฿',
+    'Philippines': '₱',
+    'Vietnam': '₫',
+    'Malaysia': 'RM',
+    'Pakistan': '₨',
+    'Bangladesh': '৳',
+    'Nepal': '₨',
+    'Sri Lanka': '₨',
+    'Nigeria': '₦',
+    'Kenya': 'KSh',
+    'Egypt': 'E£',
+    'Israel': '₪',
+    'Portugal': '€',
+    'Poland': 'zł',
+    'Finland': '€',
+    'Greece': '€',
+    'Austria': '€',
+    'Belgium': '€',
+    'Czech Republic': 'Kč',
+    'Hungary': 'Ft',
+    'Romania': 'lei',
+    'Colombia': 'COL\$',
+    'Peru': 'S/',
+    'Ukraine': '₴',
+    'Morocco': 'د.م.',
+    'Qatar': '﷼',
+    'Kuwait': 'د.ك',
+    'Oman': '﷼',
+  };
 
   @override
   void initState() {
@@ -64,6 +126,11 @@ class _BudgetPageState extends State<BudgetPage>
       final data = doc.data()!;
       setState(() {
         _username = data["username"];
+        // Fetch country and set currency symbol
+        final country = data["country"] as String?;
+        if (country != null && _currencyMap.containsKey(country)) {
+          _currencySymbol = _currencyMap[country]!;
+        }
       });
     }
   }
@@ -173,7 +240,7 @@ class _BudgetPageState extends State<BudgetPage>
                                         decoration: InputDecoration(
                                           border: InputBorder.none,
                                           prefix: Text(
-                                            _currencySymbol ?? "₹",
+                                            _currencySymbol,
                                             style: GoogleFonts.poppins(
                                               fontSize: 48,
                                               fontWeight: FontWeight.w700,
@@ -193,7 +260,7 @@ class _BudgetPageState extends State<BudgetPage>
                                         },
                                       )
                                     : Text(
-                                        "${_currencySymbol ?? "₹"}${_budget.round().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}",
+                                        "$_currencySymbol${_budget.round().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}",
                                         style: GoogleFonts.poppins(
                                           fontSize: 48,
                                           fontWeight: FontWeight.w700,
@@ -202,7 +269,7 @@ class _BudgetPageState extends State<BudgetPage>
                                       ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  "${_currencySymbol ?? "₹"}$_dailyBudget per day",
+                                  "$_currencySymbol$_dailyBudget per day",
                                   style: GoogleFonts.poppins(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,

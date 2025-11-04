@@ -630,6 +630,7 @@ class CategoryDetailsDrawer extends StatefulWidget {
 
 class _CategoryDetailsDrawerState extends State<CategoryDetailsDrawer> {
   String selectedMonth = "All";
+  String _currencySymbol = "₹";
 
   final List<String> months = [
     "All",
@@ -646,6 +647,98 @@ class _CategoryDetailsDrawerState extends State<CategoryDetailsDrawer> {
     "November",
     "December",
   ];
+
+  // Currency mapping based on country names
+  final Map<String, String> _currencyMap = {
+    'India': '₹',
+    'United States': '\$',
+    'United Kingdom': '£',
+    'Canada': 'C\$',
+    'Australia': 'A\$',
+    'Germany': '€',
+    'France': '€',
+    'Japan': '¥',
+    'China': '¥',
+    'Brazil': 'R\$',
+    'Mexico': 'MX\$',
+    'Spain': '€',
+    'Italy': '€',
+    'South Korea': '₩',
+    'Singapore': 'S\$',
+    'Netherlands': '€',
+    'Sweden': 'kr',
+    'Norway': 'kr',
+    'Denmark': 'kr',
+    'Switzerland': 'CHF',
+    'Russia': '₽',
+    'South Africa': 'R',
+    'New Zealand': 'NZ\$',
+    'Ireland': '€',
+    'United Arab Emirates': 'د.إ',
+    'Saudi Arabia': '﷼',
+    'Turkey': '₺',
+    'Argentina': 'AR\$',
+    'Chile': 'CL\$',
+    'Indonesia': 'Rp',
+    'Thailand': '฿',
+    'Philippines': '₱',
+    'Vietnam': '₫',
+    'Malaysia': 'RM',
+    'Pakistan': '₨',
+    'Bangladesh': '৳',
+    'Nepal': '₨',
+    'Sri Lanka': '₨',
+    'Nigeria': '₦',
+    'Kenya': 'KSh',
+    'Egypt': 'E£',
+    'Israel': '₪',
+    'Portugal': '€',
+    'Poland': 'zł',
+    'Finland': '€',
+    'Greece': '€',
+    'Austria': '€',
+    'Belgium': '€',
+    'Czech Republic': 'Kč',
+    'Hungary': 'Ft',
+    'Romania': 'lei',
+    'Colombia': 'COL\$',
+    'Peru': 'S/',
+    'Ukraine': '₴',
+    'Morocco': 'د.م.',
+    'Qatar': '﷼',
+    'Kuwait': 'د.ك',
+    'Oman': '﷼',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserCountry();
+  }
+
+  Future<void> _fetchUserCountry() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection("Users")
+          .doc(user.uid)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data()!;
+        final country = data["country"] as String?;
+        if (country != null && _currencyMap.containsKey(country)) {
+          setState(() {
+            _currencySymbol = _currencyMap[country]!;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching country: $e");
+    }
+  }
 
   bool _matchesMonthFilter(Timestamp? timestamp) {
     if (selectedMonth == "All") return true;
@@ -740,7 +833,7 @@ class _CategoryDetailsDrawerState extends State<CategoryDetailsDrawer> {
               child: Column(
                 children: [
                   Text(
-                    "₹${remainingAmount.abs().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}",
+                    "$_currencySymbol${remainingAmount.abs().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}",
                     style: GoogleFonts.poppins(
                       fontSize: 32,
                       fontWeight: FontWeight.w600,
@@ -765,7 +858,7 @@ class _CategoryDetailsDrawerState extends State<CategoryDetailsDrawer> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "₹${spentAmount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}",
+                            "$_currencySymbol${spentAmount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}",
                             style: GoogleFonts.poppins(
                               fontSize: 13,
                               color: Colors.grey[600],
@@ -784,7 +877,7 @@ class _CategoryDetailsDrawerState extends State<CategoryDetailsDrawer> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            "₹${widget.originalBudget.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}",
+                            "$_currencySymbol${widget.originalBudget.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}",
                             style: GoogleFonts.poppins(
                               fontSize: 13,
                               color: Colors.grey[600],
@@ -1168,7 +1261,7 @@ class _CategoryDetailsDrawerState extends State<CategoryDetailsDrawer> {
                                   ),
                                 ),
                                 Text(
-                                  "₹${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}",
+                                  "$_currencySymbol${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}",
                                   style: GoogleFonts.poppins(
                                     fontSize: 15,
                                     fontWeight: FontWeight.bold,

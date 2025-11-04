@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:slideme/auth/lr.dart';
+
 import 'package:slideme/auth/signup.dart';
+import 'package:slideme/auth/gphone.dart';
 import 'package:slideme/screens/category.dart';
-import 'package:slideme/screens/homepage.dart';
-import 'package:slideme/screens/monthly_budget.dart';
+
 import 'package:slideme/screens/welcome.dart';
 import 'package:slideme/screens/wrapper.dart';
 
@@ -19,11 +19,17 @@ class AuthGate extends StatelessWidget {
         .get();
 
     if (!doc.exists) {
-      // New user, no document yet → go to Welcome
-      return const NamePage();
+      // New user, no document yet → go to phone verification
+      return GPhoneInputPage(isAfterGoogleSignIn: true, userId: user.uid);
     }
 
     final data = doc.data() ?? {};
+
+    // CRITICAL: Check phone verification FIRST
+    final phoneVerified = data['phoneVerified'] ?? false;
+    if (!phoneVerified) {
+      return GPhoneInputPage(isAfterGoogleSignIn: true, userId: user.uid);
+    }
 
     // Username check
     if (!data.containsKey("username") || (data["username"] as String).isEmpty) {
@@ -32,7 +38,7 @@ class AuthGate extends StatelessWidget {
 
     // Budget check
     if (!data.containsKey("monthlyBudget")) {
-      return const NamePage(); // you already have this
+      return const NamePage();
     }
 
     // Category Budgets check

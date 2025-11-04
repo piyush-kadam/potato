@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:slideme/auth/scat.dart';
 
 class SpendAmountPage extends StatefulWidget {
@@ -12,17 +14,82 @@ class SpendAmountPage extends StatefulWidget {
 class _SpendAmountPageState extends State<SpendAmountPage>
     with TickerProviderStateMixin {
   double _amount = 25000;
+  String _currencySymbol = "₹";
+  bool _isLoading = true;
+
   late AnimationController _progressController;
   late Animation<double> _progressAnimation;
   late AnimationController _floatController;
   late Animation<double> _floatAnimation;
-
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+
+  // Currency mapping based on country names
+  final Map<String, String> _currencyMap = {
+    'India': '₹',
+    'United States': '\$',
+    'United Kingdom': '£',
+    'Canada': 'C\$',
+    'Australia': 'A\$',
+    'Germany': '€',
+    'France': '€',
+    'Japan': '¥',
+    'China': '¥',
+    'Brazil': 'R\$',
+    'Mexico': 'MX\$',
+    'Spain': '€',
+    'Italy': '€',
+    'South Korea': '₩',
+    'Singapore': 'S\$',
+    'Netherlands': '€',
+    'Sweden': 'kr',
+    'Norway': 'kr',
+    'Denmark': 'kr',
+    'Switzerland': 'CHF',
+    'Russia': '₽',
+    'South Africa': 'R',
+    'New Zealand': 'NZ\$',
+    'Ireland': '€',
+    'United Arab Emirates': 'د.إ',
+    'Saudi Arabia': '﷼',
+    'Turkey': '₺',
+    'Argentina': 'AR\$',
+    'Chile': 'CL\$',
+    'Indonesia': 'Rp',
+    'Thailand': '฿',
+    'Philippines': '₱',
+    'Vietnam': '₫',
+    'Malaysia': 'RM',
+    'Pakistan': '₨',
+    'Bangladesh': '৳',
+    'Nepal': '₨',
+    'Sri Lanka': '₨',
+    'Nigeria': '₦',
+    'Kenya': 'KSh',
+    'Egypt': 'E£',
+    'Israel': '₪',
+    'Portugal': '€',
+    'Poland': 'zł',
+    'Finland': '€',
+    'Greece': '€',
+    'Austria': '€',
+    'Belgium': '€',
+    'Czech Republic': 'Kč',
+    'Hungary': 'Ft',
+    'Romania': 'lei',
+    'Colombia': 'COL\$',
+    'Peru': 'S/',
+    'Ukraine': '₴',
+    'Morocco': 'د.م.',
+    'Qatar': '﷼',
+    'Kuwait': 'د.ك',
+    'Oman': '﷼',
+  };
 
   @override
   void initState() {
     super.initState();
+    _fetchUserCountry();
 
     // Fade-in controller & animation for entire page
     _fadeController = AnimationController(
@@ -57,6 +124,36 @@ class _SpendAmountPageState extends State<SpendAmountPage>
       _progressController.forward();
       _floatController.repeat(reverse: true);
     });
+  }
+
+  Future<void> _fetchUserCountry() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection("Users")
+          .doc(user.uid)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data()!;
+        final country = data["country"] as String?;
+        if (country != null && _currencyMap.containsKey(country)) {
+          setState(() {
+            _currencySymbol = _currencyMap[country]!;
+          });
+        }
+      }
+    } catch (e) {
+      // Handle error silently, keep default currency
+      debugPrint("Error fetching country: $e");
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -188,7 +285,7 @@ class _SpendAmountPageState extends State<SpendAmountPage>
                           ),
                           const SizedBox(height: 20),
                           Text(
-                            "₹${_amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d)(?=(\d\d)+\d$)'), (m) => "${m[1]},")}",
+                            "$_currencySymbol${_amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d)(?=(\d\d)+\d$)'), (m) => "${m[1]},")}",
                             style: GoogleFonts.poppins(
                               fontSize: 38,
                               fontWeight: FontWeight.w800,
@@ -211,7 +308,7 @@ class _SpendAmountPageState extends State<SpendAmountPage>
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "₹5,000",
+                                  "${_currencySymbol}5,000",
                                   style: GoogleFonts.poppins(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 13,
@@ -237,7 +334,7 @@ class _SpendAmountPageState extends State<SpendAmountPage>
                                   ),
                                 ),
                                 Text(
-                                  "₹2,00,000",
+                                  "${_currencySymbol}2,00,000",
                                   style: GoogleFonts.poppins(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 13,

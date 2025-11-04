@@ -18,12 +18,12 @@ dependencies:
   google_sign_in: ^6.3.0
   shared_preferences: ^2.5.3
   url_launcher: ^6.3.2
-  android_intent_plus: ^6.0.0
+  
   sign_in_with_apple: ^7.0.1
-  upi_pay: ^1.1.0
+  
   liquid_progress_indicator_v2: ^0.5.0
   glassmorphism: ^3.0.0
-  provider: ^6.1.5+1
+  
   blurrycontainer: ^2.1.0
   glass_kit: ^4.0.1
   flutter_svg: ^2.2.1
@@ -33,45 +33,29 @@ dependencies:
   lottie: ^3.3.1
   animated_splash_screen: ^1.3.0
   gif: ^2.3.0
-  flutter_gif: ^0.0.4
-  video_player: ^2.10.0
+  
+  
   flutter_staggered_animations: ^1.1.1
-  flutter_native_splash: ^2.4.7
-  device_preview: ^1.3.1
+  intl: ^0.20.2
+  
+  
   
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
-  flutter_launcher_icons: ^0.14.1  # 👈 for your custom app icon
+  flutter_native_splash: ^2.4.7
+    # 👈 for your custom app icon
 
-# 👇 Flutter Launcher Icons configuration
-flutter_icons:
-  android: true
-  ios: true
-  image_path: "assets/images/appicon.png"
-  adaptive_icon_background: "#5FB567"
-  adaptive_icon_foreground: "assets/images/appicon.png"
+
 
 flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/mascot.png
-    - assets/images/bg.png
-    - assets/images/splash.mp4
-    - assets/images/splash.gif
-    - assets/images/splash.jpeg
-    - assets/images/splash.png
-    - assets/images/bgg.png
-    - assets/images/mascot2.png
-    - assets/images/mascot3.png
-    - assets/images/mascot4.png
-    - assets/images/googlelogo.png
-    - assets/animations/Scene.json
-    - assets/animations/money.json
-    - assets/images/appicon.png
+    - assets/images/
+    - assets/animations/
 
 
 

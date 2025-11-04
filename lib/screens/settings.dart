@@ -82,11 +82,79 @@ class _SettingsPageState extends State<SettingsPage> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    // Currency mapping based on country names
+    final Map<String, String> currencyMap = {
+      'India': '₹',
+      'United States': '\$',
+      'United Kingdom': '£',
+      'Canada': 'C\$',
+      'Australia': 'A\$',
+      'Germany': '€',
+      'France': '€',
+      'Japan': '¥',
+      'China': '¥',
+      'Brazil': 'R\$',
+      'Mexico': 'MX\$',
+      'Spain': '€',
+      'Italy': '€',
+      'South Korea': '₩',
+      'Singapore': 'S\$',
+      'Netherlands': '€',
+      'Sweden': 'kr',
+      'Norway': 'kr',
+      'Denmark': 'kr',
+      'Switzerland': 'CHF',
+      'Russia': '₽',
+      'South Africa': 'R',
+      'New Zealand': 'NZ\$',
+      'Ireland': '€',
+      'United Arab Emirates': 'د.إ',
+      'Saudi Arabia': '﷼',
+      'Turkey': '₺',
+      'Argentina': 'AR\$',
+      'Chile': 'CL\$',
+      'Indonesia': 'Rp',
+      'Thailand': '฿',
+      'Philippines': '₱',
+      'Vietnam': '₫',
+      'Malaysia': 'RM',
+      'Pakistan': '₨',
+      'Bangladesh': '৳',
+      'Nepal': '₨',
+      'Sri Lanka': '₨',
+      'Nigeria': '₦',
+      'Kenya': 'KSh',
+      'Egypt': 'E£',
+      'Israel': '₪',
+      'Portugal': '€',
+      'Poland': 'zł',
+      'Finland': '€',
+      'Greece': '€',
+      'Austria': '€',
+      'Belgium': '€',
+      'Czech Republic': 'Kč',
+      'Hungary': 'Ft',
+      'Romania': 'lei',
+      'Colombia': 'COL\$',
+      'Peru': 'S/',
+      'Ukraine': '₴',
+      'Morocco': 'د.م.',
+      'Qatar': '﷼',
+      'Kuwait': 'د.ك',
+      'Oman': '﷼',
+    };
+
     // Extract data safely
     final username = userData?['username'] ?? "User";
     final monthlyBudget = userData?['monthlyBudget'] ?? 0;
     final remaining = userData?['remainingBudget'] ?? 0;
     final spent = monthlyBudget - remaining;
+
+    // Get currency symbol based on country
+    final country = userData?['country'] as String?;
+    final currencySymbol = (country != null && currencyMap.containsKey(country))
+        ? currencyMap[country]!
+        : '₹';
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -190,17 +258,17 @@ class _SettingsPageState extends State<SettingsPage> {
                                 children: [
                                   _buildBudgetStat(
                                     "Budget",
-                                    "₹${monthlyBudget.toString()}",
+                                    "$currencySymbol${monthlyBudget.toString()}",
                                     Colors.blue,
                                   ),
                                   _buildBudgetStat(
                                     "Spent",
-                                    "₹$spent",
+                                    "$currencySymbol$spent",
                                     Colors.orange,
                                   ),
                                   _buildBudgetStat(
                                     "Remaining",
-                                    "₹${remaining.toString()}",
+                                    "$currencySymbol${remaining.toString()}",
                                     Colors.green,
                                   ),
                                 ],

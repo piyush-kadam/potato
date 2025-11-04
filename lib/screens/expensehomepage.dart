@@ -23,6 +23,18 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
   bool isDarkMode = false;
   bool _isNavigating = false;
 
+  // Store previous progress values to animate from current position
+  final Map<String, double> _previousProgress = {};
+
+  // Define the desired category order
+  final List<String> _categoryOrder = [
+    'food',
+    'shopping',
+    'entertainment',
+    'travel',
+    'savings',
+  ];
+
   String extractEmoji(String categoryName) {
     final emojiRegex = RegExp(
       r'[\u{1F600}-\u{1F64F}]|'
@@ -61,6 +73,31 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
     if (name.contains('health')) return Colors.red;
     if (name.contains('education')) return Colors.teal;
     return const Color(0xFF4CAF50);
+  }
+
+  // Sort categories based on predefined order
+  List<String> _getSortedCategories(List<String> categories) {
+    List<String> sortedCategories = [];
+
+    // Add categories in the defined order
+    for (String orderKey in _categoryOrder) {
+      for (String category in categories) {
+        String cleanName = extractCategoryName(category).toLowerCase();
+        if (cleanName.contains(orderKey)) {
+          sortedCategories.add(category);
+          break;
+        }
+      }
+    }
+
+    // Add any remaining categories that don't match the order
+    for (String category in categories) {
+      if (!sortedCategories.contains(category)) {
+        sortedCategories.add(category);
+      }
+    }
+
+    return sortedCategories;
   }
 
   Future<void> _navigateToBudgetMode() async {
@@ -145,6 +182,9 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
           categories = List<String>.from(data["expenseCategories"]);
         }
 
+        // Sort categories based on predefined order
+        List<String> sortedCategories = _getSortedCategories(categories);
+
         Map<String, int> categorySpent = {};
         if (data["categorySpent"] != null) {
           (data["categorySpent"] as Map<String, dynamic>).forEach((key, value) {
@@ -168,7 +208,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
         final analyticsHeight = availableHeight * 0.17;
 
         // Calculate if scrolling is needed
-        bool needsScrolling = categories.length >= 5;
+        bool needsScrolling = sortedCategories.length >= 5;
 
         return Scaffold(
           resizeToAvoidBottomInset: false,
@@ -390,8 +430,9 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                             onPressed: () async {
                               var result = await showDialog(
                                 context: context,
-                                builder: (_) =>
-                                    ExpensePayNowPopup(categories: categories),
+                                builder: (_) => ExpensePayNowPopup(
+                                  categories: sortedCategories,
+                                ),
                               );
 
                               if (result != null && result['success'] == true) {
@@ -420,14 +461,14 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                       ),
                     ),
 
-                    /// CATEGORY GRID
+                    /// CATEGORY GRID - NOW WITH FIXED ORDER
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: screenWidth * 0.04,
                       ),
                       child: LayoutBuilder(
                         builder: (context, constraints) {
-                          int itemCount = categories.length + 1;
+                          int itemCount = sortedCategories.length + 1;
                           int rows = (itemCount / 2).ceil();
 
                           double itemWidth =
@@ -462,10 +503,10 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                                     mainAxisSpacing: screenHeight * 0.015,
                                     childAspectRatio: 1.2,
                                   ),
-                              itemCount: categories.length + 1,
+                              itemCount: sortedCategories.length + 1,
                               itemBuilder: (context, index) {
-                                if (index < categories.length) {
-                                  String categoryKey = categories[index];
+                                if (index < sortedCategories.length) {
+                                  String categoryKey = sortedCategories[index];
                                   int spentAmount =
                                       categorySpent[categoryKey] ?? 0;
 
@@ -475,6 +516,14 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                                           1.0,
                                         )
                                       : 0.0;
+
+                                  // Get previous progress or use current if first time
+                                  double previousProgress =
+                                      _previousProgress[categoryKey] ??
+                                      progress;
+
+                                  // Update stored progress for next rebuild
+                                  _previousProgress[categoryKey] = progress;
 
                                   String emoji = extractEmoji(categoryKey);
                                   String categoryName = extractCategoryName(
@@ -490,7 +539,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                                       var result = await showDialog(
                                         context: context,
                                         builder: (_) => ExpensePayNowPopup(
-                                          categories: categories,
+                                          categories: sortedCategories,
                                         ),
                                       );
 
@@ -514,7 +563,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                                         borderRadius: BorderRadius.circular(24),
                                         child: Stack(
                                           children: [
-                                            // Animated Liquid fill
+                                            // Animated Liquid fill - now animates from previous position
                                             TweenAnimationBuilder<double>(
                                               key: ValueKey(
                                                 '$categoryKey-$spentAmount',
@@ -524,7 +573,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                                               ),
                                               curve: Curves.easeInOut,
                                               tween: Tween<double>(
-                                                begin: 0.0,
+                                                begin: previousProgress,
                                                 end: progress,
                                               ),
                                               builder:
@@ -740,7 +789,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                               Column(
                                 children: [
                                   Text(
-                                    "₹${categories.isNotEmpty ? totalSpent : 0}",
+                                    "₹${sortedCategories.isNotEmpty ? totalSpent : 0}",
                                     style: GoogleFonts.poppins(
                                       fontSize: screenWidth * 0.035,
                                       fontWeight: FontWeight.bold,
@@ -759,7 +808,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                               Column(
                                 children: [
                                   Text(
-                                    "${categories.length}",
+                                    "${sortedCategories.length}",
                                     style: GoogleFonts.poppins(
                                       fontSize: screenWidth * 0.035,
                                       fontWeight: FontWeight.bold,

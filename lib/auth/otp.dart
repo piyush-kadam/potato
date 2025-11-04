@@ -210,6 +210,7 @@ class _OTPPageState extends State<OTPPage> with TickerProviderStateMixin {
             'name': widget.fullName,
             'phone': widget.phone,
             'otpVerified': true,
+            'phoneVerified': true,
             'profileCompleted': true,
             'timestamp': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));

@@ -25,8 +25,16 @@ class _HomePageState extends State<HomePage> {
   bool isDarkMode = false;
   bool _isNavigating = false;
 
+  // Define the desired category order
+  final List<String> _categoryOrder = [
+    'food',
+    'shopping',
+    'entertainment',
+    'travel',
+    'savings',
+  ];
+
   String extractEmoji(String categoryName) {
-    // More comprehensive emoji regex that handles variation selectors
     final emojiRegex = RegExp(
       r'(?:[\u{1F600}-\u{1F64F}]|'
       r'[\u{1F300}-\u{1F5FF}]|'
@@ -37,7 +45,7 @@ class _HomePageState extends State<HomePage> {
       r'[\u{1F900}-\u{1F9FF}]|'
       r'[\u{1FA00}-\u{1FA6F}]|'
       r'[\u{1FA70}-\u{1FAFF}])'
-      r'[\u{FE00}-\u{FE0F}\u{E0100}-\u{E01EF}]?', // Variation selectors
+      r'[\u{FE00}-\u{FE0F}\u{E0100}-\u{E01EF}]?',
       unicode: true,
     );
     final match = emojiRegex.firstMatch(categoryName);
@@ -45,7 +53,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   String extractCategoryName(String categoryName) {
-    // More comprehensive emoji regex that handles variation selectors
     final emojiRegex = RegExp(
       r'(?:[\u{1F600}-\u{1F64F}]|'
       r'[\u{1F300}-\u{1F5FF}]|'
@@ -56,23 +63,35 @@ class _HomePageState extends State<HomePage> {
       r'[\u{1F900}-\u{1F9FF}]|'
       r'[\u{1FA00}-\u{1FA6F}]|'
       r'[\u{1FA70}-\u{1FAFF}])'
-      r'[\u{FE00}-\u{FE0F}\u{E0100}-\u{E01EF}]?', // Variation selectors
+      r'[\u{FE00}-\u{FE0F}\u{E0100}-\u{E01EF}]?',
       unicode: true,
     );
     return categoryName.replaceAll(emojiRegex, '').trim();
   }
 
-  Color getCategoryColor(String categoryName) {
-    final name = categoryName.toLowerCase();
-    if (name.contains('food')) return Colors.orange;
-    if (name.contains('shopping')) return Colors.pink;
-    if (name.contains('travel')) return Colors.blue;
-    if (name.contains('entertainment')) return Colors.purple;
-    if (name.contains('savings')) return Colors.green;
-    if (name.contains('transport')) return Colors.indigo;
-    if (name.contains('health')) return Colors.red;
-    if (name.contains('education')) return Colors.teal;
-    return const Color(0xFF4CAF50);
+  // Sort categories based on predefined order
+  List<String> _getSortedCategories(Map<String, int> categoryBudgets) {
+    List<String> sortedKeys = [];
+
+    // Add categories in the defined order
+    for (String orderKey in _categoryOrder) {
+      for (String key in categoryBudgets.keys) {
+        String cleanName = extractCategoryName(key).toLowerCase();
+        if (cleanName.contains(orderKey)) {
+          sortedKeys.add(key);
+          break;
+        }
+      }
+    }
+
+    // Add any remaining categories that don't match the order
+    for (String key in categoryBudgets.keys) {
+      if (!sortedKeys.contains(key)) {
+        sortedKeys.add(key);
+      }
+    }
+
+    return sortedKeys;
   }
 
   Future<void> _navigateToExpenseMode() async {
@@ -180,6 +199,9 @@ class _HomePageState extends State<HomePage> {
           });
         }
 
+        // Get sorted category keys
+        List<String> sortedCategoryKeys = _getSortedCategories(categoryBudgets);
+
         int spent = monthlyBudget - remainingBudget;
         int categoriesCount = categoryBudgets.length;
         double usedPercent = monthlyBudget > 0 ? spent / monthlyBudget : 0;
@@ -188,20 +210,17 @@ class _HomePageState extends State<HomePage> {
         final lastDay = DateTime(now.year, now.month + 1, 0);
         int remainingDays = lastDay.difference(now).inDays + 1;
 
-        // Calculate responsive heights
         final topBarHeight = availableHeight * 0.10;
         final daysLeftHeight = availableHeight * 0.12;
         final gridHeight = availableHeight * 0.58;
         final analyticsHeight = availableHeight * 0.17;
 
-        // Calculate if scrolling is needed (more than 5 categories)
         bool needsScrolling = categoryBudgets.length > 5;
 
         return Scaffold(
           resizeToAvoidBottomInset: false,
           body: Stack(
             children: [
-              // Background Image
               Positioned.fill(
                 child: Image.asset(
                   'assets/images/bg.png',
@@ -210,7 +229,6 @@ class _HomePageState extends State<HomePage> {
                       Container(color: const Color(0xFFE3F2FD)),
                 ),
               ),
-              // Main Content
               SafeArea(
                 child: Column(
                   children: [
@@ -222,7 +240,6 @@ class _HomePageState extends State<HomePage> {
                       ),
                       child: Row(
                         children: [
-                          // Gesture area for mascot + text
                           GestureDetector(
                             onTap: () {
                               Navigator.push(
@@ -234,7 +251,6 @@ class _HomePageState extends State<HomePage> {
                             },
                             child: Row(
                               children: [
-                                // Mascot Image
                                 Image.asset(
                                   'assets/images/mascot.png',
                                   width: screenWidth * 0.11,
@@ -248,8 +264,6 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                 ),
                                 SizedBox(width: screenWidth * 0.03),
-
-                                // Text Column
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -274,10 +288,7 @@ class _HomePageState extends State<HomePage> {
                               ],
                             ),
                           ),
-
                           const Spacer(),
-
-                          // Toggle Container (Budget / Expense)
                           Container(
                             padding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.01,
@@ -454,14 +465,14 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
 
-                    /// CATEGORY GRID
+                    /// CATEGORY GRID - NOW WITH FIXED ORDER
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: screenWidth * 0.04,
                       ),
                       child: LayoutBuilder(
                         builder: (context, constraints) {
-                          int itemCount = categoryBudgets.length + 1;
+                          int itemCount = sortedCategoryKeys.length + 1;
                           int rows = (itemCount / 2).ceil();
 
                           double itemWidth =
@@ -496,17 +507,15 @@ class _HomePageState extends State<HomePage> {
                                     mainAxisSpacing: screenHeight * 0.015,
                                     childAspectRatio: 1.2,
                                   ),
-                              itemCount: categoryBudgets.length + 1,
+                              itemCount: sortedCategoryKeys.length + 1,
                               itemBuilder: (context, index) {
-                                if (index < categoryBudgets.length) {
-                                  var entry = categoryBudgets.entries.elementAt(
-                                    index,
-                                  );
-                                  String categoryKey = entry.key;
+                                if (index < sortedCategoryKeys.length) {
+                                  String categoryKey =
+                                      sortedCategoryKeys[index];
 
                                   int originalBudget =
                                       originalCategoryBudgets[categoryKey] ??
-                                      entry.value;
+                                      categoryBudgets[categoryKey]!;
                                   int spentAmount =
                                       categorySpent[categoryKey] ?? 0;
                                   int remainingInCategory =
@@ -522,9 +531,6 @@ class _HomePageState extends State<HomePage> {
 
                                   String emoji = extractEmoji(categoryKey);
                                   String categoryName = extractCategoryName(
-                                    categoryKey,
-                                  );
-                                  Color categoryColor = getCategoryColor(
                                     categoryKey,
                                   );
 
@@ -547,7 +553,6 @@ class _HomePageState extends State<HomePage> {
                                     );
                                   }
 
-                                  // Check if category has overspent
                                   bool isOverspent =
                                       spentAmount > originalBudget;
 
@@ -572,7 +577,6 @@ class _HomePageState extends State<HomePage> {
                                         color: Colors.white.withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(24),
                                         border: Border.all(
-                                          // Red border if overspent, white otherwise
                                           color: isOverspent
                                               ? const Color(0xFFFF3B30)
                                               : Colors.white.withOpacity(0.3),
@@ -876,7 +880,6 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ],
                           ),
-                          // Page Indicators at bottom of analytics container
                           if (widget.currentPage != null &&
                               widget.onPageIndicatorTap != null)
                             Positioned(

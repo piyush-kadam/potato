@@ -6,7 +6,7 @@ import 'package:slideme/auth/authservice.dart';
 import 'package:slideme/auth/gphone.dart';
 import 'package:slideme/auth/login.dart';
 import 'package:slideme/auth/welcome.dart';
-import 'package:slideme/screens/welcome.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -22,18 +22,12 @@ class _SignUpPageState extends State<SignUpPage> {
   bool isLoading = false;
   final AuthService _authService = AuthService();
 
-  void _onGetStarted() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const WelcomePage()),
-    );
-  }
-
   void _signInWithGoogle() async {
     setState(() => isLoading = true);
 
     try {
       final userCredential = await _authService.signInWithGoogle();
+
       if (userCredential != null) {
         final userDoc = FirebaseFirestore.instance
             .collection('Users')
@@ -47,22 +41,35 @@ class _SignUpPageState extends State<SignUpPage> {
             'authMethod': 'google',
             'phoneVerified': false,
           });
+        } else {
+          final data = snapshot.data() as Map<String, dynamic>;
+          final phoneVerified = data['phoneVerified'] ?? false;
+
+          if (phoneVerified) {
+            // Don't navigate here - let your auth state listener handle it
+            return;
+          }
         }
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => GPhoneInputPage(
-              isAfterGoogleSignIn: true,
-              userId: userCredential.user!.uid,
+        // Always navigate to GPhoneInputPage if phone not verified
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => GPhoneInputPage(
+                isAfterGoogleSignIn: true,
+                userId: userCredential.user!.uid,
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
     } catch (e) {
       _showError("Google sign-in failed: ${e.toString()}");
     } finally {
-      setState(() => isLoading = false);
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
 
@@ -71,6 +78,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
     try {
       final userCredential = await _authService.signInWithApple();
+
       if (userCredential != null) {
         final userDoc = FirebaseFirestore.instance
             .collection('Users')
@@ -84,22 +92,35 @@ class _SignUpPageState extends State<SignUpPage> {
             'authMethod': 'apple',
             'phoneVerified': false,
           });
+        } else {
+          final data = snapshot.data() as Map<String, dynamic>;
+          final phoneVerified = data['phoneVerified'] ?? false;
+
+          if (phoneVerified) {
+            // Don't navigate here - let your auth state listener handle it
+            return;
+          }
         }
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => GPhoneInputPage(
-              isAfterGoogleSignIn: true,
-              userId: userCredential.user!.uid,
+        // Always navigate to GPhoneInputPage if phone not verified
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => GPhoneInputPage(
+                isAfterGoogleSignIn: true,
+                userId: userCredential.user!.uid,
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
     } catch (e) {
       _showError("Apple sign-in failed: ${e.toString()}");
     } finally {
-      setState(() => isLoading = false);
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
 
