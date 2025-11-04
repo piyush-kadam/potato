@@ -8,7 +8,7 @@
 PRODUCT_NAME = slideme
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.slideme
+PRODUCT_BUNDLE_IDENTIFIER = com.potato.slideme
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2025 com.example. All rights reserved.

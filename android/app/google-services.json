@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:202409214260:android:381eaede3a9195c166e561",
         "android_client_info": {
-          "package_name": "com.example.slideme"
+          "package_name": "com.potato.slideme"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "202409214260-7kpje0jvfgitobslkcf92055s7hvm2mj.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.slideme",
+            "package_name": "com.potato.slideme",
             "certificate_hash": "82e07f7043427088e117a73bdc25596a3887cef4"
           }
         },
@@ -25,7 +25,7 @@
           "client_id": "202409214260-s0ch0p229tuepivdlhjeou0199emkd11.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.slideme",
+            "package_name": "com.potato.slideme",
             "certificate_hash": "ad031555d3581b2501579b51aba0d99f4a6940f4"
           }
         },
@@ -50,7 +50,7 @@
               "client_id": "202409214260-los88ld879r5r26ueamp1tfmkgvivr8k.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.slideme"
+                "bundle_id": "com.potato.slideme"
               }
             }
           ]

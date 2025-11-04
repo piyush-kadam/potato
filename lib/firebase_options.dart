@@ -70,7 +70,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '202409214260',
     projectId: 'slideme-87da5',
     storageBucket: 'slideme-87da5.firebasestorage.app',
-    iosClientId: '202409214260-los88ld879r5r26ueamp1tfmkgvivr8k.apps.googleusercontent.com',
-    iosBundleId: 'com.example.slideme',
+    iosClientId:
+        '202409214260-los88ld879r5r26ueamp1tfmkgvivr8k.apps.googleusercontent.com',
+    iosBundleId: 'com.potato.slideme',
   );
 }
