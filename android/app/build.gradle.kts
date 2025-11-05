@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.potato.slideme"
+    namespace = "com.example.slideme"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
 
@@ -22,7 +22,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.potato.slideme"
+        applicationId = "com.example.slideme"
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

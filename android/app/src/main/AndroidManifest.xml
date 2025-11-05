@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.potato.slideme">
+    package="com.example.slideme">
 
     <!-- Required for Android 11+ so the share sheet can find compatible apps -->
     <queries>

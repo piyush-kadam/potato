@@ -1,4 +1,4 @@
-package com.potato.slideme
+package com.example.slideme
 
 import io.flutter.embedding.android.FlutterActivity
 
