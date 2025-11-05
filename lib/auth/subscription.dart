@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 
 class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({super.key});
@@ -11,11 +12,60 @@ class SubscriptionPage extends StatefulWidget {
 class _SubscriptionPageState extends State<SubscriptionPage> {
   String _selectedPlan = '12'; // Default selection
 
+  Package? _selectedPackage;
+  Offerings? _offerings;
+
   final Map<String, Color> planColors = {
     '30': Colors.green,
     '12': Colors.redAccent,
     'lifetime': Colors.amber,
   };
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPackages();
+  }
+
+  Future<void> _fetchPackages() async {
+    try {
+      _offerings = await Purchases.getOfferings();
+      _updateSelectedPackage();
+    } catch (e) {
+      print("Error fetching offerings: $e");
+    }
+  }
+
+  void _updateSelectedPackage() {
+    if (_offerings == null) return;
+
+    if (_selectedPlan == '30' && _offerings?.current?.monthly != null) {
+      _selectedPackage = _offerings!.current!.monthly;
+    } else if (_selectedPlan == '12' && _offerings?.current?.annual != null) {
+      _selectedPackage = _offerings!.current!.annual;
+    } else if (_selectedPlan == 'lifetime' &&
+        _offerings?.current?.lifetime != null) {
+      _selectedPackage = _offerings!.current!.lifetime;
+    } else {
+      _selectedPackage = null;
+    }
+    setState(() {});
+  }
+
+  Future<void> _onSubscribe() async {
+    if (_selectedPackage == null) {
+      print('No package selected');
+      return;
+    }
+    try {
+      await Purchases.purchasePackage(_selectedPackage!);
+      // TODO: Show success UI or unlock features
+      print('Purchase Successful');
+    } catch (e) {
+      print('Purchase failed: $e');
+      // TODO: Show error to user if necessary
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +76,6 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       body: SafeArea(
         child: Stack(
           children: [
-            /// --- X (close) button on top right ---
             Positioned(
               top: 8,
               right: 8,
@@ -35,23 +84,17 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                 onPressed: () => Navigator.pop(context),
               ),
             ),
-
-            /// --- Centered Main Content ---
             Center(
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const SizedBox(height: 20),
-
-                    /// Mascot image
                     Image.asset(
                       'assets/images/mascot3.png',
                       width: 120,
                       height: 130,
                     ),
-
-                    /// Title
                     Text(
                       "MyPotato Pro",
                       style: GoogleFonts.poppins(
@@ -60,16 +103,12 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                         color: Colors.black87,
                       ),
                     ),
-
                     const SizedBox(height: 40),
-
-                    /// Subscription Plan Cards Row
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 28),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          /// 30 Days Plan
                           Expanded(
                             child: _buildPlanCard(
                               title: "30",
@@ -77,27 +116,31 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                               price: "₹149",
                               color: planColors['30']!,
                               isSelected: _selectedPlan == '30',
-                              onTap: () => setState(() => _selectedPlan = '30'),
+                              onTap: () {
+                                setState(() {
+                                  _selectedPlan = '30';
+                                  _updateSelectedPackage();
+                                });
+                              },
                             ),
                           ),
-
                           const SizedBox(width: 12),
-
-                          /// 12 Months Plan (Center Red One)
                           Expanded(
                             child: _buildPlanCard(
                               title: "12",
-                              subtitle: "Monts",
+                              subtitle: "Months",
                               price: "₹999",
                               color: planColors['12']!,
                               isSelected: _selectedPlan == '12',
-                              onTap: () => setState(() => _selectedPlan = '12'),
+                              onTap: () {
+                                setState(() {
+                                  _selectedPlan = '12';
+                                  _updateSelectedPackage();
+                                });
+                              },
                             ),
                           ),
-
                           const SizedBox(width: 12),
-
-                          /// Lifetime Plan (Yellow)
                           Expanded(
                             child: _buildPlanCard(
                               title: "∞",
@@ -105,17 +148,18 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                               price: "₹1999",
                               color: planColors['lifetime']!,
                               isSelected: _selectedPlan == 'lifetime',
-                              onTap: () =>
-                                  setState(() => _selectedPlan = 'lifetime'),
+                              onTap: () {
+                                setState(() {
+                                  _selectedPlan = 'lifetime';
+                                  _updateSelectedPackage();
+                                });
+                              },
                             ),
                           ),
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 60),
-
-                    /// Subscribe Button
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 40),
                       child: AnimatedContainer(
@@ -132,7 +176,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                           ],
                         ),
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: _onSubscribe,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: selectedColor,
                             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -152,9 +196,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     Text(
                       "Cancel anytime",
                       style: GoogleFonts.poppins(
@@ -162,7 +204,6 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                         color: Colors.grey[400],
                       ),
                     ),
-
                     const SizedBox(height: 30),
                   ],
                 ),
@@ -174,7 +215,6 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     );
   }
 
-  /// Reusable plan card widget
   Widget _buildPlanCard({
     required String title,
     required String subtitle,
@@ -187,7 +227,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        height: 140, // fixed equal height for all
+        height: 140,
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           color: isSelected ? color : Colors.white,

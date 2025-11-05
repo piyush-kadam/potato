@@ -1,16 +1,22 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:slideme/auth/authgate.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:slideme/auth/splash.dart';
-import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize RevenueCat with your API Key
+  await Purchases.configure(
+    PurchasesConfiguration("appl_EITUCoBOOvJZnbizeQftEnetdEd"),
+  );
 
   runApp(const MyApp());
 }
