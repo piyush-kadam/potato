@@ -112,8 +112,10 @@ class AuthService {
     try {
       // Check if Apple Sign In is available (iOS 13+, macOS 10.15+)
       final isAvailable = await SignInWithApple.isAvailable();
-      if (!isAvailable) {
-        throw Exception("Apple Sign-In is not available on this device");
+      if (!(Platform.isIOS || Platform.isMacOS) || !isAvailable) {
+        // Use web-based Apple Sign-In for Android or unsupported devices
+        final provider = OAuthProvider("apple.com");
+        return await FirebaseAuth.instance.signInWithProvider(provider);
       }
 
       // Request credential for the currently signed in Apple account
