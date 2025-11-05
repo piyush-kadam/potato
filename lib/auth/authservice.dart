@@ -123,9 +123,9 @@ class AuthService {
           AppleIDAuthorizationScopes.fullName,
         ],
         webAuthenticationOptions: WebAuthenticationOptions(
-          clientId: 'your.bundle.id', // Replace with your bundle ID
+          clientId: 'com.potato.slideme', // Replace with your bundle ID
           redirectUri: Uri.parse(
-            'https://your-project.firebaseapp.com/__/auth/handler',
+            'https://slideme-87da5.firebaseapp.com/__/auth/handler',
           ), // Replace with your Firebase redirect URI
         ),
       );

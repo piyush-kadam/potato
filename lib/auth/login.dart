@@ -308,10 +308,9 @@ class _LoginPageState extends State<LoginPage> {
         ],
       );
 
-      final oauthCredential = OAuthProvider("apple.com").credential(
-        idToken: appleCredential.identityToken,
-        accessToken: appleCredential.authorizationCode,
-      );
+      final oauthCredential = OAuthProvider(
+        "apple.com",
+      ).credential(idToken: appleCredential.identityToken);
 
       await FirebaseAuth.instance.signInWithCredential(oauthCredential);
       await _clearSkipLoginState();
