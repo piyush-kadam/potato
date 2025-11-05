@@ -108,6 +108,7 @@ class AuthService {
   }
 
   // Apple Sign-In
+
   Future<UserCredential?> signInWithApple() async {
     try {
       // Check if Apple Sign In is available (iOS 13+, macOS 10.15+)
@@ -125,10 +126,12 @@ class AuthService {
           AppleIDAuthorizationScopes.fullName,
         ],
         webAuthenticationOptions: WebAuthenticationOptions(
-          clientId: 'com.potato.slideme', // Replace with your bundle ID
+          // IMPORTANT: Use your Service ID (not Bundle ID) for web auth
+          clientId:
+              'com.potato.slideme.service', // Change this to your actual Service ID
           redirectUri: Uri.parse(
             'https://slideme-87da5.firebaseapp.com/__/auth/handler',
-          ), // Replace with your Firebase redirect URI
+          ),
         ),
       );
 
@@ -166,10 +169,12 @@ class AuthService {
         final docRef = FirebaseFirestore.instance
             .collection('Users')
             .doc(user.uid);
-        await docRef.update({
+
+        // Use set with merge to avoid errors if document doesn't exist
+        await docRef.set({
           'displayName': user.displayName,
           'lastSignIn': FieldValue.serverTimestamp(),
-        });
+        }, SetOptions(merge: true));
       }
 
       return userCredential;

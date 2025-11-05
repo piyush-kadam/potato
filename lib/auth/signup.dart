@@ -41,28 +41,8 @@ class _SignUpPageState extends State<SignUpPage> {
             'authMethod': 'google',
             'phoneVerified': false,
           });
-        } else {
-          final data = snapshot.data() as Map<String, dynamic>;
-          final phoneVerified = data['phoneVerified'] ?? false;
-
-          if (phoneVerified) {
-            // Don't navigate here - let your auth state listener handle it
-            return;
-          }
         }
-
-        // Always navigate to GPhoneInputPage if phone not verified
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => GPhoneInputPage(
-                isAfterGoogleSignIn: true,
-                userId: userCredential.user!.uid,
-              ),
-            ),
-          );
-        }
+        // REMOVED: Manual navigation - let AuthGate handle it
       }
     } catch (e) {
       _showError("Google sign-in failed: ${e.toString()}");
@@ -92,28 +72,10 @@ class _SignUpPageState extends State<SignUpPage> {
             'authMethod': 'apple',
             'phoneVerified': false,
           });
-        } else {
-          final data = snapshot.data() as Map<String, dynamic>;
-          final phoneVerified = data['phoneVerified'] ?? false;
-
-          if (phoneVerified) {
-            // Don't navigate here - let your auth state listener handle it
-            return;
-          }
         }
-
-        // Always navigate to GPhoneInputPage if phone not verified
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => GPhoneInputPage(
-                isAfterGoogleSignIn: true,
-                userId: userCredential.user!.uid,
-              ),
-            ),
-          );
-        }
+        // REMOVED: Manual navigation - let AuthGate handle it
+        // The AuthGate StreamBuilder will automatically detect the auth state change
+        // and navigate to the correct page based on user data
       }
     } catch (e) {
       _showError("Apple sign-in failed: ${e.toString()}");
@@ -260,7 +222,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
                 const SizedBox(height: 15),
 
-                // Google and Apple buttons restored as before
+                // Google and Apple buttons
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 60.0),
                   child: Row(

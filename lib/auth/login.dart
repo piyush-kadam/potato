@@ -297,46 +297,77 @@ class _LoginPageState extends State<LoginPage> {
 
   // Apple Sign-In
   // Apple Sign-In
+
   Future<void> signInWithApple() async {
     try {
       setState(() => isLoading = true);
 
-      final appleCredential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-      );
+      // Use the centralized AuthService method
+      final userCredential = await authService.signInWithApple();
 
-      final oauthCredential = OAuthProvider(
-        "apple.com",
-      ).credential(idToken: appleCredential.identityToken);
+      if (userCredential == null) {
+        // User cancelled the sign-in
+        setState(() => isLoading = false);
+        return;
+      }
 
-      await FirebaseAuth.instance.signInWithCredential(oauthCredential);
+      // Check if user document exists
+      final userDoc = FirebaseFirestore.instance
+          .collection('Users')
+          .doc(userCredential.user!.uid);
+      final snapshot = await userDoc.get();
+
+      if (!snapshot.exists) {
+        // New user - should sign up first
+        await FirebaseAuth.instance.signOut();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'No account found. Please sign up first.',
+              style: GoogleFonts.poppins(color: Colors.white),
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+        setState(() => isLoading = false);
+        return;
+      }
+
+      // Clear skip login state and navigate
       await _clearSkipLoginState();
 
-      // Navigate directly to HomePage
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
-        (route) => false,
-      );
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const HomePage()),
+          (route) => false,
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Apple Sign-In failed: $e',
-            style: GoogleFonts.poppins(color: Colors.white),
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Apple Sign-In failed: ${e.toString()}',
+              style: GoogleFonts.poppins(color: Colors.white),
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
+        );
+      }
     } finally {
-      setState(() => isLoading = false);
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
 

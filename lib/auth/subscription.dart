@@ -20,16 +20,21 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
 
   Future<void> _fetchOfferings() async {
     try {
-      _offerings = await Purchases.getOfferings();
+      final offerings = await Purchases.getOfferings();
+      print('Offerings fetched: ${offerings.all.keys}');
+      if (offerings.current != null) {
+        print('Current offering: ${offerings.current!.identifier}');
+        for (var pkg in offerings.current!.availablePackages) {
+          print(
+            'Package: ${pkg.identifier}, Product: ${pkg.storeProduct.identifier}',
+          );
+        }
+      }
 
-      if (_offerings != null &&
-          _offerings!.current != null &&
-          _offerings!.current!.availablePackages.isNotEmpty) {
+      if (offerings.current?.availablePackages.isNotEmpty ?? false) {
         setState(() {
-          _selectedPackage = _offerings!
-              .current!
-              .availablePackages
-              .first; // default select first package
+          _offerings = offerings;
+          _selectedPackage = offerings.current!.availablePackages.first;
         });
       }
     } catch (e) {

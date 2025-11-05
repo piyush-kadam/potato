@@ -11,7 +11,7 @@ Future<void> main() async {
 
   // Initialize RevenueCat with your API key
   await Purchases.configure(
-    PurchasesConfiguration("appl_EITUCoBOOvJZnbizeQftEnetdEd"),
+    PurchasesConfiguration("appl_UmcrQrsvFzOgkfJmcFsmioBNrlS"),
   );
 
   runApp(const MyApp());
