@@ -3,6 +3,139 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math' as math;
 
+// ============================================
+// MONTHLY WRAP SERVICE
+// ============================================
+class MonthlyWrapService {
+  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  /// Check if we need to archive last month's data
+  static Future<void> checkAndArchiveMonthData() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return;
+
+      final userDoc = await _firestore.collection('Users').doc(user.uid).get();
+      if (!userDoc.exists) return;
+
+      final data = userDoc.data() as Map<String, dynamic>;
+      final now = DateTime.now();
+
+      // Get the last archived month
+      final lastArchivedMonth = data['lastArchivedMonth'] as int?;
+      final lastArchivedYear = data['lastArchivedYear'] as int?;
+
+      // Check if we're in a new month and haven't archived yet
+      final previousMonth = DateTime(now.year, now.month - 1);
+
+      if (lastArchivedMonth != previousMonth.month ||
+          lastArchivedYear != previousMonth.year) {
+        // Get current month's data
+        final categoryBudgets =
+            data['categoryBudgets'] as Map<String, dynamic>?;
+        final categorySpent = data['categorySpent'] as Map<String, dynamic>?;
+
+        if (categoryBudgets != null && categorySpent != null) {
+          // Archive to previousMonthAnalytics
+          await _firestore.collection('Users').doc(user.uid).update({
+            'previousMonthAnalytics': {
+              'month': previousMonth.month,
+              'year': previousMonth.year,
+              'categoryBudgets': categoryBudgets,
+              'categorySpent': categorySpent,
+              'archivedAt': FieldValue.serverTimestamp(),
+            },
+            'previousMonthAnalyticsViewed': false,
+            'lastArchivedMonth': previousMonth.month,
+            'lastArchivedYear': previousMonth.year,
+            // Reset current month's spent (keep budgets)
+            'categorySpent': Map.fromEntries(
+              categoryBudgets.keys.map((key) => MapEntry(key, 0.0)),
+            ),
+          });
+
+          print(
+            '✅ Archived data for ${previousMonth.month}/${previousMonth.year}',
+          );
+        }
+      }
+    } catch (e) {
+      print('Error archiving month data: $e');
+    }
+  }
+
+  /// Check if monthly wrap should be shown
+  static Future<bool> shouldShowMonthlyWrap() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return false;
+
+      final userDoc = await _firestore.collection('Users').doc(user.uid).get();
+
+      if (!userDoc.exists) return false;
+
+      final data = userDoc.data() as Map<String, dynamic>;
+
+      // Check if previous month analytics exists
+      if (!data.containsKey('previousMonthAnalytics')) {
+        return false;
+      }
+
+      // Check if it has been viewed already
+      final viewed = data['previousMonthAnalyticsViewed'] ?? false;
+
+      return !viewed;
+    } catch (e) {
+      print('Error checking monthly wrap: $e');
+      return false;
+    }
+  }
+
+  /// Mark that the wrap has been viewed
+  static Future<void> markWrapAsViewed() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return;
+
+      await _firestore.collection('Users').doc(user.uid).update({
+        'previousMonthAnalyticsViewed': true,
+      });
+    } catch (e) {
+      print('Error marking wrap as viewed: $e');
+    }
+  }
+
+  /// Show the monthly wrap screen if needed
+  static Future<void> showMonthlyWrapIfNeeded(BuildContext context) async {
+    // First check and archive if needed
+    await checkAndArchiveMonthData();
+
+    // Then check if we should show the wrap
+    final shouldShow = await shouldShowMonthlyWrap();
+
+    if (shouldShow && context.mounted) {
+      // Wait a bit for the home screen to settle
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      if (context.mounted) {
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const MonthlyWrapScreen(),
+            fullscreenDialog: true,
+          ),
+        );
+
+        // Mark as viewed after they've seen it
+        await markWrapAsViewed();
+      }
+    }
+  }
+}
+
+// ============================================
+// MONTHLY WRAP SCREEN
+// ============================================
 class MonthlyWrapScreen extends StatefulWidget {
   const MonthlyWrapScreen({Key? key}) : super(key: key);
 
@@ -202,7 +335,10 @@ class _MonthlyWrapScreenState extends State<MonthlyWrapScreen>
                           ),
                           IconButton(
                             icon: const Icon(Icons.close, color: Colors.white),
-                            onPressed: () => Navigator.pop(context),
+                            onPressed: () {
+                              MonthlyWrapService.markWrapAsViewed();
+                              Navigator.pop(context);
+                            },
                           ),
                         ],
                       ),
@@ -660,7 +796,10 @@ class _MonthlyWrapScreenState extends State<MonthlyWrapScreen>
                     SizedBox(height: constraints.maxHeight * 0.03),
 
                     ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () {
+                        MonthlyWrapService.markWrapAsViewed();
+                        Navigator.pop(context);
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black,

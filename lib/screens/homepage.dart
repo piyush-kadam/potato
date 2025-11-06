@@ -3,9 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:liquid_progress_indicator_v2/liquid_progress_indicator.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:slideme/auth/subscription.dart';
 import 'package:slideme/screens/chatbot.dart';
 import 'package:slideme/screens/expensecategory.dart';
 import 'package:slideme/screens/expensewrap.dart';
+import 'package:slideme/screens/motnhlywrap.dart';
 import 'package:slideme/screens/settings.dart';
 
 import 'package:slideme/widgets/addcat.dart';
@@ -24,6 +27,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool isDarkMode = false;
   bool _isNavigating = false;
+  bool _isProUser = false;
+  bool _isCheckingEntitlement = true;
 
   // Define the desired category order
   final List<String> _categoryOrder = [
@@ -33,6 +38,43 @@ class _HomePageState extends State<HomePage> {
     'travel',
     'savings',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _checkProStatus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      MonthlyWrapService.showMonthlyWrapIfNeeded(context);
+    });
+  }
+
+  // Check if user has any pro entitlement
+  Future<void> _checkProStatus() async {
+    try {
+      CustomerInfo customerInfo = await Purchases.getCustomerInfo();
+
+      // Check for any of the three pro entitlements
+      bool hasMonthlyPro =
+          customerInfo.entitlements.all['Monthly Pro Access']?.isActive ??
+          false;
+      bool hasYearlyPro =
+          customerInfo.entitlements.all['Yearly Pro Access']?.isActive ?? false;
+      bool hasLifetimePro =
+          customerInfo.entitlements.all['Lifetime Pro Access']?.isActive ??
+          false;
+
+      setState(() {
+        _isProUser = hasMonthlyPro || hasYearlyPro || hasLifetimePro;
+        _isCheckingEntitlement = false;
+      });
+    } catch (e) {
+      print("Error checking pro status: $e");
+      setState(() {
+        _isProUser = false;
+        _isCheckingEntitlement = false;
+      });
+    }
+  }
 
   String extractEmoji(String categoryName) {
     final emojiRegex = RegExp(
@@ -137,6 +179,35 @@ class _HomePageState extends State<HomePage> {
     } finally {
       if (mounted) {
         setState(() => _isNavigating = false);
+      }
+    }
+  }
+
+  // Handle add category tap - show subscription page if not pro
+  void _handleAddCategoryTap(
+    int remainingBudget,
+    Map<String, int> categoryBudgets,
+    String userId,
+  ) async {
+    if (!_isProUser) {
+      // Navigate to subscription page
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => SubscriptionPage()),
+      );
+    } else {
+      // Show add category dialog for pro users
+      var result = await showDialog(
+        context: context,
+        builder: (_) => AddCategoryPopup(
+          remainingBudget: remainingBudget,
+          categoryBudgets: categoryBudgets,
+        ),
+      );
+      if (result != null) {
+        await FirebaseFirestore.instance.collection("Users").doc(userId).update(
+          {"categoryBudgets": result},
+        );
       }
     }
   }
@@ -465,7 +536,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
 
-                    /// CATEGORY GRID - NOW WITH FIXED ORDER
+                    /// CATEGORY GRID - NOW WITH PRO CHECK
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: screenWidth * 0.04,
@@ -646,31 +717,26 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                   );
                                 } else {
+                                  // Add Category Button - Shows lock or plus based on pro status
                                   return GestureDetector(
-                                    onTap: () async {
-                                      var result = await showDialog(
-                                        context: context,
-                                        builder: (_) => AddCategoryPopup(
-                                          remainingBudget: remainingBudget,
-                                          categoryBudgets: categoryBudgets,
-                                        ),
-                                      );
-                                      if (result != null) {
-                                        await FirebaseFirestore.instance
-                                            .collection("Users")
-                                            .doc(userId)
-                                            .update({
-                                              "categoryBudgets": result,
-                                            });
-                                      }
-                                    },
+                                    onTap: _isCheckingEntitlement
+                                        ? null
+                                        : () => _handleAddCategoryTap(
+                                            remainingBudget,
+                                            categoryBudgets,
+                                            userId,
+                                          ),
                                     child: Container(
                                       decoration: BoxDecoration(
                                         color: Colors.white.withOpacity(0.15),
                                         borderRadius: BorderRadius.circular(24),
                                         border: Border.all(
-                                          color: Colors.white.withOpacity(0.3),
-                                          width: 1.5,
+                                          color: _isProUser
+                                              ? Colors.white.withOpacity(0.3)
+                                              : const Color(
+                                                  0xFFFFD700,
+                                                ).withOpacity(0.5),
+                                          width: _isProUser ? 1.5 : 2.0,
                                         ),
                                         boxShadow: [
                                           BoxShadow(
@@ -689,34 +755,88 @@ class _HomePageState extends State<HomePage> {
                                                 gradient: LinearGradient(
                                                   begin: Alignment.topLeft,
                                                   end: Alignment.bottomRight,
-                                                  colors: [
-                                                    Colors.white.withOpacity(
-                                                      0.2,
-                                                    ),
-                                                    Colors.white.withOpacity(
-                                                      0.05,
-                                                    ),
-                                                  ],
+                                                  colors: _isProUser
+                                                      ? [
+                                                          Colors.white
+                                                              .withOpacity(0.2),
+                                                          Colors.white
+                                                              .withOpacity(
+                                                                0.05,
+                                                              ),
+                                                        ]
+                                                      : [
+                                                          const Color(
+                                                            0xFFFFD700,
+                                                          ).withOpacity(0.1),
+                                                          const Color(
+                                                            0xFFFFA500,
+                                                          ).withOpacity(0.05),
+                                                        ],
                                                 ),
                                               ),
                                             ),
                                             Center(
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Icon(
-                                                    Icons.add,
-                                                    size: screenWidth * 0.2,
-                                                    color: const Color.fromARGB(
-                                                      255,
-                                                      81,
-                                                      75,
-                                                      75,
+                                              child: _isCheckingEntitlement
+                                                  ? SizedBox(
+                                                      width: screenWidth * 0.08,
+                                                      height:
+                                                          screenWidth * 0.08,
+                                                      child: CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        valueColor:
+                                                            AlwaysStoppedAnimation<
+                                                              Color
+                                                            >(
+                                                              Colors.grey[600]!,
+                                                            ),
+                                                      ),
+                                                    )
+                                                  : Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        Icon(
+                                                          _isProUser
+                                                              ? Icons.add
+                                                              : Icons.lock,
+                                                          size:
+                                                              screenWidth * 0.2,
+                                                          color: _isProUser
+                                                              ? const Color.fromARGB(
+                                                                  255,
+                                                                  81,
+                                                                  75,
+                                                                  75,
+                                                                )
+                                                              : const Color(
+                                                                  0xFFFFD700,
+                                                                ),
+                                                        ),
+                                                        if (!_isProUser) ...[
+                                                          SizedBox(
+                                                            height:
+                                                                screenHeight *
+                                                                0.005,
+                                                          ),
+                                                          Text(
+                                                            "PRO",
+                                                            style: GoogleFonts.poppins(
+                                                              fontSize:
+                                                                  screenWidth *
+                                                                  0.025,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              color:
+                                                                  const Color(
+                                                                    0xFFFFD700,
+                                                                  ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ],
                                                     ),
-                                                  ),
-                                                ],
-                                              ),
                                             ),
                                           ],
                                         ),
