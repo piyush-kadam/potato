@@ -5,6 +5,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:slideme/auth/authservice.dart';
 import 'package:slideme/auth/login.dart';
 import 'package:slideme/auth/subscription.dart';
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -14,7 +21,9 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String selectedMonth = 'current'; // 'current' or 'previous'
+  String selectedMonth = 'current';
+  bool _isUploadingImage = false;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -22,16 +31,11 @@ class _ProfilePageState extends State<ProfilePage> {
     _checkAndStoreMonthlyData();
   }
 
-  // Check if it's last day of month at 11:59 PM and store data
   void _checkAndStoreMonthlyData() async {
     DateTime now = DateTime.now();
-
-    // Check if it's 11:59 PM
     if (now.hour == 23 && now.minute == 59) {
-      // Check if tomorrow is a new month (means today is last day)
       DateTime tomorrow = now.add(const Duration(days: 1));
       if (tomorrow.month != now.month) {
-        // It's the last day at 11:59 PM - store the data!
         await _storeMonthlyAnalytics();
       }
     }
@@ -42,7 +46,6 @@ class _ProfilePageState extends State<ProfilePage> {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) return;
 
-      // Get current user data
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection("Users")
           .doc(userId)
@@ -52,7 +55,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
       Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
 
-      // Store previous month analytics (only store, don't reset)
       Map<String, dynamic> previousMonthData = {
         'categoryBudgets': data['categoryBudgets'] ?? {},
         'categorySpent': data['categorySpent'] ?? {},
@@ -61,7 +63,6 @@ class _ProfilePageState extends State<ProfilePage> {
         'savedAt': FieldValue.serverTimestamp(),
       };
 
-      // Update database - only store previous month data
       await FirebaseFirestore.instance.collection("Users").doc(userId).update({
         'previousMonthAnalytics': previousMonthData,
       });
@@ -69,6 +70,103 @@ class _ProfilePageState extends State<ProfilePage> {
       print('✅ Monthly analytics stored!');
     } catch (e) {
       print('❌ Error storing analytics: $e');
+    }
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    try {
+      // Show options dialog
+      final source = await showDialog<ImageSource>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(
+            "Choose Image Source",
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: Colors.green),
+                title: Text("Camera", style: GoogleFonts.poppins()),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: Colors.green),
+                title: Text("Gallery", style: GoogleFonts.poppins()),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (source == null) return;
+
+      // Pick image
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 75,
+      );
+
+      if (image == null) return;
+
+      setState(() {
+        _isUploadingImage = true;
+      });
+
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) throw Exception("User not logged in");
+
+      // Create reference to Firebase Storage
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('user_uploads')
+          .child(userId)
+          .child('profile.jpg');
+
+      // Upload file
+      await storageRef.putFile(File(image.path));
+
+      // Get download URL
+      final downloadUrl = await storageRef.getDownloadURL();
+
+      // Update Firestore with the pfp URL
+      await FirebaseFirestore.instance.collection("Users").doc(userId).update({
+        'pfp': downloadUrl,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Profile picture updated successfully!",
+              style: GoogleFonts.poppins(),
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Error uploading image: ${e.toString()}",
+              style: GoogleFonts.poppins(),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingImage = false;
+        });
+      }
     }
   }
 
@@ -92,19 +190,17 @@ class _ProfilePageState extends State<ProfilePage> {
         String username = data["username"] ?? "User";
         String email = data["email"] ?? "Not available";
         String country = data["country"] ?? "India";
+        String? profilePicUrl = data["pfp"];
         int monthlyBudget = (data["monthlyBudget"] ?? 0).toInt();
         int remainingBudget = (data["remainingBudget"] ?? 0).toInt();
         int totalTransactions = (data["transactions"] ?? 0).toInt();
 
-        // Get currency symbol based on country
         String currencySymbol = _getCurrencySymbol(country);
 
-        // Get data based on selected month
         Map<String, dynamic> displayData = selectedMonth == 'current'
             ? data
             : (data["previousMonthAnalytics"] as Map<String, dynamic>? ?? {});
 
-        // Parse categoryBudgets safely
         Map<String, int> categoryBudgets = {};
         if (displayData["categoryBudgets"] != null) {
           (displayData["categoryBudgets"] as Map<String, dynamic>).forEach((
@@ -117,7 +213,6 @@ class _ProfilePageState extends State<ProfilePage> {
           });
         }
 
-        // Parse categorySpent safely
         Map<String, int> categorySpent = {};
         if (displayData["categorySpent"] != null) {
           (displayData["categorySpent"] as Map<String, dynamic>).forEach((
@@ -130,7 +225,6 @@ class _ProfilePageState extends State<ProfilePage> {
           });
         }
 
-        // Calculate total spent from categorySpent (for current month stats)
         int totalSpent = 0;
         if (data["categorySpent"] != null) {
           (data["categorySpent"] as Map<String, dynamic>).forEach((key, value) {
@@ -140,20 +234,17 @@ class _ProfilePageState extends State<ProfilePage> {
           });
         }
 
-        // Days active (based on createdAt timestamp)
         int daysActive = 0;
         if (data["createdAt"] != null) {
           DateTime createdAt = (data["createdAt"] as Timestamp).toDate();
           daysActive = DateTime.now().difference(createdAt).inDays;
-          if (daysActive == 0) daysActive = 1; // Avoid division by zero
+          if (daysActive == 0) daysActive = 1;
         }
 
-        // Calculate daily average (total spent / days active)
         int dailyAverage = daysActive > 0
             ? (totalSpent / daysActive).round()
             : 0;
 
-        // Find top spending category
         String topCategory = "None";
         int topCategoryAmount = 0;
         if (data["categorySpent"] != null) {
@@ -168,7 +259,6 @@ class _ProfilePageState extends State<ProfilePage> {
           });
         }
 
-        // Budget progress %
         double budgetProgress = monthlyBudget > 0
             ? totalSpent / monthlyBudget
             : 0;
@@ -184,7 +274,6 @@ class _ProfilePageState extends State<ProfilePage> {
             child: SafeArea(
               child: Column(
                 children: [
-                  // Custom AppBar with Close Icon
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8.0,
@@ -204,31 +293,68 @@ class _ProfilePageState extends State<ProfilePage> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(width: 48), // Balance the layout
+                        const SizedBox(width: 48),
                       ],
                     ),
                   ),
-                  // Scrollable Content
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // Profile Circle
-                          CircleAvatar(
-                            radius: 50,
-                            backgroundColor: Colors.green.shade300,
-                            child: Text(
-                              username.isNotEmpty
-                                  ? username[0].toUpperCase()
-                                  : "U",
-                              style: GoogleFonts.poppins(
-                                fontSize: 40,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                          // Profile Picture with Upload Button
+                          Stack(
+                            children: [
+                              CircleAvatar(
+                                radius: 50,
+                                backgroundColor: Colors.green.shade300,
+                                backgroundImage: profilePicUrl != null
+                                    ? NetworkImage(profilePicUrl)
+                                    : null,
+                                child: _isUploadingImage
+                                    ? const CircularProgressIndicator(
+                                        color: Colors.white,
+                                      )
+                                    : profilePicUrl == null
+                                    ? Text(
+                                        username.isNotEmpty
+                                            ? username[0].toUpperCase()
+                                            : "U",
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 40,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      )
+                                    : null,
                               ),
-                            ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: GestureDetector(
+                                  onTap: _isUploadingImage
+                                      ? null
+                                      : _pickAndUploadImage,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.camera_alt,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 10),
                           Text(
@@ -312,7 +438,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                           const SizedBox(height: 20),
 
-                          // Stats Grid (4 cards)
+                          // Stats Grid
                           Row(
                             children: [
                               Expanded(
@@ -390,7 +516,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                       MainAxisAlignment.spaceBetween,
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    // Title Section
                                     Expanded(
                                       child: Row(
                                         children: [
@@ -421,8 +546,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                         ],
                                       ),
                                     ),
-
-                                    // Month Filter (Dropdown)
                                     Flexible(
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
@@ -473,9 +596,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     ),
                                   ],
                                 ),
-
                                 const SizedBox(height: 16),
-
                                 if (categoryBudgets.isEmpty)
                                   Center(
                                     child: Padding(

@@ -39,6 +39,9 @@ dependencies:
   intl: ^0.20.2
   shared_preferences: ^2.5.3
   purchases_flutter: ^9.9.2
+  firebase_storage: ^13.0.4
+  image_picker: ^1.2.0
+  webview_flutter: ^4.13.0
   
   
   

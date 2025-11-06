@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:slideme/screens/expensehomepage.dart';
+import 'package:slideme/auth/subscription.dart';
+
 import 'package:slideme/screens/expensewrap.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 
 class ExpenseCategoryPage extends StatefulWidget {
   const ExpenseCategoryPage({super.key});
@@ -45,6 +47,20 @@ class _ExpenseCategoryPageState extends State<ExpenseCategoryPage>
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+
+  // Check if user is pro
+  Future<bool> _checkProStatus() async {
+    try {
+      CustomerInfo customerInfo = await Purchases.getCustomerInfo();
+      return customerInfo.entitlements.active.containsKey(
+            'Monthly Pro Access',
+          ) ||
+          customerInfo.entitlements.active.containsKey('Yearly Pro Access') ||
+          customerInfo.entitlements.active.containsKey('Lifetime Pro Access');
+    } catch (e) {
+      return false;
+    }
   }
 
   @override
@@ -276,7 +292,14 @@ class _ExpenseCategoryPageState extends State<ExpenseCategoryPage>
   // Add Category Card
   Widget _buildAddCategoryCard() {
     return GestureDetector(
-      onTap: _showAddCategoryDialog,
+      onTap: () async {
+        bool isPro = await _checkProStatus();
+        if (isPro) {
+          _showAddCategoryDialog();
+        } else {
+          _showUpgradeToProDialog();
+        }
+      },
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.6),
@@ -312,6 +335,117 @@ class _ExpenseCategoryPageState extends State<ExpenseCategoryPage>
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // Upgrade to Pro Dialog
+  Future<void> _showUpgradeToProDialog() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Crown icon
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.amber[50],
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Center(
+                  child: Text('👑', style: TextStyle(fontSize: 40)),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Title
+              Text(
+                "Upgrade to Pro",
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Description
+              Text(
+                "Add custom categories and unlock all premium features with Pro!",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Text(
+                        "Maybe Later",
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SubscriptionPage(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.amber[600],
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        "Go Pro",
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

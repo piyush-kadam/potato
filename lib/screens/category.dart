@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:slideme/auth/subscription.dart';
 import 'package:slideme/screens/homepage.dart';
 import 'package:slideme/screens/wrapper.dart';
+// Import your subscription page
 
 class CategoryBudgetPage extends StatefulWidget {
   const CategoryBudgetPage({super.key});
@@ -15,6 +18,7 @@ class CategoryBudgetPage extends StatefulWidget {
 class _CategoryBudgetPageState extends State<CategoryBudgetPage> {
   double _monthlyBudget = 0;
   String _currencySymbol = '₹';
+  bool _isProUser = false; // Track pro subscription status
 
   Map<String, double> _categories = {
     "🍔 Food": 0,
@@ -100,6 +104,28 @@ class _CategoryBudgetPageState extends State<CategoryBudgetPage> {
   void initState() {
     super.initState();
     _fetchBudget();
+    _checkProStatus();
+  }
+
+  // Check if user has pro subscription
+  Future<void> _checkProStatus() async {
+    try {
+      CustomerInfo customerInfo = await Purchases.getCustomerInfo();
+      setState(() {
+        // Check for any of the three entitlements
+        _isProUser =
+            customerInfo.entitlements.active.containsKey(
+              'Monthly Pro Access',
+            ) ||
+            customerInfo.entitlements.active.containsKey('Yearly Pro Access') ||
+            customerInfo.entitlements.active.containsKey('Lifetime Pro Access');
+      });
+    } catch (e) {
+      print('Error checking pro status: $e');
+      setState(() {
+        _isProUser = false;
+      });
+    }
   }
 
   Future<void> _fetchBudget() async {
@@ -313,7 +339,117 @@ class _CategoryBudgetPageState extends State<CategoryBudgetPage> {
     );
   }
 
+  void _showUpgradeDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.star, color: Colors.amber, size: 28),
+              const SizedBox(width: 8),
+              Text(
+                "Upgrade to Pro",
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Add unlimited custom categories and unlock all premium features!",
+                style: GoogleFonts.poppins(fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _proFeatureItem("✨ Unlimited custom categories"),
+                    _proFeatureItem("📊 Advanced analytics"),
+                    _proFeatureItem("🔔 Smart notifications"),
+                    _proFeatureItem("☁️ Cloud backup"),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: Text(
+                "Maybe Later",
+                style: GoogleFonts.poppins(color: Colors.grey),
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SubscriptionPage(),
+                  ),
+                ).then(
+                  (_) => _checkProStatus(),
+                ); // Recheck status after returning
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.workspace_premium, size: 18),
+                  const SizedBox(width: 6),
+                  Text(
+                    "Upgrade Now",
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _proFeatureItem(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Text(text, style: GoogleFonts.poppins(fontSize: 13)),
+    );
+  }
+
   void _addNewCategory() {
+    if (!_isProUser) {
+      _showUpgradeDialog();
+      return;
+    }
+
     final TextEditingController nameController = TextEditingController();
     final TextEditingController emojiController = TextEditingController();
 
@@ -488,30 +624,54 @@ class _CategoryBudgetPageState extends State<CategoryBudgetPage> {
                                       color: Colors.white.withOpacity(0.3),
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
-                                        color: Colors.white.withOpacity(0.5),
+                                        color: _isProUser
+                                            ? Colors.white.withOpacity(0.5)
+                                            : Colors.amber.withOpacity(0.5),
                                         width: 2,
                                       ),
                                     ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                    child: Stack(
                                       children: [
-                                        Icon(
-                                          Icons.add,
-                                          size: 42,
-                                          color: Colors.black.withOpacity(0.7),
+                                        Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              _isProUser
+                                                  ? Icons.add
+                                                  : Icons.lock,
+                                              size: 42,
+                                              color: _isProUser
+                                                  ? Colors.black.withOpacity(
+                                                      0.7,
+                                                    )
+                                                  : Colors.amber,
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              _isProUser ? "Add" : "Pro",
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w500,
+                                                color: _isProUser
+                                                    ? Colors.black.withOpacity(
+                                                        0.7,
+                                                      )
+                                                    : Colors.amber,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          "Add",
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.black.withOpacity(
-                                              0.7,
+                                        if (!_isProUser)
+                                          Positioned(
+                                            top: 8,
+                                            right: 8,
+                                            child: Icon(
+                                              Icons.star,
+                                              color: Colors.amber,
+                                              size: 20,
                                             ),
                                           ),
-                                        ),
                                       ],
                                     ),
                                   ),

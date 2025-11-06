@@ -211,7 +211,7 @@ class _HomePageState extends State<HomePage> {
         int remainingDays = lastDay.difference(now).inDays + 1;
 
         final topBarHeight = availableHeight * 0.10;
-        final daysLeftHeight = availableHeight * 0.12;
+        final daysLeftHeight = availableHeight * 0.10;
         final gridHeight = availableHeight * 0.58;
         final analyticsHeight = availableHeight * 0.17;
 
@@ -372,7 +372,7 @@ class _HomePageState extends State<HomePage> {
 
                     /// DAYS LEFT & PAY NOW
                     Container(
-                      height: daysLeftHeight.clamp(70.0, 110.0),
+                      height: daysLeftHeight.clamp(70.0, 100.0),
                       padding: EdgeInsets.symmetric(
                         horizontal: screenWidth * 0.065,
                       ),
@@ -504,7 +504,7 @@ class _HomePageState extends State<HomePage> {
                                   SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 2,
                                     crossAxisSpacing: screenWidth * 0.025,
-                                    mainAxisSpacing: screenHeight * 0.015,
+                                    mainAxisSpacing: screenHeight * 0.010,
                                     childAspectRatio: 1.2,
                                   ),
                               itemCount: sortedCategoryKeys.length + 1,
@@ -730,7 +730,6 @@ class _HomePageState extends State<HomePage> {
                         },
                       ),
                     ),
-                    const SizedBox(height: 15),
 
                     /// ANALYTICS CONTAINER WITH PAGE INDICATORS
                     Container(
