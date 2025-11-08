@@ -17,7 +17,109 @@ class _ExpensePayNowPopupState extends State<ExpensePayNowPopup> {
   int enteredAmount = 0;
   String? selectedCategory;
   String? paymentMethod;
+  String currencySymbol = '₹'; // Default to Rupee
+  bool isLoadingCurrency = true;
   final TextEditingController _amountController = TextEditingController();
+
+  final Map<String, String> _currencyMap = {
+    'India': '₹',
+    'United States': '\$',
+    'United Kingdom': '£',
+    'Canada': 'C\$',
+    'Australia': 'A\$',
+    'Germany': '€',
+    'France': '€',
+    'Japan': '¥',
+    'China': '¥',
+    'Brazil': 'R\$',
+    'Mexico': 'MX\$',
+    'Spain': '€',
+    'Italy': '€',
+    'South Korea': '₩',
+    'Singapore': 'S\$',
+    'Netherlands': '€',
+    'Sweden': 'kr',
+    'Norway': 'kr',
+    'Denmark': 'kr',
+    'Switzerland': 'CHF',
+    'Russia': '₽',
+    'South Africa': 'R',
+    'New Zealand': 'NZ\$',
+    'Ireland': '€',
+    'United Arab Emirates': 'د.إ',
+    'Saudi Arabia': '﷼',
+    'Turkey': '₺',
+    'Argentina': 'AR\$',
+    'Chile': 'CL\$',
+    'Indonesia': 'Rp',
+    'Thailand': '฿',
+    'Philippines': '₱',
+    'Vietnam': '₫',
+    'Malaysia': 'RM',
+    'Pakistan': '₨',
+    'Bangladesh': '৳',
+    'Nepal': '₨',
+    'Sri Lanka': '₨',
+    'Nigeria': '₦',
+    'Kenya': 'KSh',
+    'Egypt': 'E£',
+    'Israel': '₪',
+    'Portugal': '€',
+    'Poland': 'zł',
+    'Finland': '€',
+    'Greece': '€',
+    'Austria': '€',
+    'Belgium': '€',
+    'Czech Republic': 'Kč',
+    'Hungary': 'Ft',
+    'Romania': 'lei',
+    'Colombia': 'COL\$',
+    'Peru': 'S/',
+    'Ukraine': '₴',
+    'Morocco': 'د.م.',
+    'Qatar': '﷼',
+    'Kuwait': 'د.ك',
+    'Oman': '﷼',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserCurrency();
+  }
+
+  Future<void> _fetchUserCurrency() async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) return;
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection("Users")
+          .doc(userId)
+          .get();
+
+      if (userDoc.exists) {
+        final data = userDoc.data();
+        final country = data?['country'] as String?;
+
+        if (country != null && _currencyMap.containsKey(country)) {
+          setState(() {
+            currencySymbol = _currencyMap[country]!;
+            isLoadingCurrency = false;
+          });
+        } else {
+          setState(() {
+            isLoadingCurrency = false;
+          });
+        }
+      }
+    } catch (e) {
+      print("Error fetching currency: $e");
+      setState(() {
+        isLoadingCurrency = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -328,7 +430,7 @@ class _ExpensePayNowPopupState extends State<ExpensePayNowPopup> {
 
       print("✅ User document updated!");
 
-      // 🔽 Add to Transactions Subcollection 🔽
+      // Add to Transactions Subcollection
       final transactionRef = userDoc.collection('transactions').doc();
 
       final now = DateTime.now();
@@ -404,7 +506,7 @@ class _ExpensePayNowPopupState extends State<ExpensePayNowPopup> {
               prefixIcon: Padding(
                 padding: const EdgeInsets.only(left: 60, top: 20),
                 child: Text(
-                  "₹ ",
+                  "$currencySymbol ",
                   style: GoogleFonts.poppins(
                     fontSize: 32,
                     fontWeight: FontWeight.w600,
@@ -503,6 +605,8 @@ class _ExpensePayNowPopupState extends State<ExpensePayNowPopup> {
     String categoryName = extractCategoryName(
       selectedCategory ?? "No category",
     );
+    bool isIndia = currencySymbol == '₹';
+    String digitalPaymentLabel = isIndia ? "UPI" : "Digital";
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -510,7 +614,7 @@ class _ExpensePayNowPopupState extends State<ExpensePayNowPopup> {
       children: [
         Text(emoji, style: const TextStyle(fontSize: 38)),
         Text(
-          "₹${enteredAmount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}",
+          "$currencySymbol${enteredAmount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}",
           style: GoogleFonts.poppins(
             fontSize: 22,
             fontWeight: FontWeight.w600,
@@ -525,7 +629,13 @@ class _ExpensePayNowPopupState extends State<ExpensePayNowPopup> {
         const SizedBox(height: 10),
         Row(
           children: [
-            Expanded(child: _paymentMethodButton("UPI", "📱", "Quick Pay")),
+            Expanded(
+              child: _paymentMethodButton(
+                digitalPaymentLabel,
+                "📱",
+                "Quick Pay",
+              ),
+            ),
             const SizedBox(width: 12),
             Expanded(child: _paymentMethodButton("Cash", "💵", "Manual")),
           ],

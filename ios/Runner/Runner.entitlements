@@ -7,9 +7,5 @@
   <array>
     <string>Default</string>
   </array>
-
-  <!-- In-App Purchase Capability (needed for RevenueCat) -->
-  <key>com.apple.InAppPurchase</key>
-  <true/>
 </dict>
 </plist>
