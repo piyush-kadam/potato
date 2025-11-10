@@ -20,6 +20,16 @@
 					<string>com.googleusercontent.apps.202409214260-i9quo023dk7pqu0v8hlep135m2v6d4sf</string>
 				</array>
 			</dict>
+			<!-- Firebase Auth URL Scheme - Required for Phone Authentication -->
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<!-- This uses your app's bundle identifier -->
+					<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+				</array>
+			</dict>
 		</array>
 		<!-- End of the Google Sign-in Section -->
 		<key>CFBundleDevelopmentRegion</key>
