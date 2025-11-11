@@ -1,1022 +1,277 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:liquid_progress_indicator_v2/liquid_progress_indicator.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
-import 'package:slideme/auth/subscription.dart';
-import 'package:slideme/screens/chatbot.dart';
-import 'package:slideme/screens/expensecategory.dart';
-import 'package:slideme/screens/expensewrap.dart';
-import 'package:slideme/screens/motnhlywrap.dart';
-import 'package:slideme/screens/settings.dart';
+import 'dart:math' as math;
 
-import 'package:slideme/widgets/addcat.dart';
-import 'package:slideme/widgets/popup.dart';
-
-class HomePage extends StatefulWidget {
-  final int? currentPage;
-  final Function(int)? onPageIndicatorTap;
-
-  const HomePage({super.key, this.currentPage, this.onPageIndicatorTap});
+class MonthlyWrapScreen extends StatefulWidget {
+  const MonthlyWrapScreen({Key? key}) : super(key: key);
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<MonthlyWrapScreen> createState() => _MonthlyWrapScreenState();
 }
 
-class _HomePageState extends State<HomePage> {
-  bool isDarkMode = false;
-  bool _isNavigating = false;
-  bool _isProUser = false;
-  bool _isCheckingEntitlement = true;
+class _MonthlyWrapScreenState extends State<MonthlyWrapScreen>
+    with SingleTickerProviderStateMixin {
+  late PageController _pageController;
+  int _currentPage = 0;
+  late AnimationController _animationController;
 
-  // Define the desired category order
-  final List<String> _categoryOrder = [
-    'food',
-    'shopping',
-    'entertainment',
-    'travel',
-    'savings',
-  ];
+  late Future<Map<String, dynamic>> _monthlyDataFuture;
+
+  Map<String, dynamic>? monthlyData;
 
   @override
   void initState() {
     super.initState();
-    _checkProStatus();
-  }
-
-  // Check if user has any pro entitlement
-  Future<void> _checkProStatus() async {
-    try {
-      CustomerInfo customerInfo = await Purchases.getCustomerInfo();
-
-      // Check for any of the three pro entitlements
-      bool hasMonthlyPro =
-          customerInfo.entitlements.all['Monthly Pro Access']?.isActive ??
-          false;
-      bool hasYearlyPro =
-          customerInfo.entitlements.all['Yearly Pro Access']?.isActive ?? false;
-      bool hasLifetimePro =
-          customerInfo.entitlements.all['Lifetime Pro Access']?.isActive ??
-          false;
-
-      setState(() {
-        _isProUser = hasMonthlyPro || hasYearlyPro || hasLifetimePro;
-        _isCheckingEntitlement = false;
-      });
-    } catch (e) {
-      print("Error checking pro status: $e");
-      setState(() {
-        _isProUser = false;
-        _isCheckingEntitlement = false;
-      });
-    }
-  }
-
-  String extractEmoji(String categoryName) {
-    final emojiRegex = RegExp(
-      r'(?:[\u{1F600}-\u{1F64F}]|'
-      r'[\u{1F300}-\u{1F5FF}]|'
-      r'[\u{1F680}-\u{1F6FF}]|'
-      r'[\u{1F1E0}-\u{1F1FF}]|'
-      r'[\u{2600}-\u{26FF}]|'
-      r'[\u{2700}-\u{27BF}]|'
-      r'[\u{1F900}-\u{1F9FF}]|'
-      r'[\u{1FA00}-\u{1FA6F}]|'
-      r'[\u{1FA70}-\u{1FAFF}])'
-      r'[\u{FE00}-\u{FE0F}\u{E0100}-\u{E01EF}]?',
-      unicode: true,
+    _pageController = PageController();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
     );
-    final match = emojiRegex.firstMatch(categoryName);
-    return match?.group(0) ?? '📦';
+    _animationController.forward();
+
+    _monthlyDataFuture = fetchMonthlyDataFromFirestore();
   }
 
-  String extractCategoryName(String categoryName) {
-    final emojiRegex = RegExp(
-      r'(?:[\u{1F600}-\u{1F64F}]|'
-      r'[\u{1F300}-\u{1F5FF}]|'
-      r'[\u{1F680}-\u{1F6FF}]|'
-      r'[\u{1F1E0}-\u{1F1FF}]|'
-      r'[\u{2600}-\u{26FF}]|'
-      r'[\u{2700}-\u{27BF}]|'
-      r'[\u{1F900}-\u{1F9FF}]|'
-      r'[\u{1FA00}-\u{1FA6F}]|'
-      r'[\u{1FA70}-\u{1FAFF}])'
-      r'[\u{FE00}-\u{FE0F}\u{E0100}-\u{E01EF}]?',
-      unicode: true,
-    );
-    return categoryName.replaceAll(emojiRegex, '').trim();
-  }
-
-  // Sort categories based on predefined order
-  List<String> _getSortedCategories(Map<String, int> categoryBudgets) {
-    List<String> sortedKeys = [];
-
-    // Add categories in the defined order
-    for (String orderKey in _categoryOrder) {
-      for (String key in categoryBudgets.keys) {
-        String cleanName = extractCategoryName(key).toLowerCase();
-        if (cleanName.contains(orderKey)) {
-          sortedKeys.add(key);
-          break;
-        }
-      }
+  Future<Map<String, dynamic>> fetchMonthlyDataFromFirestore() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw Exception("User not logged in");
     }
 
-    // Add any remaining categories that don't match the order
-    for (String key in categoryBudgets.keys) {
-      if (!sortedKeys.contains(key)) {
-        sortedKeys.add(key);
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('Users')
+        .doc(user.uid)
+        .get();
+
+    if (userDoc.exists) {
+      final data = userDoc.data() as Map<String, dynamic>;
+      if (data.containsKey('previousMonthAnalytics')) {
+        return Map<String, dynamic>.from(data['previousMonthAnalytics']);
+      } else {
+        throw Exception("Previous month analytics data not found");
       }
-    }
-
-    return sortedKeys;
-  }
-
-  Future<void> _navigateToExpenseMode() async {
-    if (_isNavigating) return;
-
-    setState(() => _isNavigating = true);
-
-    try {
-      final userId = FirebaseAuth.instance.currentUser!.uid;
-      final docSnapshot = await FirebaseFirestore.instance
-          .collection("Users")
-          .doc(userId)
-          .get();
-
-      if (!mounted) return;
-
-      if (docSnapshot.exists) {
-        var data = docSnapshot.data() as Map<String, dynamic>;
-
-        if (data.containsKey('expenseCategories') &&
-            data['expenseCategories'] != null &&
-            (data['expenseCategories'] as List).isNotEmpty) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ExpensePageWithSlider(),
-            ),
-          );
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ExpenseCategoryPage(),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      print("Error navigating to expense mode: $e");
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error: $e")));
-    } finally {
-      if (mounted) {
-        setState(() => _isNavigating = false);
-      }
-    }
-  }
-
-  // Handle add category tap - show subscription page if not pro
-  void _handleAddCategoryTap(
-    int remainingBudget,
-    Map<String, int> categoryBudgets,
-    String userId,
-  ) async {
-    if (!_isProUser) {
-      // Navigate to subscription page
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => SubscriptionPage()),
-      );
     } else {
-      // Show add category dialog for pro users
-      var result = await showDialog(
-        context: context,
-        builder: (_) => AddCategoryPopup(
-          remainingBudget: remainingBudget,
-          categoryBudgets: categoryBudgets,
-        ),
-      );
-      if (result != null) {
-        await FirebaseFirestore.instance.collection("Users").doc(userId).update(
-          {"categoryBudgets": result},
-        );
-      }
+      throw Exception("User document does not exist");
     }
+  }
+
+  double get totalBudget {
+    final budgets =
+        monthlyData?['categoryBudgets'] as Map<String, dynamic>? ?? {};
+    return budgets.values.fold(
+      0.0,
+      (sum, value) => sum + (value as num).toDouble(),
+    );
+  }
+
+  double get totalSpent {
+    final spent = monthlyData?['categorySpent'] as Map<String, dynamic>? ?? {};
+    return spent.values.fold(
+      0.0,
+      (sum, value) => sum + (value as num).toDouble(),
+    );
+  }
+
+  double get remaining => totalBudget - totalSpent;
+
+  MapEntry<String, double> get topCategory {
+    final spent = monthlyData?['categorySpent'] as Map<String, dynamic>? ?? {};
+    if (spent.isEmpty) return MapEntry('No Data', 0.0);
+
+    var entries =
+        spent.entries
+            .map((e) => MapEntry(e.key as String, (e.value as num).toDouble()))
+            .toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+    return entries.first;
+  }
+
+  String get monthName {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    int month = monthlyData?['month'] ?? DateTime.now().month;
+    return months[month - 1];
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _animationController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final userId = FirebaseAuth.instance.currentUser!.uid;
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-    final topPadding = MediaQuery.of(context).padding.top;
-    final availableHeight = screenHeight - topPadding - bottomPadding;
-
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection("Users")
-          .doc(userId)
-          .snapshots(),
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _monthlyDataFuture,
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Colors.black,
+            body: Center(child: CircularProgressIndicator(color: Colors.white)),
+          );
+        }
+        if (snapshot.hasError) {
+          return Scaffold(
+            backgroundColor: Colors.black,
+            body: Center(
+              child: Text(
+                'Error: ${snapshot.error}',
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          );
+        }
         if (!snapshot.hasData) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            backgroundColor: Colors.black,
+            body: Center(
+              child: Text(
+                'No data found',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
           );
         }
 
-        var data = snapshot.data!.data() as Map<String, dynamic>;
-        String username = data["username"] ?? "User";
-        int monthlyBudget = (data["monthlyBudget"] ?? 0).toDouble().toInt();
-        int remainingBudget = (data["remainingBudget"] ?? monthlyBudget)
-            .toDouble()
-            .toInt();
-
-        Map<String, int> categoryBudgets = {};
-        Map<String, int> originalCategoryBudgets = {};
-
-        if (data["categoryBudgets"] != null) {
-          (data["categoryBudgets"] as Map<String, dynamic>).forEach((
-            key,
-            value,
-          ) {
-            categoryBudgets[key] = (value is num) ? value.toInt() : 0;
-          });
-        }
-
-        if (data["originalCategoryBudgets"] != null) {
-          (data["originalCategoryBudgets"] as Map<String, dynamic>).forEach((
-            key,
-            value,
-          ) {
-            originalCategoryBudgets[key] = (value is num) ? value.toInt() : 0;
-          });
-        } else {
-          originalCategoryBudgets = Map.from(categoryBudgets);
-        }
-
-        Map<String, int> categorySpent = {};
-        if (data["categorySpent"] != null) {
-          (data["categorySpent"] as Map<String, dynamic>).forEach((key, value) {
-            categorySpent[key] = (value is num) ? value.toInt() : 0;
-          });
-        }
-
-        // Get sorted category keys
-        List<String> sortedCategoryKeys = _getSortedCategories(categoryBudgets);
-
-        int spent = monthlyBudget - remainingBudget;
-        int categoriesCount = categoryBudgets.length;
-        double usedPercent = monthlyBudget > 0 ? spent / monthlyBudget : 0;
-
-        final now = DateTime.now();
-        final lastDay = DateTime(now.year, now.month + 1, 0);
-        int remainingDays = lastDay.difference(now).inDays + 1;
-
-        final topBarHeight = availableHeight * 0.10;
-        final daysLeftHeight = availableHeight * 0.10;
-        final gridHeight = availableHeight * 0.58;
-        final analyticsHeight = availableHeight * 0.17;
-
-        bool needsScrolling = categoryBudgets.length > 5;
-
+        monthlyData = snapshot.data!;
         return Scaffold(
-          resizeToAvoidBottomInset: false,
+          backgroundColor: Colors.black,
           body: Stack(
             children: [
-              Positioned.fill(
-                child: Image.asset(
-                  'assets/images/bg.png',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      Container(color: const Color(0xFFE3F2FD)),
-                ),
+              // Animated background gradient
+              AnimatedBuilder(
+                animation: _animationController,
+                builder: (context, child) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color.lerp(
+                            const Color(0xFF1a1a2e),
+                            const Color(0xFF16213e),
+                            _animationController.value,
+                          )!,
+                          Color.lerp(
+                            const Color(0xFF0f3460),
+                            const Color(0xFF533483),
+                            _animationController.value,
+                          )!,
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
+
+              // Content
               SafeArea(
                 child: Column(
                   children: [
-                    /// TOP BAR
-                    Container(
-                      height: topBarHeight.clamp(60.0, 90.0),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: screenWidth * 0.04,
-                      ),
-                      child: Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => ChatbotPage(),
-                                ),
-                              );
-                            },
-                            child: Row(
-                              children: [
-                                Image.asset(
-                                  'assets/images/mascot.png',
-                                  width: screenWidth * 0.11,
-                                  height: screenWidth * 0.11,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      Text(
-                                        '🥔',
-                                        style: TextStyle(
-                                          fontSize: screenWidth * 0.08,
-                                        ),
-                                      ),
-                                ),
-                                SizedBox(width: screenWidth * 0.03),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      "Hi $username",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: screenWidth * 0.04,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                    Text(
-                                      "How's your day going?",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: screenWidth * 0.028,
-                                        color: Colors.grey[700],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.01,
-                              vertical: screenHeight * 0.005,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: screenWidth * 0.03,
-                                    vertical: screenHeight * 0.007,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF4CAF50),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Text(
-                                    "Budget",
-                                    style: GoogleFonts.poppins(
-                                      color: Colors.white,
-                                      fontSize: screenWidth * 0.028,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: screenWidth * 0.01),
-                                GestureDetector(
-                                  onTap: _isNavigating
-                                      ? null
-                                      : _navigateToExpenseMode,
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: screenWidth * 0.03,
-                                      vertical: screenHeight * 0.007,
-                                    ),
-                                    child: _isNavigating
-                                        ? SizedBox(
-                                            width: screenWidth * 0.115,
-                                            height: screenHeight * 0.017,
-                                            child: Center(
-                                              child: SizedBox(
-                                                width: screenWidth * 0.025,
-                                                height: screenWidth * 0.025,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  valueColor:
-                                                      AlwaysStoppedAnimation<
-                                                        Color
-                                                      >(Colors.grey[600]!),
-                                                ),
-                                              ),
-                                            ),
-                                          )
-                                        : Text(
-                                            "Expense",
-                                            style: GoogleFonts.poppins(
-                                              color: Colors.grey[600],
-                                              fontSize: screenWidth * 0.028,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    /// DAYS LEFT & PAY NOW
-                    Container(
-                      height: daysLeftHeight.clamp(70.0, 100.0),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: screenWidth * 0.065,
-                      ),
+                    // Header
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Days Left",
-                                style: GoogleFonts.poppins(
-                                  fontSize: screenWidth * 0.028,
-                                  color: Colors.grey[600],
-                                  fontWeight: FontWeight.w500,
-                                ),
+                          Expanded(
+                            child: Text(
+                              'Your $monthName Wrap',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
                               ),
-                              Text(
-                                "$remainingDays",
-                                style: GoogleFonts.poppins(
-                                  fontSize: screenWidth * 0.09,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black87,
-                                  height: 1.0,
-                                ),
-                              ),
-                            ],
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF4CAF50),
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              padding: EdgeInsets.symmetric(
-                                horizontal: screenWidth * 0.05,
-                                vertical: screenHeight * 0.015,
-                              ),
-                              elevation: 0,
-                            ),
-                            onPressed: () async {
-                              var result = await showDialog(
-                                context: context,
-                                builder: (_) => PayNowPopup(
-                                  categoryBudgets: categoryBudgets,
-                                ),
-                              );
-                              if (result != null) {
-                                String selectedCategory = result['category'];
-                                int amount = result['amount'];
-
-                                Map<String, int> updatedSpent = Map.from(
-                                  categorySpent,
-                                );
-                                updatedSpent[selectedCategory] =
-                                    (updatedSpent[selectedCategory] ?? 0) +
-                                    amount;
-
-                                await FirebaseFirestore.instance
-                                    .collection("Users")
-                                    .doc(userId)
-                                    .update({
-                                      "categorySpent": updatedSpent,
-                                      "remainingBudget":
-                                          remainingBudget - amount,
-                                    });
-                              }
-                            },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.currency_rupee,
-                                  size: screenWidth * 0.04,
-                                ),
-                                SizedBox(width: screenWidth * 0.01),
-                                Text(
-                                  "Pay now",
-                                  style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: screenWidth * 0.033,
-                                  ),
-                                ),
-                              ],
-                            ),
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white),
+                            onPressed: () => Navigator.pop(context),
                           ),
                         ],
                       ),
                     ),
 
-                    /// CATEGORY GRID - NOW WITH PRO CHECK
+                    // Page indicator
                     Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: screenWidth * 0.04,
-                      ),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          int itemCount = sortedCategoryKeys.length + 1;
-                          int rows = (itemCount / 2).ceil();
-
-                          double itemWidth =
-                              (constraints.maxWidth - screenWidth * 0.025) / 2;
-                          double itemHeight = itemWidth / 1.2;
-
-                          double calculatedHeight =
-                              (rows * itemHeight) +
-                              ((rows - 1) * screenHeight * 0.015);
-
-                          double maxAvailableHeight = gridHeight.clamp(
-                            280.0,
-                            450.0,
-                          );
-                          double finalHeight = needsScrolling
-                              ? maxAvailableHeight
-                              : calculatedHeight.clamp(
-                                  200.0,
-                                  maxAvailableHeight,
-                                );
-
-                          return SizedBox(
-                            height: finalHeight,
-                            child: GridView.builder(
-                              physics: needsScrolling
-                                  ? const BouncingScrollPhysics()
-                                  : const NeverScrollableScrollPhysics(),
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    crossAxisSpacing: screenWidth * 0.025,
-                                    mainAxisSpacing: screenHeight * 0.010,
-                                    childAspectRatio: 1.2,
-                                  ),
-                              itemCount: sortedCategoryKeys.length + 1,
-                              itemBuilder: (context, index) {
-                                if (index < sortedCategoryKeys.length) {
-                                  String categoryKey =
-                                      sortedCategoryKeys[index];
-
-                                  int originalBudget =
-                                      originalCategoryBudgets[categoryKey] ??
-                                      categoryBudgets[categoryKey]!;
-                                  int spentAmount =
-                                      categorySpent[categoryKey] ?? 0;
-                                  int remainingInCategory =
-                                      originalBudget - spentAmount;
-                                  double progress = originalBudget > 0
-                                      ? (remainingInCategory / originalBudget)
-                                            .clamp(0.0, 1.0)
-                                      : 0.0;
-                                  if (remainingInCategory < 0) {
-                                    remainingInCategory = 0;
-                                    progress = 0.0;
-                                  }
-
-                                  String emoji = extractEmoji(categoryKey);
-                                  String categoryName = extractCategoryName(
-                                    categoryKey,
-                                  );
-
-                                  Color liquidColor;
-                                  if (progress > 0.5) {
-                                    liquidColor = const Color(0xFF4CAF50);
-                                  } else if (progress > 0.25) {
-                                    liquidColor = const Color.fromARGB(
-                                      255,
-                                      225,
-                                      160,
-                                      49,
-                                    );
-                                  } else {
-                                    liquidColor = const Color.fromARGB(
-                                      255,
-                                      249,
-                                      24,
-                                      12,
-                                    );
-                                  }
-
-                                  bool isOverspent =
-                                      spentAmount > originalBudget;
-
-                                  return GestureDetector(
-                                    onTap: () {
-                                      showModalBottomSheet(
-                                        context: context,
-                                        isScrollControlled: true,
-                                        backgroundColor: Colors.transparent,
-                                        builder: (context) =>
-                                            CategoryDetailsDrawer(
-                                              categoryName: categoryName,
-                                              emoji: emoji,
-                                              originalBudget: originalBudget,
-                                              categoryBudgets: categoryBudgets,
-                                              categorySpent: categorySpent,
-                                            ),
-                                      );
-                                    },
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(24),
-                                        border: Border.all(
-                                          color: isOverspent
-                                              ? const Color(0xFFFF3B30)
-                                              : Colors.white.withOpacity(0.3),
-                                          width: isOverspent ? 3.0 : 1.5,
-                                        ),
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(24),
-                                        child: Stack(
-                                          children: [
-                                            TweenAnimationBuilder<double>(
-                                              duration: const Duration(
-                                                milliseconds: 800,
-                                              ),
-                                              curve: Curves.easeInOut,
-                                              tween: Tween<double>(
-                                                begin: progress,
-                                                end: progress,
-                                              ),
-                                              builder: (context, value, child) {
-                                                return LiquidLinearProgressIndicator(
-                                                  value: value,
-                                                  valueColor:
-                                                      AlwaysStoppedAnimation<
-                                                        Color
-                                                      >(liquidColor),
-                                                  backgroundColor:
-                                                      Colors.transparent,
-                                                  borderColor:
-                                                      Colors.transparent,
-                                                  borderWidth: 0,
-                                                  borderRadius: 24.0,
-                                                  direction: Axis.vertical,
-                                                  center: Container(),
-                                                );
-                                              },
-                                            ),
-                                            Positioned.fill(
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  gradient: LinearGradient(
-                                                    begin: Alignment.topLeft,
-                                                    end: Alignment.bottomRight,
-                                                    colors: [
-                                                      Colors.white.withOpacity(
-                                                        0.2,
-                                                      ),
-                                                      Colors.white.withOpacity(
-                                                        0.05,
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            Center(
-                                              child: Text(
-                                                emoji,
-                                                style: TextStyle(
-                                                  fontSize: screenWidth * 0.15,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  // Add Category Button - Shows lock or plus based on pro status
-                                  return GestureDetector(
-                                    onTap: _isCheckingEntitlement
-                                        ? null
-                                        : () => _handleAddCategoryTap(
-                                            remainingBudget,
-                                            categoryBudgets,
-                                            userId,
-                                          ),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.15),
-                                        borderRadius: BorderRadius.circular(24),
-                                        border: Border.all(
-                                          color: _isProUser
-                                              ? Colors.white.withOpacity(0.3)
-                                              : Colors.white.withOpacity(0.3),
-                                          width: _isProUser ? 1.5 : 2.0,
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.grey.withOpacity(0.1),
-                                            blurRadius: 12,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(24),
-                                        child: Stack(
-                                          children: [
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                gradient: LinearGradient(
-                                                  begin: Alignment.topLeft,
-                                                  end: Alignment.bottomRight,
-                                                  colors: _isProUser
-                                                      ? [
-                                                          Colors.white
-                                                              .withOpacity(0.2),
-                                                          Colors.white
-                                                              .withOpacity(
-                                                                0.05,
-                                                              ),
-                                                        ]
-                                                      : [
-                                                          const Color(
-                                                            0xFFFFD700,
-                                                          ).withOpacity(0.1),
-                                                          const Color(
-                                                            0xFFFFA500,
-                                                          ).withOpacity(0.05),
-                                                        ],
-                                                ),
-                                              ),
-                                            ),
-                                            Center(
-                                              child: _isCheckingEntitlement
-                                                  ? SizedBox(
-                                                      width: screenWidth * 0.08,
-                                                      height:
-                                                          screenWidth * 0.08,
-                                                      child: CircularProgressIndicator(
-                                                        strokeWidth: 2,
-                                                        valueColor:
-                                                            AlwaysStoppedAnimation<
-                                                              Color
-                                                            >(
-                                                              Colors.grey[600]!,
-                                                            ),
-                                                      ),
-                                                    )
-                                                  : Column(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .center,
-                                                      children: [
-                                                        Icon(
-                                                          _isProUser
-                                                              ? Icons.add
-                                                              : Icons.lock,
-                                                          size:
-                                                              screenWidth * 0.2,
-                                                          color: _isProUser
-                                                              ? const Color.fromARGB(
-                                                                  255,
-                                                                  81,
-                                                                  75,
-                                                                  75,
-                                                                )
-                                                              : const Color.fromARGB(
-                                                                  255,
-                                                                  81,
-                                                                  75,
-                                                                  75,
-                                                                ),
-                                                        ),
-                                                        if (!_isProUser) ...[
-                                                          SizedBox(
-                                                            height:
-                                                                screenHeight *
-                                                                0.005,
-                                                          ),
-                                                          Text(
-                                                            "PRO",
-                                                            style: GoogleFonts.poppins(
-                                                              fontSize:
-                                                                  screenWidth *
-                                                                  0.025,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
-                                                              color:
-                                                                  const Color(
-                                                                    0xFFFFD700,
-                                                                  ),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ],
-                                                    ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          3,
+                          (index) => Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            width: _currentPage == index ? 24 : 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: _currentPage == index
+                                  ? Colors.white
+                                  : Colors.white.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(4),
                             ),
-                          );
-                        },
-                      ),
-                    ),
-
-                    /// ANALYTICS CONTAINER WITH PAGE INDICATORS
-                    Container(
-                      margin: EdgeInsets.fromLTRB(
-                        screenWidth * 0.04,
-                        0,
-                        screenWidth * 0.04,
-                        screenHeight * 0.015,
-                      ),
-                      padding: EdgeInsets.all(screenHeight * 0.01),
-                      constraints: BoxConstraints(
-                        minHeight: analyticsHeight.clamp(100.0, 160.0),
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.4),
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.8),
-                          width: 1.5,
+                          ),
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
                       ),
-                      child: Stack(
+                    ),
+
+                    // Pages
+                    Expanded(
+                      child: PageView(
+                        controller: _pageController,
+                        onPageChanged: (index) {
+                          setState(() {
+                            _currentPage = index;
+                          });
+                          _animationController.reset();
+                          _animationController.forward();
+                        },
                         children: [
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                "₹$remainingBudget",
-                                style: GoogleFonts.poppins(
-                                  fontSize: screenWidth * 0.06,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              Text(
-                                "remaining of ₹$monthlyBudget",
-                                style: GoogleFonts.poppins(
-                                  fontSize: screenWidth * 0.025,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              SizedBox(height: screenHeight * 0.007),
-                              Container(
-                                width: double.infinity,
-                                height: screenHeight * 0.007,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[200],
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: FractionallySizedBox(
-                                  alignment: Alignment.centerLeft,
-                                  widthFactor: usedPercent.clamp(0.0, 1.0),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF4CAF50),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: screenHeight * 0.005),
-                              Text(
-                                "${(usedPercent * 100).toStringAsFixed(1)}% used",
-                                style: GoogleFonts.poppins(
-                                  fontSize: screenWidth * 0.023,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              SizedBox(height: screenHeight * 0.012),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Column(
-                                    children: [
-                                      Text(
-                                        "₹$spent",
-                                        style: GoogleFonts.poppins(
-                                          fontSize: screenWidth * 0.035,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                      Text(
-                                        "spent",
-                                        style: GoogleFonts.poppins(
-                                          fontSize: screenWidth * 0.023,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Column(
-                                    children: [
-                                      Text(
-                                        "$categoriesCount",
-                                        style: GoogleFonts.poppins(
-                                          fontSize: screenWidth * 0.035,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                      Text(
-                                        "categories",
-                                        style: GoogleFonts.poppins(
-                                          fontSize: screenWidth * 0.023,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => SettingsPage(),
-                                        ),
-                                      );
-                                    },
-                                    child: Column(
-                                      children: [
-                                        Icon(
-                                          Icons.settings,
-                                          size: screenWidth * 0.045,
-                                          color: Colors.grey[700],
-                                        ),
-                                        Text(
-                                          "settings",
-                                          style: GoogleFonts.poppins(
-                                            fontSize: screenWidth * 0.023,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          if (widget.currentPage != null &&
-                              widget.onPageIndicatorTap != null)
-                            Positioned(
-                              bottom: 8,
-                              left: 0,
-                              right: 0,
-                              child: Center(
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    _buildPageIndicator(0),
-                                    const SizedBox(width: 6),
-                                    _buildPageIndicator(1),
-                                  ],
-                                ),
-                              ),
-                            ),
+                          _buildTopCategoryPage(),
+                          _buildAnalyticsPage(),
+                          _buildSummaryPage(),
                         ],
                       ),
                     ),
+
+                    // Navigation hint
+                    if (_currentPage < 2)
+                      Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Swipe for more',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              color: Colors.white.withOpacity(0.7),
+                              size: 16,
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -1027,21 +282,481 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildPageIndicator(int index) {
-    final isActive = widget.currentPage == index;
-    return GestureDetector(
-      onTap: () => widget.onPageIndicatorTap?.call(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: isActive ? 20 : 6,
-        height: 6,
-        decoration: BoxDecoration(
-          color: isActive
-              ? const Color(0xFF4CAF50)
-              : Colors.grey.withOpacity(0.4),
-          borderRadius: BorderRadius.circular(3),
-        ),
+  Widget _buildTopCategoryPage() {
+    final category = topCategory;
+    final budgets =
+        monthlyData?['categoryBudgets'] as Map<String, dynamic>? ?? {};
+    final budget = (budgets[category.key] as num?)?.toDouble() ?? 0.0;
+    final percentage = budget > 0
+        ? (category.value / budget * 100).clamp(0, 100)
+        : 0.0;
+
+    return FadeTransition(
+      opacity: _animationController,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32.0,
+                  vertical: 16.0,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Your top spending category',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: constraints.maxWidth * 0.045,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: constraints.maxHeight * 0.05),
+
+                    // Category emoji in circle
+                    Container(
+                      width: constraints.maxWidth * 0.4,
+                      height: constraints.maxWidth * 0.4,
+                      constraints: const BoxConstraints(
+                        maxWidth: 180,
+                        maxHeight: 180,
+                      ),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.purple.withOpacity(0.3),
+                            Colors.pink.withOpacity(0.3),
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.purple.withOpacity(0.3),
+                            blurRadius: 40,
+                            spreadRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          category.key.split(' ')[0],
+                          style: TextStyle(
+                            fontSize: constraints.maxWidth * 0.2,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: constraints.maxHeight * 0.05),
+                    Text(
+                      category.key.substring(category.key.indexOf(' ') + 1),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: constraints.maxWidth * 0.09,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: constraints.maxHeight * 0.02),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '₹${category.value.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: constraints.maxWidth * 0.12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: constraints.maxHeight * 0.01),
+                    Text(
+                      '${percentage.toStringAsFixed(0)}% of budget used',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: constraints.maxWidth * 0.04,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
+    );
+  }
+
+  Widget _buildAnalyticsPage() {
+    final spent = monthlyData?['categorySpent'] as Map<String, dynamic>? ?? {};
+    final budgets =
+        monthlyData?['categoryBudgets'] as Map<String, dynamic>? ?? {};
+
+    List<MapEntry<String, double>> sortedCategories =
+        spent.entries
+            .map((e) => MapEntry(e.key as String, (e.value as num).toDouble()))
+            .where((e) => e.value > 0)
+            .toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+
+    return FadeTransition(
+      opacity: _animationController,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+            child: Text(
+              'Category Breakdown',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: MediaQuery.of(context).size.width * 0.07,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              itemCount: sortedCategories.length,
+              itemBuilder: (context, index) {
+                final category = sortedCategories[index];
+                final budget =
+                    (budgets[category.key] as num?)?.toDouble() ?? 0.0;
+                final percentage = budget > 0
+                    ? (category.value / budget * 100).clamp(0, 100)
+                    : 0.0;
+
+                return TweenAnimationBuilder<double>(
+                  duration: Duration(milliseconds: 500 + (index * 100)),
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  builder: (context, value, child) {
+                    return Opacity(
+                      opacity: value,
+                      child: Transform.translate(
+                        offset: Offset(0, 20 * (1 - value)),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    category.key.split(' ')[0],
+                                    style: TextStyle(
+                                      fontSize:
+                                          MediaQuery.of(context).size.width *
+                                          0.08,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          category.key.substring(
+                                            category.key.indexOf(' ') + 1,
+                                          ),
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize:
+                                                MediaQuery.of(
+                                                  context,
+                                                ).size.width *
+                                                0.045,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          alignment: Alignment.centerLeft,
+                                          child: Text(
+                                            '₹${category.value.toStringAsFixed(0)} of ₹${budget.toStringAsFixed(0)}',
+                                            style: TextStyle(
+                                              color: Colors.white.withOpacity(
+                                                0.6,
+                                              ),
+                                              fontSize:
+                                                  MediaQuery.of(
+                                                    context,
+                                                  ).size.width *
+                                                  0.035,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    '${percentage.toStringAsFixed(0)}%',
+                                    style: TextStyle(
+                                      color: percentage > 90
+                                          ? Colors.red
+                                          : Colors.greenAccent,
+                                      fontSize:
+                                          MediaQuery.of(context).size.width *
+                                          0.05,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: LinearProgressIndicator(
+                                  value:
+                                      (percentage / 100).clamp(0.0, 1.0) *
+                                      value,
+                                  backgroundColor: Colors.white.withOpacity(
+                                    0.1,
+                                  ),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    percentage > 90
+                                        ? Colors.red
+                                        : Colors.greenAccent,
+                                  ),
+                                  minHeight: 8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryPage() {
+    final savingsPercentage = totalBudget > 0
+        ? (remaining / totalBudget * 100).clamp(0, 100)
+        : 0.0;
+
+    return FadeTransition(
+      opacity: _animationController,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 16.0,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Your Financial Summary',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: constraints.maxWidth * 0.07,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: constraints.maxHeight * 0.04),
+
+                    _buildSummaryCard(
+                      'Total Budget',
+                      '₹${totalBudget.toStringAsFixed(0)}',
+                      Icons.account_balance_wallet,
+                      Colors.blue,
+                      constraints,
+                    ),
+                    const SizedBox(height: 16),
+
+                    _buildSummaryCard(
+                      'Total Spent',
+                      '₹${totalSpent.toStringAsFixed(0)}',
+                      Icons.trending_up,
+                      Colors.orange,
+                      constraints,
+                    ),
+                    const SizedBox(height: 16),
+
+                    _buildSummaryCard(
+                      'Remaining',
+                      '₹${remaining.toStringAsFixed(0)}',
+                      Icons.savings,
+                      remaining >= 0 ? Colors.green : Colors.red,
+                      constraints,
+                    ),
+
+                    SizedBox(height: constraints.maxHeight * 0.03),
+
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.purple.withOpacity(0.3),
+                            Colors.pink.withOpacity(0.3),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            remaining >= 0 ? '🎉 Great job!' : '⚠️ Over budget',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: constraints.maxWidth * 0.06,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            remaining >= 0
+                                ? 'You saved ${savingsPercentage.toStringAsFixed(0)}% of your budget!'
+                                : 'You went over budget by ₹${(-remaining).toStringAsFixed(0)}',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: constraints.maxWidth * 0.04,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: constraints.maxHeight * 0.03),
+
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: constraints.maxWidth * 0.12,
+                          vertical: constraints.maxHeight * 0.02,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: Text(
+                        'Continue',
+                        style: TextStyle(
+                          fontSize: constraints.maxWidth * 0.045,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard(
+    String title,
+    String amount,
+    IconData icon,
+    Color color,
+    BoxConstraints constraints,
+  ) {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 600),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: value,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: color.withOpacity(0.3), width: 2),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: color,
+                    size: constraints.maxWidth * 0.07,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: constraints.maxWidth * 0.035,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          amount,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: constraints.maxWidth * 0.06,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

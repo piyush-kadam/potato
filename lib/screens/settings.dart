@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:slideme/auth/authservice.dart';
 import 'package:slideme/auth/login.dart';
 import 'package:slideme/auth/subscription.dart';
-import 'package:slideme/screens/motnhlywrap.dart';
+import 'package:slideme/screens/monthlywrap.dart';
 import 'package:slideme/screens/profile.dart';
 
 class SettingsPage extends StatefulWidget {
