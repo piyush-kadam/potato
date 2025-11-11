@@ -105,23 +105,12 @@ class _OTPPageState extends State<OTPPage> with TickerProviderStateMixin {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _contentAnimationController.forward();
       _otpBoxesController.forward();
+      // Focus first box for immediate input
+      _focusNodes[0].requestFocus();
     });
 
-    // Try reading OTP automatically from clipboard
-    _tryAutoFillOtp();
-
-    // Also attempt Firebase auto-retrieval
+    // Setup SMS auto-retrieval listener
     _listenForAutoVerification();
-  }
-
-  void _tryAutoFillOtp() async {
-    final clipboard = await Clipboard.getData('text/plain');
-    if (clipboard != null && clipboard.text != null) {
-      final otp = clipboard.text!.replaceAll(RegExp(r'[^0-9]'), '');
-      if (otp.length == 6) {
-        _fillOtpAutomatically(otp);
-      }
-    }
   }
 
   void _listenForAutoVerification() {
@@ -133,20 +122,40 @@ class _OTPPageState extends State<OTPPage> with TickerProviderStateMixin {
           _fillOtpAutomatically(smsCode);
         }
       },
-      verificationFailed: (_) {},
-      codeSent: (_, __) {},
-      codeAutoRetrievalTimeout: (_) {},
+      verificationFailed: (FirebaseAuthException e) {
+        print('Auto-verification failed: ${e.message}');
+      },
+      codeSent: (String verificationId, int? resendToken) {
+        print('Code sent successfully');
+      },
+      codeAutoRetrievalTimeout: (String verificationId) {
+        print('Auto-retrieval timeout');
+      },
+      timeout: const Duration(seconds: 60),
     );
   }
 
   void _fillOtpAutomatically(String otp) {
-    for (int i = 0; i < 6; i++) {
+    if (!mounted) return;
+
+    for (int i = 0; i < 6 && i < otp.length; i++) {
       _controllers[i].text = otp[i];
     }
     setState(() {
       _isOtpComplete = true;
     });
-    Future.delayed(const Duration(milliseconds: 300), _verifyOtp);
+
+    // Unfocus all to hide keyboard
+    for (var node in _focusNodes) {
+      node.unfocus();
+    }
+
+    // Auto-verify after a short delay
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted && _isOtpComplete) {
+        _verifyOtp();
+      }
+    });
   }
 
   @override
@@ -179,11 +188,52 @@ class _OTPPageState extends State<OTPPage> with TickerProviderStateMixin {
   String get _otp => _controllers.map((c) => c.text).join();
 
   void _onDigitChanged(String value, int index) {
+    // Handle paste - if multiple digits detected
+    if (value.length > 1) {
+      _handlePaste(value, index);
+      return;
+    }
+
     if (value.isNotEmpty) {
+      // Single digit entered
       _controllers[index].text = value[0];
-      if (index < 5) _focusNodes[index + 1].requestFocus();
-    } else if (index > 0) {
+      if (index < 5) {
+        _focusNodes[index + 1].requestFocus();
+      } else {
+        // Last box filled, unfocus
+        _focusNodes[index].unfocus();
+      }
+    }
+  }
+
+  void _handlePaste(String pastedText, int startIndex) {
+    // Extract only digits from pasted text
+    final digits = pastedText.replaceAll(RegExp(r'[^0-9]'), '');
+
+    // Fill boxes starting from current index
+    for (int i = 0; i < digits.length && (startIndex + i) < 6; i++) {
+      _controllers[startIndex + i].text = digits[i];
+    }
+
+    // Move focus to next empty box or last box
+    final nextEmptyIndex = _controllers.indexWhere((c) => c.text.isEmpty);
+    if (nextEmptyIndex != -1) {
+      _focusNodes[nextEmptyIndex].requestFocus();
+    } else {
+      _focusNodes[5].unfocus();
+    }
+
+    setState(() {}); // Trigger rebuild to check completion
+  }
+
+  void _handleBackspace(int index) {
+    if (_controllers[index].text.isEmpty && index > 0) {
+      // Current box is empty, move to previous box and clear it
       _focusNodes[index - 1].requestFocus();
+      _controllers[index - 1].clear();
+    } else {
+      // Current box has content, just clear it
+      _controllers[index].clear();
     }
   }
 
@@ -215,14 +265,29 @@ class _OTPPageState extends State<OTPPage> with TickerProviderStateMixin {
             'timestamp': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
 
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const NamePage()),
-        (route) => false,
-      );
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const NamePage()),
+          (route) => false,
+        );
+      }
     } on FirebaseAuthException catch (e) {
-      setState(() => _isVerifying = false);
-      _showSnackBar('OTP Error: ${e.message}', isError: true);
+      if (mounted) {
+        setState(() => _isVerifying = false);
+        String errorMessage = 'OTP verification failed';
+        if (e.code == 'invalid-verification-code') {
+          errorMessage = 'Invalid OTP. Please try again.';
+        } else if (e.code == 'session-expired') {
+          errorMessage = 'OTP expired. Please request a new one.';
+        }
+        _showSnackBar(errorMessage, isError: true);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isVerifying = false);
+        _showSnackBar('An error occurred. Please try again.', isError: true);
+      }
     }
   }
 
@@ -246,7 +311,36 @@ class _OTPPageState extends State<OTPPage> with TickerProviderStateMixin {
     );
   }
 
-  void _resendCode() => _showSnackBar('Code resent successfully');
+  void _resendCode() async {
+    setState(() => _isVerifying = true);
+    try {
+      await _auth.verifyPhoneNumber(
+        phoneNumber: widget.phone,
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          final smsCode = credential.smsCode;
+          if (smsCode != null && smsCode.length == 6) {
+            _fillOtpAutomatically(smsCode);
+          }
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          if (mounted) {
+            _showSnackBar('Failed to resend code', isError: true);
+          }
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          if (mounted) {
+            _showSnackBar('Code resent successfully');
+          }
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {},
+        timeout: const Duration(seconds: 60),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isVerifying = false);
+      }
+    }
+  }
 
   Widget _buildAnimatedElement({
     required Animation<double> animation,
@@ -302,14 +396,32 @@ class _OTPPageState extends State<OTPPage> with TickerProviderStateMixin {
           ),
           keyboardType: TextInputType.number,
           maxLength: 1,
-          showCursor: false,
+          showCursor: true,
           decoration: const InputDecoration(
             counterText: '',
             border: InputBorder.none,
             contentPadding: EdgeInsets.zero,
           ),
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(
+              6,
+            ), // Allow paste of multiple digits
+          ],
           onChanged: (value) => _onDigitChanged(value, index),
+          onTap: () {
+            // Select all text when tapping (helps with replacing)
+            _controllers[index].selection = TextSelection(
+              baseOffset: 0,
+              extentOffset: _controllers[index].text.length,
+            );
+          },
+          // Handle backspace key
+          onEditingComplete: () {
+            if (_controllers[index].text.isEmpty && index < 5) {
+              _focusNodes[index + 1].requestFocus();
+            }
+          },
         ),
       ),
     );
@@ -408,11 +520,13 @@ class _OTPPageState extends State<OTPPage> with TickerProviderStateMixin {
                   _buildAnimatedElement(
                     animation: _resendAnimation,
                     child: GestureDetector(
-                      onTap: _resendCode,
+                      onTap: _isVerifying ? null : _resendCode,
                       child: Text(
                         'Resend OTP',
                         style: GoogleFonts.poppins(
-                          color: Colors.white,
+                          color: _isVerifying
+                              ? Colors.white.withOpacity(0.5)
+                              : Colors.white,
                           fontSize: 14 * scaleFactor,
                           fontWeight: FontWeight.w500,
                           decoration: TextDecoration.underline,

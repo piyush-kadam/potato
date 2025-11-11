@@ -12,7 +12,7 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Enable debug logs (very helpful while developing)
-  await Purchases.setLogLevel(true as LogLevel);
+  await Purchases.setDebugLogsEnabled(true);
 
   // Use the platform-specific public SDK key:
   // - appl_... => iOS public SDK key (App Store)
@@ -22,8 +22,10 @@ Future<void> main() async {
       defaultTargetPlatform == TargetPlatform.macOS) {
     revenueCatKey =
         "appl_UmcrQrsvFzOgkfJmcFsmioBNrlS"; // iOS key from your console screenshot
-  } // ⚠ Replace with Android public key
-  else {
+  } else if (defaultTargetPlatform == TargetPlatform.android) {
+    revenueCatKey =
+        "YOUR_ANDROID_PUBLIC_KEY_HERE"; // ⚠ Replace with Android public key
+  } else {
     revenueCatKey = "appl_UmcrQrsvFzOgkfJmcFsmioBNrlS"; // fallback
   }
 

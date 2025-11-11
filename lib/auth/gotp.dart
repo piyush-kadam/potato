@@ -11,8 +11,8 @@ class GOTPPage extends StatefulWidget {
   final String verificationId;
   final String fullName;
   final String phone;
-  final bool isAfterGoogleSignIn; // Flag to check if after Google sign-in
-  final String? userId; // User ID from Google sign-in
+  final bool isAfterGoogleSignIn;
+  final String? userId;
 
   const GOTPPage({
     super.key,
@@ -38,7 +38,7 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
   bool _isOtpComplete = false;
   bool _isVerifying = false;
 
-  // Animation controllers - INCREASED DURATION
+  // Animation controllers
   late AnimationController _contentAnimationController;
   late AnimationController _otpBoxesController;
   late Animation<double> _backButtonAnimation;
@@ -51,19 +51,16 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
-    // INCREASED DURATION from 1000ms to 1800ms for more noticeable fade
     _contentAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1800),
       vsync: this,
     );
 
-    // INCREASED DURATION from 800ms to 1600ms for OTP boxes
     _otpBoxesController = AnimationController(
       duration: const Duration(milliseconds: 1600),
       vsync: this,
     );
 
-    // Extended intervals with slower fade curves
     _backButtonAnimation = CurvedAnimation(
       parent: _contentAnimationController,
       curve: const Interval(0.0, 0.35, curve: Curves.easeOut),
@@ -84,22 +81,19 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
       curve: const Interval(0.75, 1.0, curve: Curves.easeOut),
     );
 
-    // Create MORE NOTICEABLE staggered animations for each OTP box
     _otpBoxAnimations = List.generate(6, (index) {
-      final start = 0.0 + (index * 0.12); // Increased spacing
-      final end = start + 0.35; // Longer duration per box
+      final start = 0.0 + (index * 0.12);
+      final end = start + 0.35;
       return CurvedAnimation(
         parent: _otpBoxesController,
         curve: Interval(start, end, curve: Curves.easeOut),
       );
     });
 
-    // Add listeners to all controllers
     for (var controller in _controllers) {
       controller.addListener(_checkOtpComplete);
     }
 
-    // Start animations
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _contentAnimationController.forward();
       _otpBoxesController.forward();
@@ -138,7 +132,6 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
         _focusNodes[index + 1].requestFocus();
       }
     } else {
-      // Handle backspace - move to previous field
       if (index > 0) {
         _focusNodes[index - 1].requestFocus();
       }
@@ -156,56 +149,89 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
     setState(() => _isVerifying = true);
 
     try {
+      // Create phone credential
       final credential = PhoneAuthProvider.credential(
         verificationId: widget.verificationId,
         smsCode: otp,
       );
 
-      if (widget.isAfterGoogleSignIn && widget.userId != null) {
-        // For Google sign-in users, just link the phone credential
-        // Don't create a new auth user, just update the existing document
-        final currentUser = _auth.currentUser;
-        if (currentUser != null && currentUser.uid == widget.userId) {
-          // Link phone credential to existing Google account
+      final currentUser = _auth.currentUser;
+
+      if (widget.isAfterGoogleSignIn && currentUser != null) {
+        // CRITICAL: Link phone credential to existing Google/Apple account
+        // This prevents creating a second auth user
+        try {
           await currentUser.linkWithCredential(credential);
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'provider-already-linked') {
+            // Phone already linked, just update the document
+            print('Phone already linked to this account');
+          } else if (e.code == 'credential-already-in-use') {
+            setState(() => _isVerifying = false);
+            _showSnackBar(
+              'This phone number is already linked to another account',
+              isError: true,
+            );
+            return;
+          } else {
+            rethrow;
+          }
         }
 
-        // Update the SAME document with phone verification
+        // Update the SAME document (use merge: true to preserve existing data)
         await FirebaseFirestore.instance
             .collection('Users')
-            .doc(widget.userId)
-            .update({
-              'phone': widget.phone,
-              'phoneVerified': true,
-              'otpVerified': true,
-              'timestamp': FieldValue.serverTimestamp(),
-            });
-      } else {
-        // For regular phone authentication
-        await _auth.signInWithCredential(credential);
-
-        await FirebaseFirestore.instance
-            .collection('Users')
-            .doc(_auth.currentUser!.uid)
+            .doc(currentUser.uid)
             .set({
-              'name': widget.fullName,
-              'phone': widget.phone,
-              'otpVerified': true,
+              'phoneNumber': widget.phone,
               'phoneVerified': true,
-              'authMethod': 'phone',
-              'profileCompleted': true,
-              'timestamp': FieldValue.serverTimestamp(),
+              'phoneVerifiedAt': FieldValue.serverTimestamp(),
             }, SetOptions(merge: true));
-      }
 
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const NamePage()),
-        (route) => false,
-      );
+        _showSnackBar('Phone verified successfully!');
+
+        // Let AuthGate handle navigation
+        if (mounted) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      } else {
+        // Regular phone-only authentication
+        final userCredential = await _auth.signInWithCredential(credential);
+
+        if (userCredential.user != null) {
+          await FirebaseFirestore.instance
+              .collection('Users')
+              .doc(userCredential.user!.uid)
+              .set({
+                'uid': userCredential.user!.uid,
+                'phoneNumber': widget.phone,
+                'authMethod': 'phone',
+                'phoneVerified': true,
+                'phoneVerifiedAt': FieldValue.serverTimestamp(),
+              });
+
+          if (mounted) {
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          }
+        }
+      }
     } on FirebaseAuthException catch (e) {
       setState(() => _isVerifying = false);
-      _showSnackBar('OTP Error: ${e.message}', isError: true);
+      String errorMessage;
+      switch (e.code) {
+        case 'invalid-verification-code':
+          errorMessage = 'Invalid OTP. Please try again.';
+          break;
+        case 'session-expired':
+          errorMessage = 'OTP expired. Please request a new code.';
+          break;
+        default:
+          errorMessage = 'Verification failed: ${e.message}';
+      }
+      _showSnackBar(errorMessage, isError: true);
+    } catch (e) {
+      setState(() => _isVerifying = false);
+      _showSnackBar('An error occurred. Please try again.', isError: true);
     }
   }
 
@@ -229,8 +255,23 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
     );
   }
 
-  void _resendCode() {
-    _showSnackBar('Code resent successfully');
+  void _resendCode() async {
+    try {
+      await _auth.verifyPhoneNumber(
+        phoneNumber: widget.phone,
+        verificationCompleted: (PhoneAuthCredential credential) {},
+        verificationFailed: (FirebaseAuthException e) {
+          _showSnackBar('Failed to resend code: ${e.message}', isError: true);
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          _showSnackBar('Code resent successfully');
+          // You might want to update the verificationId here
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {},
+      );
+    } catch (e) {
+      _showSnackBar('Failed to resend code', isError: true);
+    }
   }
 
   Widget _buildAnimatedElement({
@@ -306,7 +347,6 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
       backgroundColor: const Color(0xff5FB567),
       body: Stack(
         children: [
-          // Background Image
           Positioned.fill(
             child: Image.asset(
               'assets/images/bgg.png',
@@ -315,8 +355,6 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
                   Container(color: const Color(0xff5FB567)),
             ),
           ),
-
-          // Content
           SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(
@@ -326,7 +364,6 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Back Button with Loading Bar - Animated
                   _buildAnimatedElement(
                     animation: _backButtonAnimation,
                     child: Row(
@@ -347,7 +384,6 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
                           ),
                         ),
                         SizedBox(width: 12 * scaleFactor),
-                        // Loading Bar
                         Expanded(
                           child: Container(
                             height: 4 * scaleFactor,
@@ -371,10 +407,7 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
                       ],
                     ),
                   ),
-
                   const Spacer(),
-
-                  // OTP Boxes with smooth staggered fade-in
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(6, (index) {
@@ -386,10 +419,7 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
                       );
                     }),
                   ),
-
                   SizedBox(height: 24 * scaleFactor),
-
-                  // Resend OTP - Animated
                   _buildAnimatedElement(
                     animation: _resendAnimation,
                     child: GestureDetector(
@@ -406,10 +436,7 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-
                   SizedBox(height: 30 * scaleFactor),
-
-                  // Verify Button - Animated
                   _buildAnimatedElement(
                     animation: _verifyButtonAnimation,
                     child: AnimatedContainer(
@@ -484,10 +511,7 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-
                   const Spacer(),
-
-                  // Bottom Text - Animated
                   _buildAnimatedElement(
                     animation: _bottomTextAnimation,
                     child: Padding(
