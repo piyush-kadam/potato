@@ -575,16 +575,8 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(
-                                      Icons.currency_rupee,
-                                      size: (screenWidth * 0.04).clamp(
-                                        14.0,
-                                        18.0,
-                                      ),
-                                    ),
-                                    SizedBox(width: screenWidth * 0.01),
                                     Text(
-                                      "Pay now",
+                                      "$currencySymbol Pay now",
                                       style: GoogleFonts.poppins(
                                         fontWeight: FontWeight.w600,
                                         fontSize: (screenWidth * 0.033).clamp(
@@ -604,7 +596,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                         Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: screenWidth * 0.04,
-                            vertical: screenWidth * 0.01,
+                            vertical: screenHeight * 0.01,
                           ),
                           child: LayoutBuilder(
                             builder: (context, constraints) {
@@ -986,7 +978,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                             screenWidth * 0.04,
                             0,
                             screenWidth * 0.04,
-                            screenHeight * 0.015,
+                            screenHeight * 0.010,
                           ),
                           padding: EdgeInsets.symmetric(
                             horizontal: screenWidth * 0.04,

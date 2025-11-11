@@ -8,6 +8,7 @@ import 'package:slideme/auth/subscription.dart';
 import 'package:slideme/screens/chatbot.dart';
 import 'package:slideme/screens/expensecategory.dart';
 import 'package:slideme/screens/expensewrap.dart';
+import 'package:slideme/screens/motnhlywrap.dart';
 import 'package:slideme/screens/settings.dart';
 
 import 'package:slideme/widgets/addcat.dart';
@@ -44,6 +45,40 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _checkProStatus();
     _fetchCurrencySymbol();
+    _checkAndShowMonthlyWrap();
+  }
+
+  // 🧠 Function to check if today is first of the month and db has previousMonthAnalytics
+  Future<void> _checkAndShowMonthlyWrap() async {
+    try {
+      // Example: get current user ID
+      final uid = FirebaseAuth
+          .instance
+          .currentUser!
+          .uid; // Replace or use FirebaseAuth.instance.currentUser!.uid
+      final userDoc = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(uid)
+          .get();
+
+      // ✅ Check if today is the 1st
+      final now = DateTime.now();
+      final isFirstOfMonth = now.day == 1;
+
+      // ✅ Check if field exists
+      final hasPreviousAnalytics =
+          userDoc.data()?['previousMonthAnalytics'] != null;
+
+      if (isFirstOfMonth && hasPreviousAnalytics && mounted) {
+        // Navigate to MonthlyWrapScreen
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const MonthlyWrapScreen()),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error checking monthly wrap: $e');
+    }
   }
 
   // Check if user has any pro entitlement
@@ -632,9 +667,9 @@ class _HomePageState extends State<HomePage> {
 
                           // 🔧 HEIGHT CONTROL - Adjust these values to change grid height
                           double minHeight =
-                              320.0; // Minimum height (increased from 280)
+                              315.0; // Minimum height (increased from 280)
                           double maxHeight =
-                              650.0; // Maximum height (increased from 550 to 650)
+                              600.0; // Maximum height (increased from 550 to 650)
 
                           double maxAvailableHeight = gridHeight.clamp(
                             minHeight,

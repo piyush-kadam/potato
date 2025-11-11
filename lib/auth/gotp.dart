@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:neopop/widgets/buttons/neopop_button/neopop_button.dart';
 import 'package:slideme/screens/homepage.dart';
 import 'package:slideme/screens/welcome.dart';
+import 'package:sms_autofill/sms_autofill.dart'; // Add this to pubspec.yaml
 
 class GOTPPage extends StatefulWidget {
   final String verificationId;
@@ -27,7 +28,8 @@ class GOTPPage extends StatefulWidget {
   State<GOTPPage> createState() => _GOTPPageState();
 }
 
-class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
+class _GOTPPageState extends State<GOTPPage>
+    with TickerProviderStateMixin, CodeAutoFill {
   final List<TextEditingController> _controllers = List.generate(
     6,
     (index) => TextEditingController(),
@@ -51,8 +53,8 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
-    // Start listening for Firebase auto-verification
-    _listenForAutoVerification();
+    // Start listening for SMS
+    _listenForOtp();
 
     _contentAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1800),
@@ -100,62 +102,38 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _contentAnimationController.forward();
       _otpBoxesController.forward();
-      // Focus first box for immediate input
-      _focusNodes[0].requestFocus();
     });
   }
 
-  // Listen for Firebase auto-verification (SMS auto-retrieval)
-  void _listenForAutoVerification() {
-    _auth.verifyPhoneNumber(
-      phoneNumber: widget.phone,
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        // This callback is triggered when Firebase automatically retrieves SMS
-        final smsCode = credential.smsCode;
-        if (smsCode != null && smsCode.length == 6) {
-          _fillOtpAutomatically(smsCode);
-        }
-      },
-      verificationFailed: (FirebaseAuthException e) {
-        debugPrint('Auto-verification failed: ${e.message}');
-      },
-      codeSent: (String verificationId, int? resendToken) {
-        debugPrint('Code sent successfully');
-      },
-      codeAutoRetrievalTimeout: (String verificationId) {
-        debugPrint('Auto-retrieval timeout');
-      },
-      timeout: const Duration(seconds: 60),
-    );
+  // Listen for OTP from SMS
+  void _listenForOtp() async {
+    await SmsAutoFill().listenForCode();
   }
 
-  // Fill OTP automatically when detected
-  void _fillOtpAutomatically(String otp) {
-    if (!mounted) return;
+  @override
+  void codeUpdated() {
+    // This is called when SMS OTP is detected
+    if (code != null && code!.length == 6) {
+      _fillOtp(code!);
+    }
+  }
 
-    for (int i = 0; i < 6 && i < otp.length; i++) {
+  // Fill OTP into boxes
+  void _fillOtp(String otp) {
+    for (int i = 0; i < otp.length && i < 6; i++) {
       _controllers[i].text = otp[i];
     }
-
     setState(() {
-      _isOtpComplete = true;
+      _checkOtpComplete();
     });
-
-    // Hide keyboard
-    for (var node in _focusNodes) {
-      node.unfocus();
-    }
-
-    // Auto-verify after short delay
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted && _isOtpComplete) {
-        _verifyOtp();
-      }
-    });
+    // Unfocus to hide keyboard after auto-fill
+    FocusScope.of(context).unfocus();
   }
 
   @override
   void dispose() {
+    SmsAutoFill().unregisterListener();
+    cancel(); // Cancel SMS listener
     _contentAnimationController.dispose();
     _otpBoxesController.dispose();
     for (var controller in _controllers) {
@@ -180,8 +158,8 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
   String get _otp => _controllers.map((controller) => controller.text).join();
 
   void _onDigitChanged(String value, int index) {
-    // Handle paste - if multiple digits detected
     if (value.length > 1) {
+      // Handle paste - distribute characters across boxes
       _handlePaste(value, index);
       return;
     }
@@ -219,14 +197,18 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
     });
   }
 
-  void _handleBackspace(int index) {
-    if (_controllers[index].text.isEmpty && index > 0) {
-      // Current box is empty, move to previous box and clear it
-      _focusNodes[index - 1].requestFocus();
-      _controllers[index - 1].clear();
-    } else {
-      // Current box has content, just clear it
-      _controllers[index].clear();
+  void _onKeyEvent(RawKeyEvent event, int index) {
+    if (event is RawKeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.backspace) {
+        if (_controllers[index].text.isEmpty && index > 0) {
+          // If current box is empty and backspace pressed, move to previous box and clear it
+          _controllers[index - 1].clear();
+          _focusNodes[index - 1].requestFocus();
+        } else if (_controllers[index].text.isNotEmpty) {
+          // If current box has content, clear it
+          _controllers[index].clear();
+        }
+      }
     }
   }
 
@@ -301,8 +283,8 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
     }
     _focusNodes[0].requestFocus();
 
-    // Restart auto-verification listener
-    _listenForAutoVerification();
+    // Restart SMS listener
+    await SmsAutoFill().listenForCode();
 
     _showSnackBar('Code resent successfully');
   }
@@ -344,35 +326,32 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
             ),
           ],
         ),
-        child: TextField(
-          controller: _controllers[index],
-          focusNode: _focusNodes[index],
-          textAlign: TextAlign.center,
-          style: GoogleFonts.poppins(
-            color: Colors.black87,
-            fontSize: 20 * scaleFactor,
-            fontWeight: FontWeight.w600,
+        child: RawKeyboardListener(
+          focusNode: FocusNode(),
+          onKey: (event) => _onKeyEvent(event, index),
+          child: TextField(
+            controller: _controllers[index],
+            focusNode: _focusNodes[index],
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              color: Colors.black87,
+              fontSize: 20 * scaleFactor,
+              fontWeight: FontWeight.w600,
+            ),
+            keyboardType: TextInputType.number,
+            maxLength: 1,
+            showCursor: false,
+            decoration: const InputDecoration(
+              counterText: '',
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
+            ),
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(6), // Allow paste of full OTP
+            ],
+            onChanged: (value) => _onDigitChanged(value, index),
           ),
-          keyboardType: TextInputType.number,
-          maxLength: 1,
-          showCursor: true,
-          decoration: const InputDecoration(
-            counterText: '',
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.zero,
-          ),
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(6), // Allow paste of full OTP
-          ],
-          onChanged: (value) => _onDigitChanged(value, index),
-          onTap: () {
-            // Select all text when tapping (helps with replacing)
-            _controllers[index].selection = TextSelection(
-              baseOffset: 0,
-              extentOffset: _controllers[index].text.length,
-            );
-          },
         ),
       ),
     );
