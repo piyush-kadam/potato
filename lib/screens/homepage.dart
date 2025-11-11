@@ -8,7 +8,7 @@ import 'package:slideme/auth/subscription.dart';
 import 'package:slideme/screens/chatbot.dart';
 import 'package:slideme/screens/expensecategory.dart';
 import 'package:slideme/screens/expensewrap.dart';
-import 'package:slideme/screens/motnhlywrap.dart';
+import 'package:slideme/screens/monthlywrap.dart';
 import 'package:slideme/screens/settings.dart';
 
 import 'package:slideme/widgets/addcat.dart';
