@@ -6,8 +6,8 @@ import 'package:slideme/auth/authservice.dart';
 import 'package:slideme/auth/gphone.dart';
 import 'package:slideme/auth/login.dart';
 import 'package:slideme/auth/welcome.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class SignUpPage extends StatefulWidget {
   final VoidCallback onTap;
@@ -21,6 +21,26 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   bool isLoading = false;
   final AuthService _authService = AuthService();
+
+  // Add GoogleSignIn instance
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  @override
+  void initState() {
+    super.initState();
+    _clearGoogleSession();
+  }
+
+  // This function clears the last used (cached) Google account/session
+  Future<void> _clearGoogleSession() async {
+    try {
+      await _googleSignIn.signOut();
+      await _googleSignIn.disconnect();
+      // Optionally handle catch
+    } catch (e) {
+      print("Error clearing Google Sign-In cache: $e");
+    }
+  }
 
   void _signInWithGoogle() async {
     setState(() => isLoading = true);
@@ -73,9 +93,7 @@ class _SignUpPageState extends State<SignUpPage> {
             'phoneVerified': false,
           });
         }
-        // REMOVED: Manual navigation - let AuthGate handle it
-        // The AuthGate StreamBuilder will automatically detect the auth state change
-        // and navigate to the correct page based on user data
+        // AuthGate handles navigation
       }
     } catch (e) {
       _showError("Apple sign-in failed: ${e.toString()}");
@@ -108,13 +126,13 @@ class _SignUpPageState extends State<SignUpPage> {
           alignment: Alignment.topCenter,
           children: [
             const SizedBox(height: 80),
-            // Bigger Lottie with slight overlap
+
             Positioned(
               left: 0,
               top: 20,
               child: Lottie.asset(
                 'assets/animations/Scene.json',
-                height: size.height * 0.8, // large, dynamic height
+                height: size.height * 0.8,
                 width: size.width,
                 fit: BoxFit.cover,
                 alignment: Alignment.centerLeft,
@@ -124,7 +142,6 @@ class _SignUpPageState extends State<SignUpPage> {
             Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                // Get started NeoPop button with soft edges
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 40.0,
@@ -168,7 +185,6 @@ class _SignUpPageState extends State<SignUpPage> {
 
                 const SizedBox(height: 14),
 
-                // Already have an account NeoPop button with soft corners
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10.0),
                   child: NeoPopButton(
@@ -222,7 +238,6 @@ class _SignUpPageState extends State<SignUpPage> {
 
                 const SizedBox(height: 15),
 
-                // Google and Apple buttons
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 60.0),
                   child: Row(

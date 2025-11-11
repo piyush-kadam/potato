@@ -51,6 +51,9 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
+    // Start listening for Firebase auto-verification
+    _listenForAutoVerification();
+
     _contentAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1800),
       vsync: this,
@@ -97,6 +100,57 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _contentAnimationController.forward();
       _otpBoxesController.forward();
+      // Focus first box for immediate input
+      _focusNodes[0].requestFocus();
+    });
+  }
+
+  // Listen for Firebase auto-verification (SMS auto-retrieval)
+  void _listenForAutoVerification() {
+    _auth.verifyPhoneNumber(
+      phoneNumber: widget.phone,
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        // This callback is triggered when Firebase automatically retrieves SMS
+        final smsCode = credential.smsCode;
+        if (smsCode != null && smsCode.length == 6) {
+          _fillOtpAutomatically(smsCode);
+        }
+      },
+      verificationFailed: (FirebaseAuthException e) {
+        debugPrint('Auto-verification failed: ${e.message}');
+      },
+      codeSent: (String verificationId, int? resendToken) {
+        debugPrint('Code sent successfully');
+      },
+      codeAutoRetrievalTimeout: (String verificationId) {
+        debugPrint('Auto-retrieval timeout');
+      },
+      timeout: const Duration(seconds: 60),
+    );
+  }
+
+  // Fill OTP automatically when detected
+  void _fillOtpAutomatically(String otp) {
+    if (!mounted) return;
+
+    for (int i = 0; i < 6 && i < otp.length; i++) {
+      _controllers[i].text = otp[i];
+    }
+
+    setState(() {
+      _isOtpComplete = true;
+    });
+
+    // Hide keyboard
+    for (var node in _focusNodes) {
+      node.unfocus();
+    }
+
+    // Auto-verify after short delay
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted && _isOtpComplete) {
+        _verifyOtp();
+      }
     });
   }
 
@@ -126,15 +180,53 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
   String get _otp => _controllers.map((controller) => controller.text).join();
 
   void _onDigitChanged(String value, int index) {
+    // Handle paste - if multiple digits detected
+    if (value.length > 1) {
+      _handlePaste(value, index);
+      return;
+    }
+
     if (value.isNotEmpty) {
       _controllers[index].text = value[0];
       if (index < 5) {
         _focusNodes[index + 1].requestFocus();
+      } else {
+        // Last box filled, unfocus
+        _focusNodes[index].unfocus();
       }
+    }
+  }
+
+  void _handlePaste(String pastedText, int startIndex) {
+    // Extract only digits from pasted text
+    final digits = pastedText.replaceAll(RegExp(r'[^0-9]'), '');
+
+    // Fill boxes starting from current index
+    for (int i = 0; i < digits.length && (startIndex + i) < 6; i++) {
+      _controllers[startIndex + i].text = digits[i];
+    }
+
+    // Move focus to the last filled box or next empty box
+    final lastFilledIndex = (startIndex + digits.length - 1).clamp(0, 5);
+    if (lastFilledIndex < 5 && digits.length < 6) {
+      _focusNodes[lastFilledIndex + 1].requestFocus();
     } else {
-      if (index > 0) {
-        _focusNodes[index - 1].requestFocus();
-      }
+      _focusNodes[lastFilledIndex].unfocus();
+    }
+
+    setState(() {
+      _checkOtpComplete();
+    });
+  }
+
+  void _handleBackspace(int index) {
+    if (_controllers[index].text.isEmpty && index > 0) {
+      // Current box is empty, move to previous box and clear it
+      _focusNodes[index - 1].requestFocus();
+      _controllers[index - 1].clear();
+    } else {
+      // Current box has content, just clear it
+      _controllers[index].clear();
     }
   }
 
@@ -149,89 +241,36 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
     setState(() => _isVerifying = true);
 
     try {
-      // Create phone credential
       final credential = PhoneAuthProvider.credential(
         verificationId: widget.verificationId,
         smsCode: otp,
       );
 
-      final currentUser = _auth.currentUser;
-
-      if (widget.isAfterGoogleSignIn && currentUser != null) {
-        // CRITICAL: Link phone credential to existing Google/Apple account
-        // This prevents creating a second auth user
-        try {
+      if (widget.isAfterGoogleSignIn && widget.userId != null) {
+        final currentUser = _auth.currentUser;
+        if (currentUser != null && currentUser.uid == widget.userId) {
           await currentUser.linkWithCredential(credential);
-        } on FirebaseAuthException catch (e) {
-          if (e.code == 'provider-already-linked') {
-            // Phone already linked, just update the document
-            print('Phone already linked to this account');
-          } else if (e.code == 'credential-already-in-use') {
-            setState(() => _isVerifying = false);
-            _showSnackBar(
-              'This phone number is already linked to another account',
-              isError: true,
-            );
-            return;
-          } else {
-            rethrow;
-          }
         }
 
-        // Update the SAME document (use merge: true to preserve existing data)
         await FirebaseFirestore.instance
             .collection('Users')
-            .doc(currentUser.uid)
-            .set({
-              'phoneNumber': widget.phone,
+            .doc(widget.userId)
+            .update({
+              'phone': widget.phone,
               'phoneVerified': true,
-              'phoneVerifiedAt': FieldValue.serverTimestamp(),
-            }, SetOptions(merge: true));
-
-        _showSnackBar('Phone verified successfully!');
-
-        // Let AuthGate handle navigation
-        if (mounted) {
-          Navigator.of(context).popUntil((route) => route.isFirst);
-        }
-      } else {
-        // Regular phone-only authentication
-        final userCredential = await _auth.signInWithCredential(credential);
-
-        if (userCredential.user != null) {
-          await FirebaseFirestore.instance
-              .collection('Users')
-              .doc(userCredential.user!.uid)
-              .set({
-                'uid': userCredential.user!.uid,
-                'phoneNumber': widget.phone,
-                'authMethod': 'phone',
-                'phoneVerified': true,
-                'phoneVerifiedAt': FieldValue.serverTimestamp(),
-              });
-
-          if (mounted) {
-            Navigator.of(context).popUntil((route) => route.isFirst);
-          }
-        }
+              'otpVerified': true,
+              'timestamp': FieldValue.serverTimestamp(),
+            });
       }
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const NamePage()),
+        (route) => false,
+      );
     } on FirebaseAuthException catch (e) {
       setState(() => _isVerifying = false);
-      String errorMessage;
-      switch (e.code) {
-        case 'invalid-verification-code':
-          errorMessage = 'Invalid OTP. Please try again.';
-          break;
-        case 'session-expired':
-          errorMessage = 'OTP expired. Please request a new code.';
-          break;
-        default:
-          errorMessage = 'Verification failed: ${e.message}';
-      }
-      _showSnackBar(errorMessage, isError: true);
-    } catch (e) {
-      setState(() => _isVerifying = false);
-      _showSnackBar('An error occurred. Please try again.', isError: true);
+      _showSnackBar('OTP Error: ${e.message}', isError: true);
     }
   }
 
@@ -256,22 +295,16 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
   }
 
   void _resendCode() async {
-    try {
-      await _auth.verifyPhoneNumber(
-        phoneNumber: widget.phone,
-        verificationCompleted: (PhoneAuthCredential credential) {},
-        verificationFailed: (FirebaseAuthException e) {
-          _showSnackBar('Failed to resend code: ${e.message}', isError: true);
-        },
-        codeSent: (String verificationId, int? resendToken) {
-          _showSnackBar('Code resent successfully');
-          // You might want to update the verificationId here
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {},
-      );
-    } catch (e) {
-      _showSnackBar('Failed to resend code', isError: true);
+    // Clear existing OTP
+    for (var controller in _controllers) {
+      controller.clear();
     }
+    _focusNodes[0].requestFocus();
+
+    // Restart auto-verification listener
+    _listenForAutoVerification();
+
+    _showSnackBar('Code resent successfully');
   }
 
   Widget _buildAnimatedElement({
@@ -322,14 +355,24 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
           ),
           keyboardType: TextInputType.number,
           maxLength: 1,
-          showCursor: false,
+          showCursor: true,
           decoration: const InputDecoration(
             counterText: '',
             border: InputBorder.none,
             contentPadding: EdgeInsets.zero,
           ),
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(6), // Allow paste of full OTP
+          ],
           onChanged: (value) => _onDigitChanged(value, index),
+          onTap: () {
+            // Select all text when tapping (helps with replacing)
+            _controllers[index].selection = TextSelection(
+              baseOffset: 0,
+              extentOffset: _controllers[index].text.length,
+            );
+          },
         ),
       ),
     );
