@@ -1,104 +1,73 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
-    <!-- Google Sign-In Configuration -->
-    <key>GIDClientID</key>
-    <string>202409214260-i9quo023dk7pqu0v8hlep135m2v6d4sf.apps.googleusercontent.com</string>
-
-    <!-- URL Schemes -->
-    <key>CFBundleURLTypes</key>
-    <array>
-        <!-- Google Sign-In URL Scheme -->
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>com.googleusercontent.apps.202409214260-i9quo023dk7pqu0v8hlep135m2v6d4sf</string>
-            </array>
-        </dict>
-        <!-- App Bundle URL Scheme -->
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-            </array>
-        </dict>
-    </array>
-
-    <!-- App Info -->
-    <key>CFBundleDevelopmentRegion</key>
-    <string>$(DEVELOPMENT_LANGUAGE)</string>
-    <key>CFBundleDisplayName</key>
-    <string>Potato Book</string>
-    <key>CFBundleExecutable</key>
-    <string>$(EXECUTABLE_NAME)</string>
-    <key>CFBundleIdentifier</key>
-    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>6.0</string>
-    <key>CFBundleName</key>
-    <string>slideme</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleShortVersionString</key>
-    <string>$(FLUTTER_BUILD_NAME)</string>
-    <key>CFBundleSignature</key>
-    <string>????</string>
-    <key>CFBundleVersion</key>
-    <string>$(FLUTTER_BUILD_NUMBER)</string>
-
-    <!-- Launch Config -->
-    <key>LSRequiresIPhoneOS</key>
-    <true/>
-    <key>UILaunchStoryboardName</key>
-    <string>LaunchScreen</string>
-    <key>UIMainStoryboardFile</key>
-    <string>Main</string>
-
-    <!-- Orientation -->
-    <key>UISupportedInterfaceOrientations</key>
-    <array>
-        <string>UIInterfaceOrientationPortrait</string>
-        <string>UIInterfaceOrientationLandscapeLeft</string>
-        <string>UIInterfaceOrientationLandscapeRight</string>
-    </array>
-    <key>UISupportedInterfaceOrientations~ipad</key>
-    <array>
-        <string>UIInterfaceOrientationPortrait</string>
-        <string>UIInterfaceOrientationPortraitUpsideDown</string>
-        <string>UIInterfaceOrientationLandscapeLeft</string>
-        <string>UIInterfaceOrientationLandscapeRight</string>
-    </array>
-
-    <!-- Flutter Performance -->
-    <key>CADisableMinimumFrameDurationOnPhone</key>
-    <true/>
-    <key>UIApplicationSupportsIndirectInputEvents</key>
-    <true/>
-    <key>UIStatusBarHidden</key>
-    <true/>
-    <key>UIViewControllerBasedStatusBarAppearance</key>
-    <false/>
-
-    <!-- ✅ Permissions -->
-    <key>NSCameraUsageDescription</key>
-    <string>Camera access is required for taking profile or ID pictures.</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>Photo library access is required for selecting images.</string>
-
-    <!-- ✅ Firebase Phone Auth (reCAPTCHA flow) -->
-    <key>FirebaseAppDelegateProxyEnabled</key>
-    <true/>
-
-    <!-- ✅ Allow non-HTTPS API calls -->
-    <key>NSAppTransportSecurity</key>
-    <dict>
-        <key>NSAllowsArbitraryLoads</key>
-        <true/>
-    </dict>
-</dict>
+	<dict>
+		<key>GIDClientID</key>
+		<!-- TODO Replace this value: -->
+		<!-- Copied from GoogleService-Info.plist key CLIENT_ID -->
+		<string>202409214260-i9quo023dk7pqu0v8hlep135m2v6d4sf.apps.googleusercontent.com</string>
+		<!-- Put me in the [my_project]/ios/Runner/Info.plist file -->
+		<!-- Google Sign-in Section -->
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<!-- TODO Replace this value: -->
+					<!-- Copied from GoogleService-Info.plist key REVERSED_CLIENT_ID -->
+					<string>com.googleusercontent.apps.202409214260-i9quo023dk7pqu0v8hlep135m2v6d4sf</string>
+				</array>
+			</dict>
+		</array>
+		<!-- End of the Google Sign-in Section -->
+		<key>CFBundleDevelopmentRegion</key>
+		<string>$(DEVELOPMENT_LANGUAGE)</string>
+		<key>CFBundleDisplayName</key>
+		<string>Slideme</string>
+		<key>CFBundleExecutable</key>
+		<string>$(EXECUTABLE_NAME)</string>
+		<key>CFBundleIdentifier</key>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+		<key>CFBundleInfoDictionaryVersion</key>
+		<string>6.0</string>
+		<key>CFBundleName</key>
+		<string>slideme</string>
+		<key>CFBundlePackageType</key>
+		<string>APPL</string>
+		<key>CFBundleShortVersionString</key>
+		<string>$(FLUTTER_BUILD_NAME)</string>
+		<key>CFBundleSignature</key>
+		<string>????</string>
+		<key>CFBundleVersion</key>
+		<string>$(FLUTTER_BUILD_NUMBER)</string>
+		<key>LSRequiresIPhoneOS</key>
+		<true/>
+		<key>UILaunchStoryboardName</key>
+		<string>LaunchScreen</string>
+		<key>UIMainStoryboardFile</key>
+		<string>Main</string>
+		<key>UISupportedInterfaceOrientations</key>
+		<array>
+			<string>UIInterfaceOrientationPortrait</string>
+			<string>UIInterfaceOrientationLandscapeLeft</string>
+			<string>UIInterfaceOrientationLandscapeRight</string>
+		</array>
+		<key>UISupportedInterfaceOrientations~ipad</key>
+		<array>
+			<string>UIInterfaceOrientationPortrait</string>
+			<string>UIInterfaceOrientationPortraitUpsideDown</string>
+			<string>UIInterfaceOrientationLandscapeLeft</string>
+			<string>UIInterfaceOrientationLandscapeRight</string>
+		</array>
+		<key>CADisableMinimumFrameDurationOnPhone</key>
+		<true/>
+		<key>UIApplicationSupportsIndirectInputEvents</key>
+		<true/>
+		<key>UIStatusBarHidden</key>
+		<true/>
+		<key>UIViewControllerBasedStatusBarAppearance</key>
+		<false/>
+	</dict>
 </plist>
