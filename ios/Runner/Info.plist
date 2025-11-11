@@ -8,13 +8,16 @@
 
     <key>CFBundleURLTypes</key>
     <array>
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>com.googleusercontent.apps.202409214260-i9quo023dk7pqu0v8hlep135m2v6d4sf</string>
-            </array>
+    <!-- Google Sign-In URL Scheme -->
+    <dict>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+            <string>com.googleusercontent.apps.202409214260-i9quo023dk7pqu0v8hlep135m2v6d4sf</string>
+        </array>
+    </dict>
+    </array>
         </dict>
         <dict>
             <key>CFBundleTypeRole</key>
@@ -86,8 +89,7 @@
     <string>Camera access is required for taking profile or ID pictures.</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>Photo library access is required for selecting images.</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>Microphone access is required for recording audio.</string>
+    
 
     <!-- ✅ Firebase Phone Auth (web-based reCAPTCHA flow) -->
     <key>FirebaseAppDelegateProxyEnabled</key>

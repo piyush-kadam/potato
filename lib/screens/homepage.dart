@@ -733,9 +733,7 @@ class _HomePageState extends State<HomePage> {
                                         border: Border.all(
                                           color: _isProUser
                                               ? Colors.white.withOpacity(0.3)
-                                              : const Color(
-                                                  0xFFFFD700,
-                                                ).withOpacity(0.5),
+                                              : Colors.white.withOpacity(0.3),
                                           width: _isProUser ? 1.5 : 2.0,
                                         ),
                                         boxShadow: [
@@ -809,8 +807,11 @@ class _HomePageState extends State<HomePage> {
                                                                   75,
                                                                   75,
                                                                 )
-                                                              : const Color(
-                                                                  0xFFFFD700,
+                                                              : const Color.fromARGB(
+                                                                  255,
+                                                                  81,
+                                                                  75,
+                                                                  75,
                                                                 ),
                                                         ),
                                                         if (!_isProUser) ...[
