@@ -6,19 +6,19 @@
     <key>GIDClientID</key>
     <string>202409214260-i9quo023dk7pqu0v8hlep135m2v6d4sf.apps.googleusercontent.com</string>
 
+    <!-- URL Schemes -->
     <key>CFBundleURLTypes</key>
     <array>
-    <!-- Google Sign-In URL Scheme -->
-    <dict>
-        <key>CFBundleTypeRole</key>
-        <string>Editor</string>
-        <key>CFBundleURLSchemes</key>
-        <array>
-            <string>com.googleusercontent.apps.202409214260-i9quo023dk7pqu0v8hlep135m2v6d4sf</string>
-        </array>
-    </dict>
-    </array>
+        <!-- Google Sign-In URL Scheme -->
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>com.googleusercontent.apps.202409214260-i9quo023dk7pqu0v8hlep135m2v6d4sf</string>
+            </array>
         </dict>
+        <!-- App Bundle URL Scheme -->
         <dict>
             <key>CFBundleTypeRole</key>
             <string>Editor</string>
@@ -84,14 +84,13 @@
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
 
-    <!-- ✅ Permissions (required for real iOS devices) -->
+    <!-- ✅ Permissions -->
     <key>NSCameraUsageDescription</key>
     <string>Camera access is required for taking profile or ID pictures.</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>Photo library access is required for selecting images.</string>
-    
 
-    <!-- ✅ Firebase Phone Auth (web-based reCAPTCHA flow) -->
+    <!-- ✅ Firebase Phone Auth (reCAPTCHA flow) -->
     <key>FirebaseAppDelegateProxyEnabled</key>
     <true/>
 
