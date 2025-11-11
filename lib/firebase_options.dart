@@ -66,12 +66,12 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBcd8wRfN3IWJoHtCzc6VXKghp4ltSvU6Q',
-    appId: '1:202409214260:ios:0f630f65cb18a68e66e561',
+    appId: '1:202409214260:ios:dd11fa96890d25e566e561',
     messagingSenderId: '202409214260',
     projectId: 'slideme-87da5',
     storageBucket: 'slideme-87da5.firebasestorage.app',
     iosClientId:
-        '202409214260-los88ld879r5r26ueamp1tfmkgvivr8k.apps.googleusercontent.com',
+        '202409214260-i9quo023dk7pqu0v8hlep135m2v6d4sf.apps.googleusercontent.com',
     iosBundleId: 'com.potato.slideme',
   );
 }
