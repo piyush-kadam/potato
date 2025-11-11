@@ -8,7 +8,6 @@ import 'package:slideme/auth/subscription.dart';
 import 'package:slideme/screens/chatbot.dart';
 import 'package:slideme/screens/expensecategory.dart';
 import 'package:slideme/screens/expensewrap.dart';
-import 'package:slideme/screens/motnhlywrap.dart';
 import 'package:slideme/screens/settings.dart';
 
 import 'package:slideme/widgets/addcat.dart';
@@ -29,6 +28,7 @@ class _HomePageState extends State<HomePage> {
   bool _isNavigating = false;
   bool _isProUser = false;
   bool _isCheckingEntitlement = true;
+  String _currencySymbol = '₹';
 
   // Define the desired category order
   final List<String> _categoryOrder = [
@@ -43,9 +43,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _checkProStatus();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      MonthlyWrapService.showMonthlyWrapIfNeeded(context);
-    });
+    _fetchCurrencySymbol();
   }
 
   // Check if user has any pro entitlement
@@ -109,6 +107,79 @@ class _HomePageState extends State<HomePage> {
       unicode: true,
     );
     return categoryName.replaceAll(emojiRegex, '').trim();
+  }
+
+  final Map<String, String> currencyMap = {
+    'India': '₹',
+    'United States': '\$',
+    'United Kingdom': '£',
+    'Canada': 'C\$',
+    'Australia': 'A\$',
+    'Germany': '€',
+    'France': '€',
+    'Japan': '¥',
+    'China': '¥',
+    'Brazil': 'R\$',
+    'Mexico': 'MX\$',
+    'Spain': '€',
+    'Italy': '€',
+    'South Korea': '₩',
+    'Singapore': 'S\$',
+    'Netherlands': '€',
+    'Sweden': 'kr',
+    'Norway': 'kr',
+    'Denmark': 'kr',
+    'Switzerland': 'CHF',
+    'Russia': '₽',
+    'South Africa': 'R',
+    'New Zealand': 'NZ\$',
+    'Ireland': '€',
+    'United Arab Emirates': 'د.إ',
+    'Saudi Arabia': '﷼',
+    'Turkey': '₺',
+    'Argentina': 'AR\$',
+    'Chile': 'CL\$',
+    'Indonesia': 'Rp',
+    'Thailand': '฿',
+    'Philippines': '₱',
+    'Vietnam': '₫',
+    'Malaysia': 'RM',
+    'Pakistan': '₨',
+    'Bangladesh': '৳',
+    'Nepal': '₨',
+    'Sri Lanka': '₨',
+    'Nigeria': '₦',
+    'Kenya': 'KSh',
+    'Egypt': 'E£',
+    'Israel': '₪',
+    'Portugal': '€',
+    'Poland': 'zł',
+    'Finland': '€',
+    'Greece': '€',
+    'Austria': '€',
+    'Belgium': '€',
+    'Czech Republic': 'Kč',
+    'Hungary': 'Ft',
+    'Romania': 'lei',
+    'Colombia': 'COL\$',
+    'Peru': 'S/',
+    'Ukraine': '₴',
+    'Morocco': 'د.م.',
+    'Qatar': '﷼',
+    'Kuwait': 'د.ك',
+    'Oman': '﷼',
+  };
+
+  Future<void> _fetchCurrencySymbol() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final userDoc = await FirebaseFirestore.instance
+        .collection('Users')
+        .doc(uid)
+        .get();
+    final country = userDoc.data()?['country'] as String?;
+    setState(() {
+      _currencySymbol = currencyMap[country ?? 'India'] ?? '₹';
+    });
   }
 
   // Sort categories based on predefined order
@@ -283,7 +354,7 @@ class _HomePageState extends State<HomePage> {
 
         final topBarHeight = availableHeight * 0.10;
         final daysLeftHeight = availableHeight * 0.10;
-        final gridHeight = availableHeight * 0.58;
+        final gridHeight = availableHeight * 0.65;
         final analyticsHeight = availableHeight * 0.17;
 
         bool needsScrolling = categoryBudgets.length > 5;
@@ -517,9 +588,13 @@ class _HomePageState extends State<HomePage> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
-                                  Icons.currency_rupee,
-                                  size: screenWidth * 0.04,
+                                Text(
+                                  _currencySymbol,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: screenWidth * 0.04,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
                                 ),
                                 SizedBox(width: screenWidth * 0.01),
                                 Text(
@@ -540,6 +615,7 @@ class _HomePageState extends State<HomePage> {
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: screenWidth * 0.04,
+                        vertical: screenHeight * 0.01,
                       ),
                       child: LayoutBuilder(
                         builder: (context, constraints) {
@@ -554,14 +630,21 @@ class _HomePageState extends State<HomePage> {
                               (rows * itemHeight) +
                               ((rows - 1) * screenHeight * 0.015);
 
+                          // 🔧 HEIGHT CONTROL - Adjust these values to change grid height
+                          double minHeight =
+                              320.0; // Minimum height (increased from 280)
+                          double maxHeight =
+                              650.0; // Maximum height (increased from 550 to 650)
+
                           double maxAvailableHeight = gridHeight.clamp(
-                            280.0,
-                            450.0,
+                            minHeight,
+                            maxHeight,
                           );
+
                           double finalHeight = needsScrolling
                               ? maxAvailableHeight
                               : calculatedHeight.clamp(
-                                  200.0,
+                                  200.0, // Minimum for non-scrolling (can also increase this)
                                   maxAvailableHeight,
                                 );
 
@@ -717,7 +800,7 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                   );
                                 } else {
-                                  // Add Category Button - Shows lock or plus based on pro status
+                                  // Add Category Button
                                   return GestureDetector(
                                     onTap: _isCheckingEntitlement
                                         ? null
@@ -733,7 +816,9 @@ class _HomePageState extends State<HomePage> {
                                         border: Border.all(
                                           color: _isProUser
                                               ? Colors.white.withOpacity(0.3)
-                                              : Colors.white.withOpacity(0.3),
+                                              : const Color(
+                                                  0xFFFFD700,
+                                                ).withOpacity(0.5),
                                           width: _isProUser ? 1.5 : 2.0,
                                         ),
                                         boxShadow: [
@@ -807,11 +892,8 @@ class _HomePageState extends State<HomePage> {
                                                                   75,
                                                                   75,
                                                                 )
-                                                              : const Color.fromARGB(
-                                                                  255,
-                                                                  81,
-                                                                  75,
-                                                                  75,
+                                                              : const Color(
+                                                                  0xFFFFD700,
                                                                 ),
                                                         ),
                                                         if (!_isProUser) ...[
@@ -886,7 +968,7 @@ class _HomePageState extends State<HomePage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                "₹$remainingBudget",
+                                "$_currencySymbol$remainingBudget",
                                 style: GoogleFonts.poppins(
                                   fontSize: screenWidth * 0.06,
                                   fontWeight: FontWeight.w700,
@@ -894,7 +976,7 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ),
                               Text(
-                                "remaining of ₹$monthlyBudget",
+                                "remaining of $_currencySymbol$monthlyBudget",
                                 style: GoogleFonts.poppins(
                                   fontSize: screenWidth * 0.025,
                                   color: Colors.grey[600],
@@ -935,7 +1017,7 @@ class _HomePageState extends State<HomePage> {
                                   Column(
                                     children: [
                                       Text(
-                                        "₹$spent",
+                                        "$_currencySymbol$spent",
                                         style: GoogleFonts.poppins(
                                           fontSize: screenWidth * 0.035,
                                           fontWeight: FontWeight.bold,
@@ -1000,23 +1082,6 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ],
                           ),
-                          if (widget.currentPage != null &&
-                              widget.onPageIndicatorTap != null)
-                            Positioned(
-                              bottom: 8,
-                              left: 0,
-                              right: 0,
-                              child: Center(
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    _buildPageIndicator(0),
-                                    const SizedBox(width: 6),
-                                    _buildPageIndicator(1),
-                                  ],
-                                ),
-                              ),
-                            ),
                         ],
                       ),
                     ),
@@ -1027,24 +1092,6 @@ class _HomePageState extends State<HomePage> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildPageIndicator(int index) {
-    final isActive = widget.currentPage == index;
-    return GestureDetector(
-      onTap: () => widget.onPageIndicatorTap?.call(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: isActive ? 20 : 6,
-        height: 6,
-        decoration: BoxDecoration(
-          color: isActive
-              ? const Color(0xFF4CAF50)
-              : Colors.grey.withOpacity(0.4),
-          borderRadius: BorderRadius.circular(3),
-        ),
-      ),
     );
   }
 }

@@ -51,21 +51,29 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!doc.exists) return;
 
     final data = doc.data()!;
-    final lastReset = data['lastResetDate'];
     final now = DateTime.now();
     final currentMonth = DateFormat('yyyy-MM').format(now);
+    final lastReset = data['lastResetDate'];
 
-    // Only reset if we have a lastResetDate AND it's from a previous month
-    if (lastReset != null && lastReset != currentMonth) {
-      // This means a new month has started since the last reset
+    // 🆕 New user (no reset date yet)
+    if (lastReset == null) {
+      await docRef.update({'lastResetDate': currentMonth});
+      debugPrint('🆕 First-time user detected — set lastResetDate only.');
+      return;
+    }
+
+    // 📅 Month changed — reset monthly fields
+    if (lastReset != currentMonth) {
       await docRef.update({
-        'categorySpent': _resetMapValues(data['categorySpent']),
-        'expenseCategorySpent': _resetMapValues(data['expenseCategorySpent']),
+        'categorySpent': _resetMapValues(data['categorySpent'] ?? {}),
+        'expenseCategorySpent': _resetMapValues(
+          data['expenseCategorySpent'] ?? {},
+        ),
         'lastResetDate': currentMonth,
       });
-    } else if (lastReset == null) {
-      // First time - just set the lastResetDate without resetting
-      await docRef.update({'lastResetDate': currentMonth});
+      debugPrint('✅ Monthly data reset for $currentMonth');
+    } else {
+      debugPrint('⏸ No reset needed — same month ($currentMonth)');
     }
   }
 

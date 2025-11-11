@@ -52,15 +52,12 @@ class _AllTransactionsPageState extends State<AllTransactionsPage> {
   }
 
   bool _matchesFilters(Map<String, dynamic> data) {
-    // Filter by category
     if (selectedCategory != "All") {
       final transactionCategory = data['category'] as String?;
       if (transactionCategory != selectedCategory) {
         return false;
       }
     }
-
-    // Filter by month
     if (selectedMonth != "All") {
       final timestamp = data['date'] as Timestamp?;
       if (timestamp != null) {
@@ -71,17 +68,14 @@ class _AllTransactionsPageState extends State<AllTransactionsPage> {
         }
       }
     }
-
     return true;
   }
 
   String _formatDate(Timestamp? timestamp) {
     if (timestamp == null) return "Unknown date";
-
     final date = timestamp.toDate();
     final now = DateTime.now();
     final difference = now.difference(date);
-
     if (difference.inDays == 0) {
       if (difference.inHours > 0) {
         return "${difference.inHours}h ago";
@@ -112,13 +106,9 @@ class _AllTransactionsPageState extends State<AllTransactionsPage> {
   }
 
   String _getMethodIcon(String method) {
-    if (method.toLowerCase().contains("cash")) {
-      return "💵";
-    } else if (method.toLowerCase().contains("upi")) {
-      return "📱";
-    } else if (method.toLowerCase().contains("card")) {
-      return "💳";
-    }
+    if (method.toLowerCase().contains("cash")) return "💵";
+    if (method.toLowerCase().contains("upi")) return "📱";
+    if (method.toLowerCase().contains("card")) return "💳";
     return "💳";
   }
 
@@ -152,7 +142,6 @@ class _AllTransactionsPageState extends State<AllTransactionsPage> {
       ),
       body: Column(
         children: [
-          // Filters Section
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -167,7 +156,6 @@ class _AllTransactionsPageState extends State<AllTransactionsPage> {
             ),
             child: Row(
               children: [
-                // Month Filter
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -201,7 +189,6 @@ class _AllTransactionsPageState extends State<AllTransactionsPage> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Category Filter
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -222,7 +209,6 @@ class _AllTransactionsPageState extends State<AllTransactionsPage> {
                         items: categoryOptions.map((String category) {
                           String displayText = category;
                           if (category != "All") {
-                            // Extract just the category name without emoji
                             displayText = category.replaceFirst(
                               RegExp(r'^(\p{Emoji}\s*)', unicode: true),
                               '',
@@ -248,7 +234,6 @@ class _AllTransactionsPageState extends State<AllTransactionsPage> {
               ],
             ),
           ),
-          // Transactions List
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
@@ -312,7 +297,6 @@ class _AllTransactionsPageState extends State<AllTransactionsPage> {
                   );
                 }
 
-                // Filter transactions
                 final filteredTransactions = snapshot.data!.docs.where((doc) {
                   final data = doc.data() as Map<String, dynamic>;
                   return _matchesFilters(data);
@@ -346,14 +330,12 @@ class _AllTransactionsPageState extends State<AllTransactionsPage> {
                   );
                 }
 
-                // Group transactions by date
                 Map<String, List<QueryDocumentSnapshot>> groupedTransactions =
                     {};
                 for (var doc in filteredTransactions) {
                   final data = doc.data() as Map<String, dynamic>;
                   final timestamp = data['date'] as Timestamp?;
                   String dateKey = "Unknown";
-
                   if (timestamp != null) {
                     final date = timestamp.toDate();
                     final now = DateTime.now();
@@ -363,7 +345,6 @@ class _AllTransactionsPageState extends State<AllTransactionsPage> {
                       date.month,
                       date.day,
                     );
-
                     if (transactionDate == today) {
                       dateKey = "Today";
                     } else if (transactionDate ==
@@ -388,7 +369,6 @@ class _AllTransactionsPageState extends State<AllTransactionsPage> {
                           "${monthNames[date.month - 1]} ${date.day}, ${date.year}";
                     }
                   }
-
                   if (!groupedTransactions.containsKey(dateKey)) {
                     groupedTransactions[dateKey] = [];
                   }
@@ -401,11 +381,9 @@ class _AllTransactionsPageState extends State<AllTransactionsPage> {
                   itemBuilder: (context, index) {
                     final dateKey = groupedTransactions.keys.elementAt(index);
                     final transactions = groupedTransactions[dateKey]!;
-
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Date Header
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Text(
@@ -417,7 +395,6 @@ class _AllTransactionsPageState extends State<AllTransactionsPage> {
                             ),
                           ),
                         ),
-                        // Transactions for this date
                         ...transactions.map((doc) {
                           final data = doc.data() as Map<String, dynamic>;
                           final amount = data['amount'] as int? ?? 0;
@@ -426,94 +403,174 @@ class _AllTransactionsPageState extends State<AllTransactionsPage> {
                           final method =
                               data['paymentMethod'] as String? ?? "Payment";
                           final timestamp = data['date'] as Timestamp?;
-
                           final categoryEmoji = _extractEmoji(category);
                           final methodIcon = _getMethodIcon(method);
                           final formattedTime = _formatDate(timestamp);
 
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF9F9F9),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.grey[200]!,
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                // Category Icon
-                                Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: const Color(
-                                      0xFF4CAF50,
-                                    ).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      categoryEmoji,
-                                      style: const TextStyle(fontSize: 24),
+                          // Check if transaction is from current month
+                          final DateTime transactionDate =
+                              timestamp?.toDate() ?? DateTime.now();
+                          final DateTime now = DateTime.now();
+                          final bool isCurrentMonth =
+                              now.year == transactionDate.year &&
+                              now.month == transactionDate.month;
+
+                          return Dismissible(
+                            key: Key(doc.id),
+                            direction: isCurrentMonth
+                                ? DismissDirection.endToStart
+                                : DismissDirection.none,
+                            confirmDismiss: (_) async {
+                              if (!isCurrentMonth) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      "Only current month transactions can be deleted.",
                                     ),
                                   ),
+                                );
+                                return false;
+                              }
+                              return await showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: Text('Delete Transaction?'),
+                                  content: Text(
+                                    'Are you sure you want to delete this transaction? The category spend will be updated.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(false),
+                                      child: Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(true),
+                                      child: Text('Delete'),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 12),
-                                // Transaction Details
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        category.replaceFirst(
-                                          RegExp(
-                                            r'^(\p{Emoji}\s*)',
-                                            unicode: true,
-                                          ),
-                                          '',
-                                        ),
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            methodIcon,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            "$method • $formattedTime",
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 12,
-                                              color: Colors.grey[600],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                              );
+                            },
+                            onDismissed: (_) async {
+                              final userDoc = FirebaseFirestore.instance
+                                  .collection("Users")
+                                  .doc(FirebaseAuth.instance.currentUser!.uid);
+                              final String catKey = category;
+                              final categorySpentPath = "categorySpent.$catKey";
+                              await userDoc.update({
+                                categorySpentPath: FieldValue.increment(
+                                  -amount,
+                                ),
+                              });
+                              await userDoc
+                                  .collection("transactions")
+                                  .doc(doc.id)
+                                  .delete();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    "Transaction deleted and category spend updated.",
                                   ),
                                 ),
-                                // Amount
-                                Text(
-                                  "₹${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}",
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.red[600],
-                                  ),
+                              );
+                            },
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.delete,
+                                color: Colors.white,
+                              ),
+                            ),
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF9F9F9),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.grey[200]!,
+                                  width: 1,
                                 ),
-                              ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: const Color(
+                                        0xFF4CAF50,
+                                      ).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        categoryEmoji,
+                                        style: const TextStyle(fontSize: 24),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          category.replaceFirst(
+                                            RegExp(
+                                              r'^(\p{Emoji}\s*)',
+                                              unicode: true,
+                                            ),
+                                            '',
+                                          ),
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              methodIcon,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              "$method • $formattedTime",
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 12,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    "₹${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.red[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         }).toList(),

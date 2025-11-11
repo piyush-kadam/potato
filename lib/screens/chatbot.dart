@@ -198,6 +198,71 @@ Give short, direct financial insights.
     return DateFormat('hh:mm a').format(time);
   }
 
+  // 🔧 NEW: Parse markdown formatting
+  List<TextSpan> _parseMarkdown(String text) {
+    final List<TextSpan> spans = [];
+    final RegExp boldPattern = RegExp(r'\*\*(.+?)\*\*');
+    int lastMatchEnd = 0;
+
+    for (final match in boldPattern.allMatches(text)) {
+      // Add text before the bold part
+      if (match.start > lastMatchEnd) {
+        spans.add(
+          TextSpan(
+            text: text.substring(lastMatchEnd, match.start),
+            style: GoogleFonts.poppins(
+              color: Colors.black87,
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+        );
+      }
+
+      // Add bold text
+      spans.add(
+        TextSpan(
+          text: match.group(1),
+          style: GoogleFonts.poppins(
+            color: Colors.black87,
+            fontSize: 14,
+            height: 1.5,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+
+      lastMatchEnd = match.end;
+    }
+
+    // Add remaining text after last match
+    if (lastMatchEnd < text.length) {
+      spans.add(
+        TextSpan(
+          text: text.substring(lastMatchEnd),
+          style: GoogleFonts.poppins(
+            color: Colors.black87,
+            fontSize: 14,
+            height: 1.5,
+          ),
+        ),
+      );
+    }
+
+    return spans.isEmpty
+        ? [
+            TextSpan(
+              text: text,
+              style: GoogleFonts.poppins(
+                color: Colors.black87,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+          ]
+        : spans;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -326,16 +391,23 @@ Give short, direct financial insights.
                                         ),
                                       ],
                                     ),
-                                    child: Text(
-                                      msg['text'] ?? '',
-                                      style: GoogleFonts.poppins(
-                                        color: isUser
-                                            ? Colors.white
-                                            : Colors.black87,
-                                        fontSize: 14,
-                                        height: 1.5,
-                                      ),
-                                    ),
+                                    // 🔧 UPDATED: Use RichText for bot messages to support markdown
+                                    child: isUser
+                                        ? Text(
+                                            msg['text'] ?? '',
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.white,
+                                              fontSize: 14,
+                                              height: 1.5,
+                                            ),
+                                          )
+                                        : RichText(
+                                            text: TextSpan(
+                                              children: _parseMarkdown(
+                                                msg['text'] ?? '',
+                                              ),
+                                            ),
+                                          ),
                                   ),
                                   Padding(
                                     padding: EdgeInsets.only(

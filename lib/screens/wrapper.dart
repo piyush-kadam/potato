@@ -98,7 +98,7 @@ class HomePageContent extends StatelessWidget {
         const HomePage(),
         // Page Indicators positioned at bottom
         Positioned(
-          bottom: 50,
+          bottom: 25,
           left: 0,
           right: 0,
           child: Center(

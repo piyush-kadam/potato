@@ -24,20 +24,33 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   Future<void> _fetchOfferings() async {
     try {
       final offerings = await Purchases.getOfferings();
-      print('Offerings fetched: ${offerings.all.keys}');
-      if (offerings.current != null) {
-        print('Current offering: ${offerings.current!.identifier}');
-        for (var pkg in offerings.current!.availablePackages) {
-          print(
-            'Package: ${pkg.identifier}, Product: ${pkg.storeProduct.identifier}',
-          );
-        }
+      print('RevenueCat: Offerings object: $offerings');
+
+      // Print all keys and what's inside
+      print('RevenueCat: offerings.all keys = ${offerings.all.keys}');
+      offerings.all.forEach((k, v) {
+        print(
+          'Offering key: $k, identifier: ${v.identifier}, packages: ${v.availablePackages.length}',
+        );
+      });
+
+      // Prefer offerings.current, but if it's null fallback to first in offerings.all
+      Offering? chosenOffering = offerings.current;
+      if (chosenOffering == null && offerings.all.isNotEmpty) {
+        chosenOffering = offerings.all.values.first;
+        print(
+          'RevenueCat: current offering is null — falling back to ${chosenOffering.identifier}',
+        );
       }
 
-      if (offerings.current?.availablePackages.isNotEmpty ?? false) {
-        // Find the monthly package as default selection (middle option with "Save 45%")
+      if (chosenOffering != null &&
+          chosenOffering.availablePackages.isNotEmpty) {
+        // choose monthly default if available
         Package? defaultPackage;
-        for (var pkg in offerings.current!.availablePackages) {
+        for (var pkg in chosenOffering.availablePackages) {
+          print(
+            'RevenueCat: package -> ${pkg.identifier} (${pkg.packageType}) productId=${pkg.storeProduct.identifier}',
+          );
           if (pkg.packageType == PackageType.monthly ||
               pkg.identifier.toLowerCase().contains('month')) {
             defaultPackage = pkg;
@@ -48,14 +61,15 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
         setState(() {
           _offerings = offerings;
           _selectedPackage =
-              defaultPackage ?? offerings.current!.availablePackages.first;
+              defaultPackage ?? chosenOffering!.availablePackages.first;
           _isLoading = false;
         });
       } else {
+        print('RevenueCat: No packages available in chosen offering.');
         setState(() => _isLoading = false);
       }
-    } catch (e) {
-      print('Error fetching offerings: $e');
+    } catch (e, st) {
+      print('Error fetching offerings: $e\n$st');
       setState(() => _isLoading = false);
     }
   }

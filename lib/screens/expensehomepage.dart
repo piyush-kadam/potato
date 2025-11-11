@@ -604,6 +604,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                         Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: screenWidth * 0.04,
+                            vertical: screenWidth * 0.01,
                           ),
                           child: LayoutBuilder(
                             builder: (context, constraints) {
@@ -985,14 +986,14 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                             screenWidth * 0.04,
                             0,
                             screenWidth * 0.04,
-                            (screenHeight * 0.015).clamp(10.0, 15.0),
+                            screenHeight * 0.015,
                           ),
                           padding: EdgeInsets.symmetric(
                             horizontal: screenWidth * 0.04,
-                            vertical: (screenHeight * 0.012).clamp(10.0, 15.0),
+                            vertical: screenWidth * 0.04,
                           ),
                           constraints: BoxConstraints(
-                            minHeight: analyticsHeight,
+                            minHeight: analyticsHeight.clamp(100.0, 160.0),
                           ),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.7),
