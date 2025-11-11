@@ -8,8 +8,8 @@
     <string>Default</string>
   </array>
   
-  <!-- Push Notifications for Phone Auth -->
+  <!-- Push Notifications for Phone Auth (use 'production' for Codemagic builds) -->
   <key>aps-environment</key>
-  <string>development</string>
+  <string>production</string>
 </dict>
 </plist>
