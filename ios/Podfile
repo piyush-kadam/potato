@@ -1,6 +1,5 @@
 platform :ios, '15.0'
 
-
 # Disable CocoaPods analytics to speed up build
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
@@ -32,14 +31,12 @@ target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
-  # ✅ Fixed: Correct Ruby variable and parentheses added
   flutter_install_all_ios_pods(File.dirname(File.realpath(__FILE__)))
-end
-
-# Add the HomeWidget target
-target 'HomeWidget' do
-  use_frameworks!
-  use_modular_headers!
+  
+  # ✅ HomeWidget must be nested INSIDE Runner target
+  target 'HomeWidget' do
+    inherit! :search_paths
+  end
 end
 
 post_install do |installer|
