@@ -11,5 +11,11 @@
   <!-- Push Notifications for Phone Auth (use 'production' for Codemagic builds) -->
   <key>aps-environment</key>
   <string>production</string>
+  
+  <!-- App Groups for Widget Communication -->
+  <key>com.apple.security.application-groups</key>
+  <array>
+    <string>group.com.potato.slideme</string>
+  </array>
 </dict>
 </plist>

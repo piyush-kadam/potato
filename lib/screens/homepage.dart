@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:liquid_progress_indicator_v2/liquid_progress_indicator.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:slideme/auth/subscription.dart';
@@ -46,6 +49,37 @@ class _HomePageState extends State<HomePage> {
     _checkProStatus();
     _fetchCurrencySymbol();
     _checkAndShowMonthlyWrap();
+    updateWidgetData();
+  }
+
+  Future<void> updateWidgetData() async {
+    try {
+      String? userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) return;
+
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(userId)
+          .get();
+
+      if (!userDoc.exists) return;
+
+      Map<String, dynamic> categoryBudgets = userDoc['categoryBudgets'] ?? {};
+      Map<String, dynamic> categorySpent = userDoc['categorySpent'] ?? {};
+
+      // Convert maps to JSON strings
+      String budgetsJson = jsonEncode(categoryBudgets);
+      String spentJson = jsonEncode(categorySpent);
+
+      // Save to shared storage
+      await HomeWidget.saveWidgetData<String>('categoryBudgets', budgetsJson);
+      await HomeWidget.saveWidgetData<String>('categorySpent', spentJson);
+
+      // Update the widget
+      await HomeWidget.updateWidget(name: 'HomeWidget', iOSName: 'HomeWidget');
+    } catch (e) {
+      print('Error updating widget: $e');
+    }
   }
 
   // 🧠 Function to check if today is first of the month and db has previousMonthAnalytics
