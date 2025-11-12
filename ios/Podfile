@@ -1,6 +1,5 @@
 platform :ios, '15.0'
 
-# Disable CocoaPods analytics to speed up build
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
 project 'Runner', {
@@ -11,11 +10,9 @@ project 'Runner', {
 
 def flutter_root
   generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
-
   unless File.exist?(generated_xcode_build_settings_path)
     raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
   end
-
   File.foreach(generated_xcode_build_settings_path) do |line|
     matches = line.match(/FLUTTER_ROOT=(.*)/)
     return matches[1].strip if matches
@@ -33,7 +30,7 @@ target 'Runner' do
 
   flutter_install_all_ios_pods(File.dirname(File.realpath(__FILE__)))
   
-  # ✅ HomeWidget must be nested INSIDE Runner target
+  # ⚠️ CRITICAL: HomeWidget MUST be INSIDE Runner target (nested)
   target 'HomeWidget' do
     inherit! :search_paths
   end
