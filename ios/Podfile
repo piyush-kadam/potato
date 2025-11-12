@@ -30,7 +30,6 @@ target 'Runner' do
 
   flutter_install_all_ios_pods(File.dirname(File.realpath(__FILE__)))
   
-  # ⚠️ CRITICAL: HomeWidget MUST be INSIDE Runner target (nested)
   target 'HomeWidget' do
     inherit! :search_paths
   end
@@ -39,5 +38,23 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+  end
+  
+  # Explicitly configure HomeWidget dependency
+  require 'xcodeproj'
+  project_path = 'Runner.xcodeproj'
+  project = Xcodeproj::Project.open(project_path)
+  
+  runner_target = project.targets.find { |t| t.name == 'Runner' }
+  widget_target = project.targets.find { |t| t.name == 'HomeWidget' }
+  
+  if runner_target && widget_target
+    # Check if dependency exists
+    unless runner_target.dependencies.any? { |dep| dep.target == widget_target }
+      puts "🔧 Adding HomeWidget dependency to Runner..."
+      runner_target.add_dependency(widget_target)
+      project.save
+      puts "✅ HomeWidget dependency added"
+    end
   end
 end
