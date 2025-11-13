@@ -22,28 +22,6 @@ end
 
 require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
 
-# Fix HomeWidget dependency BEFORE CocoaPods analyzes
-begin
-  require 'xcodeproj'
-  project_path = File.join(__dir__, 'Runner.xcodeproj')
-  project = Xcodeproj::Project.open(project_path)
-  
-  runner_target = project.targets.find { |t| t.name == 'Runner' }
-  widget_target = project.targets.find { |t| t.name == 'HomeWidget' }
-  
-  if runner_target && widget_target
-    existing = runner_target.dependencies.find { |dep| dep.target == widget_target }
-    unless existing
-      puts "🔧 Adding HomeWidget dependency to Runner..."
-      runner_target.add_dependency(widget_target)
-      project.save
-      puts "✅ Done!"
-    end
-  end
-rescue => e
-  puts "⚠️  Warning: Could not fix dependency automatically: #{e.message}"
-end
-
 flutter_ios_podfile_setup
 
 target 'Runner' do
@@ -60,5 +38,59 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+  end
+  
+  # Fix build phase order to prevent cycle
+  begin
+    require 'xcodeproj'
+    project_path = File.join(__dir__, 'Runner.xcodeproj')
+    project = Xcodeproj::Project.open(project_path)
+    
+    runner_target = project.targets.find { |t| t.name == 'Runner' }
+    widget_target = project.targets.find { |t| t.name == 'HomeWidget' }
+    
+    if runner_target && widget_target
+      puts "🔧 Fixing HomeWidget configuration..."
+      
+      # Add dependency
+      existing = runner_target.dependencies.find { |dep| dep.target == widget_target }
+      unless existing
+        runner_target.add_dependency(widget_target)
+        puts "✅ Added HomeWidget dependency"
+      end
+      
+      # Fix build phase ordering
+      embed_phase = runner_target.copy_files_build_phases.find do |phase|
+        phase.name == 'Embed App Extensions'
+      end
+      
+      thin_binary_phase = runner_target.shell_script_build_phases.find do |phase|
+        phase.name == 'Thin Binary'
+      end
+      
+      if embed_phase && thin_binary_phase
+        # Get all phases except the ones we're reordering
+        other_phases = runner_target.build_phases.reject do |phase|
+          phase == embed_phase || phase == thin_binary_phase
+        end
+        
+        # Rebuild phase list with correct order
+        runner_target.build_phases.clear
+        
+        # Add all other phases first
+        other_phases.each { |phase| runner_target.build_phases << phase }
+        
+        # Add Thin Binary before Embed
+        runner_target.build_phases << thin_binary_phase
+        runner_target.build_phases << embed_phase
+        
+        puts "✅ Reordered build phases"
+      end
+      
+      project.save
+      puts "✅ Configuration complete!"
+    end
+  rescue => e
+    puts "⚠️  Warning: #{e.message}"
   end
 end
