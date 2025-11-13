@@ -2,6 +2,9 @@ platform :ios, '15.0'
 
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
+# Run pre-install script BEFORE anything else
+system("cd #{__dir__} && bash pre_pod_install.sh")
+
 project 'Runner', {
   'Debug' => :debug,
   'Profile' => :release,
@@ -29,26 +32,9 @@ target 'Runner' do
   use_modular_headers!
 
   flutter_install_all_ios_pods(File.dirname(File.realpath(__FILE__)))
-end
-
-# Define HomeWidget as an extension of Runner
-target 'HomeWidget' do
-  use_frameworks!
-  use_modular_headers!
-end
-
-# Explicitly set the host app for HomeWidget
-def set_extension_host_app
-  project_path = 'Runner.xcodeproj'
-  project = Xcodeproj::Project.open(project_path)
   
-  runner_target = project.targets.find { |t| t.name == 'Runner' }
-  widget_target = project.targets.find { |t| t.name == 'HomeWidget' }
-  
-  if runner_target && widget_target
-    widget_target.product_type = 'com.apple.product-type.app-extension'
-    runner_target.add_dependency(widget_target)
-    project.save
+  target 'HomeWidget' do
+    inherit! :search_paths
   end
 end
 
@@ -56,7 +42,4 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
   end
-  
-  # Uncomment if needed
-  # set_extension_host_app
 end
