@@ -24,27 +24,39 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 
 flutter_ios_podfile_setup
 
-# Define shared pods
-def shared_pods
-  flutter_install_all_ios_pods(File.dirname(File.realpath(__FILE__)))
-end
-
 target 'Runner' do
   use_frameworks!
   use_modular_headers!
-  
-  shared_pods
+
+  flutter_install_all_ios_pods(File.dirname(File.realpath(__FILE__)))
 end
 
+# Define HomeWidget as an extension of Runner
 target 'HomeWidget' do
   use_frameworks!
   use_modular_headers!
+end
+
+# Explicitly set the host app for HomeWidget
+def set_extension_host_app
+  project_path = 'Runner.xcodeproj'
+  project = Xcodeproj::Project.open(project_path)
   
-  # HomeWidget as standalone target with Runner as host
+  runner_target = project.targets.find { |t| t.name == 'Runner' }
+  widget_target = project.targets.find { |t| t.name == 'HomeWidget' }
+  
+  if runner_target && widget_target
+    widget_target.product_type = 'com.apple.product-type.app-extension'
+    runner_target.add_dependency(widget_target)
+    project.save
+  end
 end
 
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
   end
+  
+  # Uncomment if needed
+  # set_extension_host_app
 end
