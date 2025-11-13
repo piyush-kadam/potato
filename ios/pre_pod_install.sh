@@ -39,8 +39,8 @@ if thin_binary
   thin_binary.input_paths.clear
   thin_binary.output_paths.clear
   
-  # Set to run on every build to prevent issues
-  thin_binary.always_out_of_date = true
+  # Set always out of date (must be string "1" not boolean)
+  thin_binary.always_out_of_date = "1"
   
   puts "✅ Cleared input/output paths from Thin Binary"
 end
