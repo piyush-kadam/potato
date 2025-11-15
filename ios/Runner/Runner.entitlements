@@ -10,22 +10,31 @@
     </array>
 
     <!-- Enable Push Notifications -->
-    <!-- Use "development" for debug builds, "production" for release/Codemagic -->
     <key>aps-environment</key>
     <string>production</string>
 
-    <!-- REQUIRED for Push Notifications to work in background -->
+    <!-- Background Modes -->
     <key>UIBackgroundModes</key>
     <array>
         <string>remote-notification</string>
         <string>processing</string>
     </array>
 
-    <!-- App Groups (your existing one) -->
+    <!-- REQUIRED for Firebase: Keychain Access -->
+    <key>keychain-access-groups</key>
+    <array>
+        <string>$(AppIdentifierPrefix)com.potato.slideme</string>
+    </array>
+
+    <!-- REQUIRED for HomeWidget (App Group) -->
     <key>com.apple.security.application-groups</key>
     <array>
         <string>group.com.potato.slideme</string>
     </array>
+
+    <!-- Fix for Firebase Messaging token persistence -->
+    <key>com.apple.security.network.client</key>
+    <true/>
 
 </dict>
 </plist>
