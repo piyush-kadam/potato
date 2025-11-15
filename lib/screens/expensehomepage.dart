@@ -639,7 +639,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                                   8.0,
                                   15.0,
                                 ),
-                                childAspectRatio: 1.3,
+                                childAspectRatio: 1.2,
                               ),
                           itemCount: sortedCategories.length + 1,
                           itemBuilder: (context, index) {
@@ -914,7 +914,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                       ),
                       padding: EdgeInsets.symmetric(
                         horizontal: screenWidth * 0.04,
-                        vertical: screenHeight * 0.05,
+                        vertical: screenHeight * 0.015,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.7),
