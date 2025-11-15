@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.slideme">
 
+    <!-- 🔔 Required for push notifications on Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
     <!-- Required for Android 11+ so the share sheet can find compatible apps -->
     <queries>
         <intent>
@@ -18,7 +21,30 @@
         android:label="Potato Book"
         android:icon="@mipmap/ic_launcher">
 
-        <!-- ✅ MainActivity back as launcher -->
+        <!-- 🔥 High importance notification channel (required by FCM) -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="high_importance_channel" />
+
+        <!-- ⭐ Must be present for Firebase Messaging -->
+        <service
+            android:name="com.google.firebase.messaging.FirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- ⭐ (Optional but recommended) Handles new FCM token updates -->
+        <service
+            android:name="com.google.firebase.iid.FirebaseInstanceIdService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- MainActivity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -37,11 +63,11 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-
         </activity>
 
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
+
 </manifest>

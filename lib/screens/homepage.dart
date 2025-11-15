@@ -626,6 +626,7 @@ class _HomePageState extends State<HomePage> {
                               ),
                               elevation: 0,
                             ),
+
                             onPressed: () async {
                               var result = await showDialog(
                                 context: context,
@@ -633,7 +634,7 @@ class _HomePageState extends State<HomePage> {
                                   categoryBudgets: categoryBudgets,
                                 ),
                               );
-                              await updateWidgetData();
+
                               if (result != null) {
                                 String selectedCategory = result['category'];
                                 int amount = result['amount'];
@@ -653,6 +654,9 @@ class _HomePageState extends State<HomePage> {
                                       "remainingBudget":
                                           remainingBudget - amount,
                                     });
+
+                                // ✅ MOVE IT HERE - After Firestore update
+                                await updateWidgetData();
                               }
                             },
                             child: Row(

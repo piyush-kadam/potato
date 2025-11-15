@@ -2,20 +2,30 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <!-- Apple Sign-In Capability -->
-  <key>com.apple.developer.applesignin</key>
-  <array>
-    <string>Default</string>
-  </array>
-  
-  <!-- Push Notifications for Phone Auth (use 'production' for Codemagic builds) -->
-  <key>aps-environment</key>
-  <string>production</string>
-  
-  <!-- App Groups for Widget Communication -->
-  <key>com.apple.security.application-groups</key>
-  <array>
-    <string>group.com.potato.slideme</string>
-  </array>
+
+    <!-- Apple Sign-In Capability -->
+    <key>com.apple.developer.applesignin</key>
+    <array>
+        <string>Default</string>
+    </array>
+
+    <!-- Enable Push Notifications -->
+    <!-- Use "development" for debug builds, "production" for release/Codemagic -->
+    <key>aps-environment</key>
+    <string>production</string>
+
+    <!-- REQUIRED for Push Notifications to work in background -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>remote-notification</string>
+        <string>processing</string>
+    </array>
+
+    <!-- App Groups (your existing one) -->
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>group.com.potato.slideme</string>
+    </array>
+
 </dict>
 </plist>

@@ -91,5 +91,17 @@
         <key>NSAllowsArbitraryLoads</key>
         <true/>
     </dict>
+
+    <!-- 🚨 REQUIRED FOR LOCAL NOTIFICATIONS -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+        <string>processing</string>
+    </array>
+
+    <!-- 🚨 REQUIRED PERMISSION MESSAGE -->
+    <key>UNUserNotificationCenterUsageDescription</key>
+    <string>This app sends notifications to remind you daily.</string>
+
 </dict>
 </plist>
