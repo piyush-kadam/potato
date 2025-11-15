@@ -940,12 +940,12 @@ class _HomePageState extends State<HomePage> {
                                                               ),
                                                         ]
                                                       : [
-                                                          const Color(
-                                                            0xFFFFD700,
-                                                          ).withOpacity(0.1),
-                                                          const Color(
-                                                            0xFFFFA500,
-                                                          ).withOpacity(0.05),
+                                                          Colors.white
+                                                              .withOpacity(0.2),
+                                                          Colors.white
+                                                              .withOpacity(
+                                                                0.05,
+                                                              ),
                                                         ],
                                                 ),
                                               ),
