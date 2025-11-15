@@ -1,10 +1,9 @@
 import Flutter
 import UIKit
-import UserNotifications   // <-- REQUIRED
+import UserNotifications
 
 @main
-@objc class AppDelegate: FlutterAppDelegate,
-                         UNUserNotificationCenterDelegate {  // <-- REQUIRED
+@objc class AppDelegate: FlutterAppDelegate {  // ✅ REMOVED the duplicate protocol declaration
                          
   override func application(
     _ application: UIApplication,
