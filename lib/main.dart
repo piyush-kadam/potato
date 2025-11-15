@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:slideme/auth/splash.dart';
 import 'package:slideme/services/notification_service.dart';
@@ -29,7 +30,7 @@ Future<void> main() async {
   } else {
     revenueCatKey = "appl_UmcrQrsvFzOgkfJmcFsmioBNrlS"; // fallback
   }
-
+  await HomeWidget.setAppGroupId('group.com.potato.slideme');
   await Purchases.configure(PurchasesConfiguration(revenueCatKey));
 
   runApp(const MyApp());
