@@ -633,6 +633,7 @@ class _HomePageState extends State<HomePage> {
                                   categoryBudgets: categoryBudgets,
                                 ),
                               );
+                              await updateWidgetData();
                               if (result != null) {
                                 String selectedCategory = result['category'];
                                 int amount = result['amount'];
