@@ -90,7 +90,7 @@ class _HomePageState extends State<HomePage> {
       await HomeWidget.saveWidgetData<String>('categorySpent', spentJson);
 
       print('✅ Data saved to widget storage');
-
+      await HomeWidget.setAppGroupId('group.com.potato.slideme');
       // Update the widget
       await HomeWidget.updateWidget(name: 'HomeWidget', iOSName: 'HomeWidget');
 
