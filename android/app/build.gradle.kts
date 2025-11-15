@@ -1,8 +1,6 @@
 plugins {
     id("com.android.application")
-    // START: FlutterFire Configuration
     id("com.google.gms.google-services")
-    // END: FlutterFire Configuration
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -13,12 +11,14 @@ android {
     ndkVersion = "27.0.12077973"
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        // Required for flutter_local_notifications
+        isCoreLibraryDesugaringEnabled = true
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = "17"
     }
 
     defaultConfig {
@@ -29,7 +29,6 @@ android {
         versionName = flutter.versionName
     }
 
-    // ✅ Correct Kotlin DSL for signing config
     signingConfigs {
         create("release") {
             keyAlias = "release-key"
@@ -44,8 +43,6 @@ android {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             isShrinkResources = false
-            // optional:
-            // proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }
@@ -55,9 +52,9 @@ flutter {
 }
 
 dependencies {
-    // ✅ GIF library for animated splash screen
+    // 🔥 Updated to required version for flutter_local_notifications
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+
     implementation("pl.droidsonroids.gif:android-gif-drawable:1.2.28")
-    
-    // ✅ AppCompat library (fixes all the errors)
     implementation("androidx.appcompat:appcompat:1.6.1")
 }
