@@ -293,14 +293,7 @@ class _SpendAmountPageState extends State<SpendAmountPage>
                             ),
                           ),
                           const SizedBox(height: 5),
-                          Text(
-                            "Tap amount to enter manually",
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: Colors.white.withOpacity(0.8),
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
+
                           const SizedBox(height: 30),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 18),

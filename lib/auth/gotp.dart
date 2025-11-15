@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:neopop/widgets/buttons/neopop_button/neopop_button.dart';
 import 'package:slideme/screens/homepage.dart';
 import 'package:slideme/screens/welcome.dart';
-import 'package:sms_autofill/sms_autofill.dart'; // Add this to pubspec.yaml
+import 'package:sms_autofill/sms_autofill.dart';
 
 class GOTPPage extends StatefulWidget {
   final String verificationId;
@@ -53,8 +53,8 @@ class _GOTPPageState extends State<GOTPPage>
   void initState() {
     super.initState();
 
-    // Start listening for SMS
-    _listenForOtp();
+    // ✅ Start listening for SMS
+    listenForCode();
 
     _contentAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1800),
@@ -105,14 +105,9 @@ class _GOTPPageState extends State<GOTPPage>
     });
   }
 
-  // Listen for OTP from SMS
-  void _listenForOtp() async {
-    await SmsAutoFill().listenForCode();
-  }
-
+  // ✅ SMS Autofill callback - automatically called when OTP is detected
   @override
   void codeUpdated() {
-    // This is called when SMS OTP is detected
     if (code != null && code!.length == 6) {
       _fillOtp(code!);
     }
@@ -128,12 +123,18 @@ class _GOTPPageState extends State<GOTPPage>
     });
     // Unfocus to hide keyboard after auto-fill
     FocusScope.of(context).unfocus();
+
+    // ✅ Auto-verify after a short delay
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted && _isOtpComplete) {
+        _verifyOtp();
+      }
+    });
   }
 
   @override
   void dispose() {
-    SmsAutoFill().unregisterListener();
-    cancel(); // Cancel SMS listener
+    cancel(); // ✅ Stop listening for SMS
     _contentAnimationController.dispose();
     _otpBoxesController.dispose();
     for (var controller in _controllers) {
@@ -283,8 +284,8 @@ class _GOTPPageState extends State<GOTPPage>
     }
     _focusNodes[0].requestFocus();
 
-    // Restart SMS listener
-    await SmsAutoFill().listenForCode();
+    // ✅ Restart SMS listener
+    listenForCode();
 
     _showSnackBar('Code resent successfully');
   }
@@ -341,6 +342,8 @@ class _GOTPPageState extends State<GOTPPage>
             keyboardType: TextInputType.number,
             maxLength: 1,
             showCursor: false,
+            // ✅ Enable iOS autofill on first box
+            autofillHints: index == 0 ? [AutofillHints.oneTimeCode] : null,
             decoration: const InputDecoration(
               counterText: '',
               border: InputBorder.none,
