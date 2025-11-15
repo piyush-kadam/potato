@@ -198,8 +198,8 @@ class _GOTPPageState extends State<GOTPPage>
     });
   }
 
-  void _onKeyEvent(RawKeyEvent event, int index) {
-    if (event is RawKeyDownEvent) {
+  void _onKeyEvent(KeyEvent event, int index) {
+    if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.backspace) {
         if (_controllers[index].text.isEmpty && index > 0) {
           // If current box is empty and backspace pressed, move to previous box and clear it
@@ -327,9 +327,9 @@ class _GOTPPageState extends State<GOTPPage>
             ),
           ],
         ),
-        child: RawKeyboardListener(
-          focusNode: FocusNode(),
-          onKey: (event) => _onKeyEvent(event, index),
+        child: KeyboardListener(
+          focusNode: _focusNodes[index],
+          onKeyEvent: (event) => _onKeyEvent(event, index),
           child: TextField(
             controller: _controllers[index],
             focusNode: _focusNodes[index],
@@ -340,20 +340,33 @@ class _GOTPPageState extends State<GOTPPage>
               fontWeight: FontWeight.w600,
             ),
             keyboardType: TextInputType.number,
-            maxLength: 1,
-            showCursor: false,
-            // ✅ Enable iOS autofill on first box
-            autofillHints: index == 0 ? [AutofillHints.oneTimeCode] : null,
+
+            // 🔥 allow full OTP paste
+            maxLength: 6,
+
+            showCursor: true,
+
+            // 🔥 enable autofill for EVERY box (required for Android/iOS)
+            autofillHints: const [AutofillHints.oneTimeCode],
+
             decoration: const InputDecoration(
               counterText: '',
               border: InputBorder.none,
               contentPadding: EdgeInsets.zero,
             ),
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(6), // Allow paste of full OTP
-            ],
+
+            // 🔥 remove 6-limit filter (it breaks paste)
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+
             onChanged: (value) => _onDigitChanged(value, index),
+
+            onTap: () {
+              // Select all to make pasting easier
+              _controllers[index].selection = TextSelection(
+                baseOffset: 0,
+                extentOffset: _controllers[index].text.length,
+              );
+            },
           ),
         ),
       ),

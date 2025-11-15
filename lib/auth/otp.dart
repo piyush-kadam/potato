@@ -35,6 +35,7 @@ class _OTPPageState extends State<OTPPage>
   final FirebaseAuth _auth = FirebaseAuth.instance;
   bool _isOtpComplete = false;
   bool _isVerifying = false;
+  String? _appSignature; // Store app signature
 
   // Animation controllers
   late AnimationController _contentAnimationController;
@@ -109,17 +110,38 @@ class _OTPPageState extends State<OTPPage>
       _otpBoxesController.forward();
       // Focus first box for immediate input
       _focusNodes[0].requestFocus();
-    });
 
-    // ✅ Start listening for SMS OTP
-    listenForCode();
+      // Initialize SMS autofill
+      _initSmsListener();
+    });
+  }
+
+  // ✅ Initialize SMS listener with proper setup
+  Future<void> _initSmsListener() async {
+    try {
+      // Get app signature for Android SMS retrieval
+      _appSignature = await SmsAutoFill().getAppSignature;
+      print('App Signature: $_appSignature'); // Log for debugging
+
+      // Start listening for SMS
+      await SmsAutoFill().listenForCode;
+
+      // Also use the mixin's listenForCode
+      listenForCode();
+    } catch (e) {
+      print('Error initializing SMS listener: $e');
+    }
   }
 
   // ✅ SMS Autofill callback - automatically called when OTP is detected
   @override
   void codeUpdated() {
-    if (code != null && code!.length == 6) {
-      _fillOtpAutomatically(code!);
+    if (code != null && code!.length >= 6) {
+      // Extract only digits from detected code
+      final digits = code!.replaceAll(RegExp(r'[^0-9]'), '');
+      if (digits.length >= 6) {
+        _fillOtpAutomatically(digits.substring(0, 6));
+      }
     }
   }
 
@@ -149,6 +171,7 @@ class _OTPPageState extends State<OTPPage>
   @override
   void dispose() {
     cancel(); // ✅ Stop listening for SMS
+    SmsAutoFill().unregisterListener(); // Additional cleanup
     _contentAnimationController.dispose();
     _otpBoxesController.dispose();
     _progressController.dispose();
@@ -177,14 +200,19 @@ class _OTPPageState extends State<OTPPage>
   String get _otp => _controllers.map((c) => c.text).join();
 
   void _onDigitChanged(String value, int index) {
-    // Handle paste - if multiple digits detected
+    if (value.isEmpty) {
+      // Handle deletion/backspace
+      return;
+    }
+
+    // ✅ Handle paste - if multiple characters detected
     if (value.length > 1) {
       _handlePaste(value, index);
       return;
     }
 
+    // Single digit entered
     if (value.isNotEmpty) {
-      // Single digit entered
       _controllers[index].text = value[0];
       if (index < 5) {
         _focusNodes[index + 1].requestFocus();
@@ -199,17 +227,23 @@ class _OTPPageState extends State<OTPPage>
     // Extract only digits from pasted text
     final digits = pastedText.replaceAll(RegExp(r'[^0-9]'), '');
 
-    // Fill boxes starting from current index
-    for (int i = 0; i < digits.length && (startIndex + i) < 6; i++) {
-      _controllers[startIndex + i].text = digits[i];
+    if (digits.isEmpty) return;
+
+    // ✅ Fill ALL boxes from the beginning (not from startIndex)
+    // This is more intuitive when pasting OTP
+    for (int i = 0; i < 6; i++) {
+      if (i < digits.length) {
+        _controllers[i].text = digits[i];
+      } else {
+        _controllers[i].clear();
+      }
     }
 
-    // Move focus to next empty box or last box
-    final nextEmptyIndex = _controllers.indexWhere((c) => c.text.isEmpty);
-    if (nextEmptyIndex != -1) {
-      _focusNodes[nextEmptyIndex].requestFocus();
-    } else {
+    // Move focus to last filled box or unfocus if complete
+    if (digits.length >= 6) {
       _focusNodes[5].unfocus();
+    } else if (digits.length > 0 && digits.length < 6) {
+      _focusNodes[digits.length].requestFocus();
     }
 
     setState(() {}); // Trigger rebuild to check completion
@@ -384,21 +418,18 @@ class _OTPPageState extends State<OTPPage>
             fontWeight: FontWeight.w600,
           ),
           keyboardType: TextInputType.number,
-          maxLength: 1,
+          maxLength: 6,
           showCursor: true,
-          // ✅ Enable iOS autofill on first box
-          autofillHints: index == 0 ? [AutofillHints.oneTimeCode] : null,
+          // ✅ Enable autofill on first box for both iOS and Android
+          autofillHints: const [AutofillHints.oneTimeCode],
+
           decoration: const InputDecoration(
             counterText: '',
             border: InputBorder.none,
             contentPadding: EdgeInsets.zero,
           ),
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(
-              6,
-            ), // Allow paste of multiple digits
-          ],
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+
           onChanged: (value) => _onDigitChanged(value, index),
           onTap: () {
             // Select all text when tapping (helps with replacing)
@@ -406,12 +437,6 @@ class _OTPPageState extends State<OTPPage>
               baseOffset: 0,
               extentOffset: _controllers[index].text.length,
             );
-          },
-          // Handle backspace key
-          onEditingComplete: () {
-            if (_controllers[index].text.isEmpty && index < 5) {
-              _focusNodes[index + 1].requestFocus();
-            }
           },
         ),
       ),

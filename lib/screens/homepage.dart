@@ -56,9 +56,6 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> updateWidgetData() async {
     try {
-      // ✅ SET THE APP GROUP ID FIRST
-      await HomeWidget.setAppGroupId('group.com.potato.slideme');
-
       String? userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) {
         print('❌ Widget Update: No user logged in');
