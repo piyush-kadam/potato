@@ -57,30 +57,46 @@ class _HomePageState extends State<HomePage> {
   Future<void> updateWidgetData() async {
     try {
       String? userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId == null) return;
+      if (userId == null) {
+        print('❌ Widget Update: No user logged in');
+        return;
+      }
 
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('Users')
           .doc(userId)
           .get();
 
-      if (!userDoc.exists) return;
+      if (!userDoc.exists) {
+        print('❌ Widget Update: User doc does not exist');
+        return;
+      }
 
       Map<String, dynamic> categoryBudgets = userDoc['categoryBudgets'] ?? {};
       Map<String, dynamic> categorySpent = userDoc['categorySpent'] ?? {};
+
+      print('📊 Widget Update - Budgets: $categoryBudgets');
+      print('📊 Widget Update - Spent: $categorySpent');
 
       // Convert maps to JSON strings
       String budgetsJson = jsonEncode(categoryBudgets);
       String spentJson = jsonEncode(categorySpent);
 
+      print('📝 Widget Update - Budgets JSON: $budgetsJson');
+      print('📝 Widget Update - Spent JSON: $spentJson');
+
       // Save to shared storage
       await HomeWidget.saveWidgetData<String>('categoryBudgets', budgetsJson);
       await HomeWidget.saveWidgetData<String>('categorySpent', spentJson);
 
+      print('✅ Data saved to widget storage');
+
       // Update the widget
       await HomeWidget.updateWidget(name: 'HomeWidget', iOSName: 'HomeWidget');
+
+      print('✅ Widget update triggered');
     } catch (e) {
-      print('Error updating widget: $e');
+      print('❌ Error updating widget: $e');
     }
   }
 
