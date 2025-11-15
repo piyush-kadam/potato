@@ -13,12 +13,7 @@
     <key>aps-environment</key>
     <string>production</string>
 
-    <!-- Background Modes -->
-    <key>UIBackgroundModes</key>
-    <array>
-        <string>remote-notification</string>
-        <string>processing</string>
-    </array>
+   
 
     <!-- REQUIRED for Firebase: Keychain Access -->
     <key>keychain-access-groups</key>
