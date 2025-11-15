@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:liquid_progress_indicator_v2/liquid_progress_indicator.dart';
 import 'package:slideme/auth/subscription.dart';
 import 'package:slideme/screens/category.dart';
@@ -244,6 +247,36 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
       if (mounted) {
         setState(() => _isNavigating = false);
       }
+    }
+  }
+
+  Future<void> updateWidgetData() async {
+    try {
+      String? userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) return;
+
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(userId)
+          .get();
+
+      if (!userDoc.exists) return;
+
+      Map<String, dynamic> categoryBudgets = userDoc['categoryBudgets'] ?? {};
+      Map<String, dynamic> categorySpent = userDoc['categorySpent'] ?? {};
+
+      // Convert maps to JSON strings
+      String budgetsJson = jsonEncode(categoryBudgets);
+      String spentJson = jsonEncode(categorySpent);
+
+      // Save to shared storage
+      await HomeWidget.saveWidgetData<String>('categoryBudgets', budgetsJson);
+      await HomeWidget.saveWidgetData<String>('categorySpent', spentJson);
+
+      // Update the widget
+      await HomeWidget.updateWidget(name: 'HomeWidget', iOSName: 'HomeWidget');
+    } catch (e) {
+      print('Error updating widget: $e');
     }
   }
 
@@ -566,7 +599,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                                       categories: sortedCategories,
                                     ),
                                   );
-
+                                  await updateWidgetData();
                                   if (result != null &&
                                       result['success'] == true) {
                                     print("✅ Payment recorded successfully");
@@ -968,10 +1001,6 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                           ),
                         ),
 
-                        SizedBox(
-                          height: (screenHeight * 0.03).clamp(8.0, 12.0),
-                        ),
-
                         /// ANALYTICS CONTAINER
                         Container(
                           margin: EdgeInsets.fromLTRB(
@@ -982,7 +1011,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                           ),
                           padding: EdgeInsets.symmetric(
                             horizontal: screenWidth * 0.04,
-                            vertical: screenWidth * 0.04,
+                            vertical: screenHeight * 0.01,
                           ),
                           constraints: BoxConstraints(
                             minHeight: analyticsHeight.clamp(100.0, 160.0),
