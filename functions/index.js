@@ -1,20 +1,19 @@
-const functions = require("firebase-functions");
+// -----------------------------
+// Firebase Functions v2 Imports
+// -----------------------------
+const { onRequest } = require("firebase-functions/v2/https");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 const fetch = require("node-fetch");
 require("dotenv").config();
 
-// Initialize Admin SDK (safe if called once)
-try {
-  admin.initializeApp();
-} catch (e) {
-  console.log("Admin already initialized:", e);
-}
+// Initialize Admin SDK
+admin.initializeApp();
 
 /* ============================================================
-   1️⃣ CHATBOT FUNCTION (Your existing code - unchanged)
+   1️⃣ CHATBOT FUNCTION (UNCHANGED LOGIC, UPDATED TO v2)
    ============================================================ */
-
-exports.chatbot = functions.https.onRequest(async (req, res) => {
+exports.chatbot = onRequest(async (req, res) => {
   try {
     const { message, context } = req.body;
 
@@ -23,9 +22,8 @@ exports.chatbot = functions.https.onRequest(async (req, res) => {
     }
 
     const apiKey = process.env.OPENAI_API_KEY;
-
     if (!apiKey) {
-      return res.status(500).json({ error: "Missing OpenAI API key" });
+      return res.status(500).json({ error: "Missing OpenAI API Key" });
     }
 
     const fullPrompt = context
@@ -58,20 +56,19 @@ exports.chatbot = functions.https.onRequest(async (req, res) => {
     );
 
     const data = await openaiResponse.json();
-
     const reply =
       data?.choices?.[0]?.message?.content ||
       "Sorry, I couldn't generate a response.";
 
     res.status(200).json({ reply });
-  } catch (error) {
-    console.error("Chatbot Error:", error);
+  } catch (err) {
+    console.error("Chatbot Error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
 /* ============================================================
-   2️⃣ RANDOM HOURLY PUSH NOTIFICATIONS (NEW)
+   2️⃣ RANDOM HOURLY PUSH NOTIFICATIONS (FULLY v2)
    ============================================================ */
 
 const potatoMessages = [
@@ -97,31 +94,30 @@ const potatoMessages = [
   "Small savings now = guilt-free weekend later.",
 ];
 
-// Runs every hour
-exports.randomPotatoNotifications = functions.pubsub
-  .schedule("every 1 hours")
-  .timeZone("Asia/Kolkata")
-  .onRun(async () => {
-    // 30% probability to send
+// Run every hour using v2 scheduler
+exports.randomPotatoNotifications = onSchedule(
+  {
+    schedule: "every 1 hours",
+    timeZone: "Asia/Kolkata",
+  },
+  async () => {
+    // 30% chance
     if (Math.random() > 0.30) {
-      console.log("Skipped (30% random chance).");
+      console.log("Random skip — not sending this hour.");
       return null;
     }
 
-    // Pick a random message
     const message =
       potatoMessages[Math.floor(Math.random() * potatoMessages.length)];
 
-    // Get all FCM tokens
     const snapshot = await admin.firestore().collection("fcmTokens").get();
     const tokens = snapshot.docs.map((d) => d.data().token);
 
     if (tokens.length === 0) {
-      console.log("No tokens found.");
+      console.log("No FCM tokens found.");
       return null;
     }
 
-    // Send the notification
     await admin.messaging().sendMulticast({
       tokens,
       notification: {
@@ -132,4 +128,5 @@ exports.randomPotatoNotifications = functions.pubsub
 
     console.log("Notification sent:", message);
     return null;
-  });
+  }
+);
