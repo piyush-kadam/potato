@@ -13,6 +13,7 @@ import 'package:slideme/screens/expensecategory.dart';
 import 'package:slideme/screens/expensewrap.dart';
 import 'package:slideme/screens/monthlywrap.dart';
 import 'package:slideme/screens/settings.dart';
+import 'package:slideme/services/notification_service.dart';
 
 import 'package:slideme/widgets/addcat.dart';
 import 'package:slideme/widgets/popup.dart';
@@ -50,6 +51,7 @@ class _HomePageState extends State<HomePage> {
     _fetchCurrencySymbol();
     _checkAndShowMonthlyWrap();
     updateWidgetData();
+    NotificationService.init();
   }
 
   Future<void> updateWidgetData() async {
@@ -958,7 +960,12 @@ class _HomePageState extends State<HomePage> {
                                                               ? Icons.add
                                                               : Icons.lock,
                                                           size:
-                                                              screenWidth * 0.2,
+                                                              (screenWidth *
+                                                                      0.1)
+                                                                  .clamp(
+                                                                    30.0,
+                                                                    45.0,
+                                                                  ),
                                                           color: _isProUser
                                                               ? const Color.fromARGB(
                                                                   255,
@@ -966,9 +973,7 @@ class _HomePageState extends State<HomePage> {
                                                                   75,
                                                                   75,
                                                                 )
-                                                              : const Color(
-                                                                  0xFFFFD700,
-                                                                ),
+                                                              : Colors.black,
                                                         ),
                                                         if (!_isProUser) ...[
                                                           SizedBox(
@@ -977,19 +982,38 @@ class _HomePageState extends State<HomePage> {
                                                                 0.005,
                                                           ),
                                                           Text(
-                                                            "PRO",
+                                                            "5 Categories\nMax",
                                                             style: GoogleFonts.poppins(
+                                                              color:
+                                                                  Colors.black,
                                                               fontSize:
-                                                                  screenWidth *
-                                                                  0.025,
+                                                                  (screenWidth *
+                                                                          0.03)
+                                                                      .clamp(
+                                                                        11.0,
+                                                                        14.0,
+                                                                      ),
                                                               fontWeight:
                                                                   FontWeight
                                                                       .w600,
-                                                              color:
-                                                                  const Color(
-                                                                    0xFFFFD700,
-                                                                  ),
+                                                              shadows: [
+                                                                Shadow(
+                                                                  color: Colors
+                                                                      .black
+                                                                      .withOpacity(
+                                                                        0.2,
+                                                                      ),
+                                                                  offset:
+                                                                      const Offset(
+                                                                        0,
+                                                                        1,
+                                                                      ),
+                                                                  blurRadius: 2,
+                                                                ),
+                                                              ],
                                                             ),
+                                                            textAlign: TextAlign
+                                                                .center,
                                                           ),
                                                         ],
                                                       ],

@@ -13,6 +13,7 @@ import 'package:slideme/screens/monthly_budget.dart';
 import 'package:slideme/screens/settings.dart';
 import 'package:slideme/screens/homepage.dart';
 import 'package:slideme/screens/wrapper.dart';
+import 'package:slideme/services/notification_service.dart';
 import 'package:slideme/widgets/expaddcat.dart';
 import 'package:slideme/widgets/expensepopup.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -107,6 +108,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
   void initState() {
     super.initState();
     _checkProStatus();
+    NotificationService.init();
   }
 
   Future<void> _checkProStatus() async {

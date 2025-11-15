@@ -10,10 +10,28 @@ class NotificationService {
     // Request notification permission
     await _messaging.requestPermission(alert: true, badge: true, sound: true);
 
-    // Initialize local notification for foreground messages
+    // ✅ Initialize local notification with iOS settings
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const settings = InitializationSettings(android: android);
+    const iOS = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+    const settings = InitializationSettings(android: android, iOS: iOS);
     await _local.initialize(settings);
+
+    // Request iOS permissions explicitly
+    final iOSImplementation = _local
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
+    if (iOSImplementation != null) {
+      await iOSImplementation.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    }
 
     // Get FCM token
     String? token = await _messaging.getToken();
@@ -36,6 +54,11 @@ class NotificationService {
             'High Importance Notifications',
             importance: Importance.max,
             priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
           ),
         ),
       );

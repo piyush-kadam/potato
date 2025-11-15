@@ -86,246 +86,289 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading || userData == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection("Users")
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-    // Currency mapping based on country names
-    final Map<String, String> currencyMap = {
-      'India': '₹',
-      'United States': '\$',
-      'United Kingdom': '£',
-      'Canada': 'C\$',
-      'Australia': 'A\$',
-      'Germany': '€',
-      'France': '€',
-      'Japan': '¥',
-      'China': '¥',
-      'Brazil': 'R\$',
-      'Mexico': 'MX\$',
-      'Spain': '€',
-      'Italy': '€',
-      'South Korea': '₩',
-      'Singapore': 'S\$',
-      'Netherlands': '€',
-      'Sweden': 'kr',
-      'Norway': 'kr',
-      'Denmark': 'kr',
-      'Switzerland': 'CHF',
-      'Russia': '₽',
-      'South Africa': 'R',
-      'New Zealand': 'NZ\$',
-      'Ireland': '€',
-      'United Arab Emirates': 'د.إ',
-      'Saudi Arabia': '﷼',
-      'Turkey': '₺',
-      'Argentina': 'AR\$',
-      'Chile': 'CL\$',
-      'Indonesia': 'Rp',
-      'Thailand': '฿',
-      'Philippines': '₱',
-      'Vietnam': '₫',
-      'Malaysia': 'RM',
-      'Pakistan': '₨',
-      'Bangladesh': '৳',
-      'Nepal': '₨',
-      'Sri Lanka': '₨',
-      'Nigeria': '₦',
-      'Kenya': 'KSh',
-      'Egypt': 'E£',
-      'Israel': '₪',
-      'Portugal': '€',
-      'Poland': 'zł',
-      'Finland': '€',
-      'Greece': '€',
-      'Austria': '€',
-      'Belgium': '€',
-      'Czech Republic': 'Kč',
-      'Hungary': 'Ft',
-      'Romania': 'lei',
-      'Colombia': 'COL\$',
-      'Peru': 'S/',
-      'Ukraine': '₴',
-      'Morocco': 'د.م.',
-      'Qatar': '﷼',
-      'Kuwait': 'د.ك',
-      'Oman': '﷼',
-    };
+        final userData = snapshot.data!.data() as Map<String, dynamic>?;
 
-    // Extract data safely
-    final username = userData?['username'] ?? "User";
-    final monthlyBudget = userData?['monthlyBudget'] ?? 0;
-    final remaining = userData?['remainingBudget'] ?? 0;
-    final spent = monthlyBudget - remaining;
+        if (userData == null) {
+          return const Scaffold(
+            body: Center(child: Text("No User Data Found")),
+          );
+        }
 
-    // Get currency symbol based on country
-    final country = userData?['country'] as String?;
-    final currencySymbol = (country != null && currencyMap.containsKey(country))
-        ? currencyMap[country]!
-        : '₹';
+        // Currency mapping
+        final Map<String, String> currencyMap = {
+          'India': '₹',
+          'United States': '\$',
+          'United Kingdom': '£',
+          'Canada': 'C\$',
+          'Australia': 'A\$',
+          'Germany': '€',
+          'France': '€',
+          'Japan': '¥',
+          'China': '¥',
+          'Brazil': 'R\$',
+          'Mexico': 'MX\$',
+          'Spain': '€',
+          'Italy': '€',
+          'South Korea': '₩',
+          'Singapore': 'S\$',
+          'Netherlands': '€',
+          'Sweden': 'kr',
+          'Norway': 'kr',
+          'Denmark': 'kr',
+          'Switzerland': 'CHF',
+          'Russia': '₽',
+          'South Africa': 'R',
+          'New Zealand': 'NZ\$',
+          'Ireland': '€',
+          'United Arab Emirates': 'د.إ',
+          'Saudi Arabia': '﷼',
+          'Turkey': '₺',
+          'Argentina': 'AR\$',
+          'Chile': 'CL\$',
+          'Indonesia': 'Rp',
+          'Thailand': '฿',
+          'Philippines': '₱',
+          'Vietnam': '₫',
+          'Malaysia': 'RM',
+          'Pakistan': '₨',
+          'Bangladesh': '৳',
+          'Nepal': '₨',
+          'Sri Lanka': '₨',
+          'Nigeria': '₦',
+          'Kenya': 'KSh',
+          'Egypt': 'E£',
+          'Israel': '₪',
+          'Portugal': '€',
+          'Poland': 'zł',
+          'Finland': '€',
+          'Greece': '€',
+          'Austria': '€',
+          'Belgium': '€',
+          'Czech Republic': 'Kč',
+          'Hungary': 'Ft',
+          'Romania': 'lei',
+          'Colombia': 'COL\$',
+          'Peru': 'S/',
+          'Ukraine': '₴',
+          'Morocco': 'د.م.',
+          'Qatar': '﷼',
+          'Kuwait': 'د.ك',
+          'Oman': '﷼',
+        };
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        leading: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.3),
-            shape: BoxShape.circle,
-          ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new,
-              color: Colors.black,
-              size: 18,
+        // Extract data
+        final username = userData['username'] ?? "User";
+        final monthlyBudget = userData['monthlyBudget'] ?? 0;
+        final remaining = userData['remainingBudget'] ?? 0;
+        final spent = monthlyBudget - remaining;
+        final country = userData['country'] as String?;
+        final profilePic = userData['pfp'] as String?;
+
+        final currencySymbol =
+            (country != null && currencyMap.containsKey(country))
+            ? currencyMap[country]!
+            : '₹';
+
+        return Scaffold(
+          extendBodyBehindAppBar: true,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: true,
+            leading: Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_new,
+                  color: Colors.black,
+                  size: 18,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
             ),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-        title: Text(
-          "Settings",
-          style: GoogleFonts.poppins(
-            color: Colors.black,
-            fontWeight: FontWeight.w600,
-            fontSize: 20,
-          ),
-        ),
-      ),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.asset('assets/images/bg.png', fit: BoxFit.cover),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const ProfilePage()),
-                      );
-                    },
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: Colors.white, width: 2),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 20,
-                          ),
-                          child: Column(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.withOpacity(0.15),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.person,
-                                  size: 32,
-                                  color: Colors.green,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                username,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  _buildBudgetStat(
-                                    "Budget",
-                                    "$currencySymbol${monthlyBudget.toString()}",
-                                    Colors.blue,
-                                  ),
-                                  _buildBudgetStat(
-                                    "Spent",
-                                    "$currencySymbol$spent",
-                                    Colors.orange,
-                                  ),
-                                  _buildBudgetStat(
-                                    "Remaining",
-                                    "$currencySymbol${remaining.toString()}",
-                                    Colors.green,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const SubscriptionPage(),
-                              ),
-                            );
-                          },
-                          child: _buildActionCard(
-                            title: "Get Pro",
-                            icon: Icons.north_east_outlined,
-                            color: Colors.green,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: _logoutUser,
-                          child: _buildActionCard(
-                            title: "Logout",
-                            icon: Icons.logout_rounded,
-                            color: Colors.red,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+            title: Text(
+              "Settings",
+              style: GoogleFonts.poppins(
+                color: Colors.black,
+                fontWeight: FontWeight.w600,
+                fontSize: 20,
               ),
             ),
           ),
-        ],
-      ),
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.asset('assets/images/bg.png', fit: BoxFit.cover),
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ProfilePage(),
+                            ),
+                          );
+                        },
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.08),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 20,
+                              ),
+                              child: Column(
+                                children: [
+                                  // 🔥 Updated Profile Photo Container
+                                  Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: CircleAvatar(
+                                      radius: 34,
+                                      backgroundColor: Colors.white.withOpacity(
+                                        0.3,
+                                      ),
+                                      backgroundImage:
+                                          (profilePic != null &&
+                                              profilePic.isNotEmpty)
+                                          ? NetworkImage(profilePic)
+                                          : null,
+                                      child:
+                                          (profilePic == null ||
+                                              profilePic.isEmpty)
+                                          ? const Icon(
+                                              Icons.person,
+                                              size: 32,
+                                              color: Colors.green,
+                                            )
+                                          : null,
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 12),
+
+                                  Text(
+                                    username,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      _buildBudgetStat(
+                                        "Budget",
+                                        "$currencySymbol${monthlyBudget.toString()}",
+                                        Colors.blue,
+                                      ),
+                                      _buildBudgetStat(
+                                        "Spent",
+                                        "$currencySymbol$spent",
+                                        Colors.orange,
+                                      ),
+                                      _buildBudgetStat(
+                                        "Remaining",
+                                        "$currencySymbol${remaining.toString()}",
+                                        Colors.green,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const SubscriptionPage(),
+                                  ),
+                                );
+                              },
+                              child: _buildActionCard(
+                                title: "Get Pro",
+                                icon: Icons.north_east_outlined,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: _logoutUser,
+                              child: _buildActionCard(
+                                title: "Logout",
+                                icon: Icons.logout_rounded,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

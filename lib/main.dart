@@ -31,7 +31,7 @@ Future<void> main() async {
   }
 
   await Purchases.configure(PurchasesConfiguration(revenueCatKey));
-  await NotificationService.init();
+
   runApp(const MyApp());
 }
 
