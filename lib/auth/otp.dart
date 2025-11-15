@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:neopop/widgets/buttons/neopop_button/neopop_button.dart';
 import 'package:slideme/screens/homepage.dart';
 import 'package:slideme/screens/welcome.dart';
+import 'package:sms_autofill/sms_autofill.dart';
 
 class OTPPage extends StatefulWidget {
   final String verificationId;
@@ -23,7 +24,8 @@ class OTPPage extends StatefulWidget {
   State<OTPPage> createState() => _OTPPageState();
 }
 
-class _OTPPageState extends State<OTPPage> with TickerProviderStateMixin {
+class _OTPPageState extends State<OTPPage>
+    with TickerProviderStateMixin, CodeAutoFill {
   final List<TextEditingController> _controllers = List.generate(
     6,
     (index) => TextEditingController(),
@@ -109,30 +111,16 @@ class _OTPPageState extends State<OTPPage> with TickerProviderStateMixin {
       _focusNodes[0].requestFocus();
     });
 
-    // Setup SMS auto-retrieval listener
-    _listenForAutoVerification();
+    // ✅ Start listening for SMS OTP
+    listenForCode();
   }
 
-  void _listenForAutoVerification() {
-    _auth.verifyPhoneNumber(
-      phoneNumber: widget.phone,
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        final smsCode = credential.smsCode;
-        if (smsCode != null && smsCode.length == 6) {
-          _fillOtpAutomatically(smsCode);
-        }
-      },
-      verificationFailed: (FirebaseAuthException e) {
-        print('Auto-verification failed: ${e.message}');
-      },
-      codeSent: (String verificationId, int? resendToken) {
-        print('Code sent successfully');
-      },
-      codeAutoRetrievalTimeout: (String verificationId) {
-        print('Auto-retrieval timeout');
-      },
-      timeout: const Duration(seconds: 60),
-    );
+  // ✅ SMS Autofill callback - automatically called when OTP is detected
+  @override
+  void codeUpdated() {
+    if (code != null && code!.length == 6) {
+      _fillOtpAutomatically(code!);
+    }
   }
 
   void _fillOtpAutomatically(String otp) {
@@ -160,6 +148,7 @@ class _OTPPageState extends State<OTPPage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    cancel(); // ✅ Stop listening for SMS
     _contentAnimationController.dispose();
     _otpBoxesController.dispose();
     _progressController.dispose();
@@ -397,6 +386,8 @@ class _OTPPageState extends State<OTPPage> with TickerProviderStateMixin {
           keyboardType: TextInputType.number,
           maxLength: 1,
           showCursor: true,
+          // ✅ Enable iOS autofill on first box
+          autofillHints: index == 0 ? [AutofillHints.oneTimeCode] : null,
           decoration: const InputDecoration(
             counterText: '',
             border: InputBorder.none,
