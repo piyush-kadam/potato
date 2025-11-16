@@ -17,33 +17,37 @@ struct Provider: TimelineProvider {
         completion(timeline)
     }
     
-  func loadData() -> SimpleEntry {
-    print("📱 WIDGET DEBUG - Starting load...")
-    
-    // Try to access UserDefaults with app group
-    let data = UserDefaults(suiteName: "group.com.potato.slideme")
-    print("📱 WIDGET DEBUG - UserDefaults exists: \(data != nil)")
-    
-    // Try to read the keys
-    let budgetsData = data?.string(forKey: "categoryBudgets") ?? "{}"
-    let spentData = data?.string(forKey: "categorySpent") ?? "{}"
-    
-    print("📱 WIDGET DEBUG - Budgets string length: \(budgetsData.count)")
-    print("📱 WIDGET DEBUG - Budgets raw: \(budgetsData)")
-    print("📱 WIDGET DEBUG - Spent string length: \(spentData.count)")
-    print("📱 WIDGET DEBUG - Spent raw: \(spentData)")
-    
-    // Parse the data
-    let budgets = parseCategoryData(budgetsData)
-    let spent = parseCategoryData(spentData)
-    
-    print("📱 WIDGET DEBUG - Parsed budgets count: \(budgets.count)")
-    print("📱 WIDGET DEBUG - Parsed budgets: \(budgets)")
-    print("📱 WIDGET DEBUG - Parsed spent count: \(spent.count)")
-    print("📱 WIDGET DEBUG - Parsed spent: \(spent)")
-    
-    return SimpleEntry(date: Date(), categoryBudgets: budgets, categorySpent: spent)
-}
+    func loadData() -> SimpleEntry {
+        print("📱 WIDGET DEBUG - Starting load...")
+        
+        // Try to access UserDefaults with app group
+        guard let data = UserDefaults(suiteName: "group.com.potato.slideme") else {
+            print("📱 WIDGET DEBUG - Failed to create UserDefaults with suite name")
+            return SimpleEntry(date: Date(), categoryBudgets: [:], categorySpent: [:])
+        }
+        
+        print("📱 WIDGET DEBUG - UserDefaults exists: true")
+        
+        // Try to read the keys
+        let budgetsData = data.string(forKey: "categoryBudgets") ?? "{}"
+        let spentData = data.string(forKey: "categorySpent") ?? "{}"
+        
+        print("📱 WIDGET DEBUG - Budgets string length: \(budgetsData.count)")
+        print("📱 WIDGET DEBUG - Budgets raw: \(budgetsData)")
+        print("📱 WIDGET DEBUG - Spent string length: \(spentData.count)")
+        print("📱 WIDGET DEBUG - Spent raw: \(spentData)")
+        
+        // Parse the data
+        let budgets = parseCategoryData(budgetsData)
+        let spent = parseCategoryData(spentData)
+        
+        print("📱 WIDGET DEBUG - Parsed budgets count: \(budgets.count)")
+        print("📱 WIDGET DEBUG - Parsed budgets: \(budgets)")
+        print("📱 WIDGET DEBUG - Parsed spent count: \(spent.count)")
+        print("📱 WIDGET DEBUG - Parsed spent: \(spent)")
+        
+        return SimpleEntry(date: Date(), categoryBudgets: budgets, categorySpent: spent)
+    }
     
     func parseCategoryData(_ jsonString: String) -> [String: Double] {
         guard let data = jsonString.data(using: .utf8),
@@ -105,12 +109,24 @@ struct HomeWidgetEntryView: View {
                 }
                 .padding(.bottom, 4)
                 
+                // ✅ DEBUG INFO - Shows count even if empty
+                Text("Budgets: \(entry.categoryBudgets.count) | Spent: \(entry.categorySpent.count)")
+                    .font(.system(size: 10))
+                    .foregroundColor(.red)
+                    .padding(.bottom, 4)
+                
                 if entry.categoryBudgets.isEmpty {
                     Spacer()
-                    Text("No budget data available")
-                        .font(.system(size: 14))
-                        .foregroundColor(.gray)
-                        .frame(maxWidth: .infinity, alignment: .center)
+                    VStack(spacing: 8) {
+                        Text("No budget data available")
+                            .font(.system(size: 14))
+                            .foregroundColor(.gray)
+                        
+                        Text("Check console logs")
+                            .font(.system(size: 10))
+                            .foregroundColor(.red)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
                     Spacer()
                 } else {
                     // Categories
