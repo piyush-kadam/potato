@@ -47,6 +47,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    HomeWidget.setAppGroupId('group.com.potato.slideme');
     _checkProStatus();
     _fetchCurrencySymbol();
     _checkAndShowMonthlyWrap();
@@ -56,6 +57,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> updateWidgetData() async {
     try {
+      await HomeWidget.setAppGroupId('group.com.potato.slideme');
       String? userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) {
         print('❌ Widget Update: No user logged in');
@@ -90,7 +92,7 @@ class _HomePageState extends State<HomePage> {
       await HomeWidget.saveWidgetData<String>('categorySpent', spentJson);
 
       print('✅ Data saved to widget storage');
-      await HomeWidget.setAppGroupId('group.com.potato.slideme');
+
       // Update the widget
       await HomeWidget.updateWidget(name: 'HomeWidget', iOSName: 'HomeWidget');
 
