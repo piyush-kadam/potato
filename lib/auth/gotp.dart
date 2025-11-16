@@ -6,13 +6,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:neopop/widgets/buttons/neopop_button/neopop_button.dart';
 import 'package:slideme/screens/homepage.dart';
 import 'package:slideme/screens/welcome.dart';
+import 'package:sms_autofill/sms_autofill.dart';
 
 class GOTPPage extends StatefulWidget {
   final String verificationId;
   final String fullName;
   final String phone;
-  final bool isAfterGoogleSignIn; // Flag to check if after Google sign-in
-  final String? userId; // User ID from Google sign-in
+  final bool isAfterGoogleSignIn;
+  final String? userId;
 
   const GOTPPage({
     super.key,
@@ -27,7 +28,8 @@ class GOTPPage extends StatefulWidget {
   State<GOTPPage> createState() => _GOTPPageState();
 }
 
-class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
+class _GOTPPageState extends State<GOTPPage>
+    with TickerProviderStateMixin, CodeAutoFill {
   final List<TextEditingController> _controllers = List.generate(
     6,
     (index) => TextEditingController(),
@@ -37,10 +39,13 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   bool _isOtpComplete = false;
   bool _isVerifying = false;
+  String? _appSignature;
 
-  // Animation controllers - INCREASED DURATION
+  // Animation controllers
   late AnimationController _contentAnimationController;
   late AnimationController _otpBoxesController;
+  late AnimationController _progressController;
+  late Animation<double> _progressAnimation;
   late Animation<double> _backButtonAnimation;
   late Animation<double> _resendAnimation;
   late Animation<double> _verifyButtonAnimation;
@@ -51,70 +56,125 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
-    // INCREASED DURATION from 1000ms to 1800ms for more noticeable fade
     _contentAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 1800),
-      vsync: this,
-    );
-
-    // INCREASED DURATION from 800ms to 1600ms for OTP boxes
-    _otpBoxesController = AnimationController(
       duration: const Duration(milliseconds: 1600),
       vsync: this,
     );
 
-    // Extended intervals with slower fade curves
+    _otpBoxesController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+
+    _progressController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _progressAnimation = Tween<double>(begin: 0.25, end: 0.5).animate(
+      CurvedAnimation(parent: _progressController, curve: Curves.easeInOut),
+    );
+
     _backButtonAnimation = CurvedAnimation(
       parent: _contentAnimationController,
-      curve: const Interval(0.0, 0.35, curve: Curves.easeOut),
+      curve: const Interval(0.0, 0.4, curve: Curves.easeOutCubic),
     );
 
     _resendAnimation = CurvedAnimation(
       parent: _contentAnimationController,
-      curve: const Interval(0.5, 0.8, curve: Curves.easeOut),
+      curve: const Interval(0.4, 0.7, curve: Curves.easeOutCubic),
     );
 
     _verifyButtonAnimation = CurvedAnimation(
       parent: _contentAnimationController,
-      curve: const Interval(0.65, 0.95, curve: Curves.easeOut),
+      curve: const Interval(0.6, 0.9, curve: Curves.easeOutCubic),
     );
 
     _bottomTextAnimation = CurvedAnimation(
       parent: _contentAnimationController,
-      curve: const Interval(0.75, 1.0, curve: Curves.easeOut),
+      curve: const Interval(0.8, 1.0, curve: Curves.easeOutCubic),
     );
 
-    // Create MORE NOTICEABLE staggered animations for each OTP box
     _otpBoxAnimations = List.generate(6, (index) {
-      final start = 0.0 + (index * 0.12); // Increased spacing
-      final end = start + 0.35; // Longer duration per box
+      final start = 0.1 + (index * 0.08);
+      final end = start + 0.35;
       return CurvedAnimation(
         parent: _otpBoxesController,
-        curve: Interval(start, end, curve: Curves.easeOut),
+        curve: Interval(start, end, curve: Curves.easeOutCubic),
       );
     });
 
-    // Add listeners to all controllers
     for (var controller in _controllers) {
       controller.addListener(_checkOtpComplete);
     }
 
-    // Start animations
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _contentAnimationController.forward();
       _otpBoxesController.forward();
+      _focusNodes[0].requestFocus();
+      _initSmsListener();
+    });
+  }
+
+  // ✅ Initialize SMS listener
+  Future<void> _initSmsListener() async {
+    try {
+      _appSignature = await SmsAutoFill().getAppSignature;
+      print('App Signature: $_appSignature');
+      await SmsAutoFill().listenForCode;
+      listenForCode();
+      print('SMS Autofill initialized successfully');
+    } catch (e) {
+      print('Error initializing SMS listener: $e');
+    }
+  }
+
+  // ✅ SMS Autofill callback
+  @override
+  void codeUpdated() {
+    print('SMS Code detected: $code');
+    if (code != null && code!.length >= 6) {
+      final digits = code!.replaceAll(RegExp(r'[^0-9]'), '');
+      print('Extracted digits: $digits');
+      if (digits.length >= 6) {
+        _fillOtpAutomatically(digits.substring(0, 6));
+      }
+    }
+  }
+
+  void _fillOtpAutomatically(String otp) {
+    if (!mounted) return;
+
+    for (int i = 0; i < 6 && i < otp.length; i++) {
+      _controllers[i].text = otp[i];
+    }
+    setState(() {
+      _isOtpComplete = true;
+    });
+
+    for (var node in _focusNodes) {
+      node.unfocus();
+    }
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted && _isOtpComplete) {
+        _verifyOtp();
+      }
     });
   }
 
   @override
   void dispose() {
+    cancel();
+    SmsAutoFill().unregisterListener();
     _contentAnimationController.dispose();
     _otpBoxesController.dispose();
-    for (var controller in _controllers) {
-      controller.dispose();
+    _progressController.dispose();
+    for (var c in _controllers) {
+      c.dispose();
     }
-    for (var node in _focusNodes) {
-      node.dispose();
+    for (var n in _focusNodes) {
+      n.dispose();
     }
     super.dispose();
   }
@@ -123,26 +183,64 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
     final otp = _otp;
     final isComplete = otp.length == 6;
     if (isComplete != _isOtpComplete) {
-      setState(() {
-        _isOtpComplete = isComplete;
-      });
+      setState(() => _isOtpComplete = isComplete);
+      if (isComplete) {
+        _progressController.forward();
+      } else {
+        _progressController.reverse();
+      }
     }
   }
 
-  String get _otp => _controllers.map((controller) => controller.text).join();
+  String get _otp => _controllers.map((c) => c.text).join();
 
   void _onDigitChanged(String value, int index) {
+    if (value.isEmpty) {
+      return;
+    }
+
+    // ✅ Handle paste
+    if (value.length > 1) {
+      _handlePaste(value, index);
+      return;
+    }
+
+    // Single digit entered
     if (value.isNotEmpty) {
-      _controllers[index].text = value[0];
+      final digit = value[value.length - 1];
+      _controllers[index].text = digit;
+      _controllers[index].selection = TextSelection.fromPosition(
+        TextPosition(offset: _controllers[index].text.length),
+      );
+
       if (index < 5) {
         _focusNodes[index + 1].requestFocus();
-      }
-    } else {
-      // Handle backspace - move to previous field
-      if (index > 0) {
-        _focusNodes[index - 1].requestFocus();
+      } else {
+        _focusNodes[index].unfocus();
       }
     }
+  }
+
+  void _handlePaste(String pastedText, int startIndex) {
+    final digits = pastedText.replaceAll(RegExp(r'[^0-9]'), '');
+
+    if (digits.isEmpty) return;
+
+    for (int i = 0; i < 6; i++) {
+      if (i < digits.length) {
+        _controllers[i].text = digits[i];
+      } else {
+        _controllers[i].clear();
+      }
+    }
+
+    if (digits.length >= 6) {
+      _focusNodes[5].unfocus();
+    } else if (digits.length > 0 && digits.length < 6) {
+      _focusNodes[digits.length].requestFocus();
+    }
+
+    setState(() {});
   }
 
   void _verifyOtp() async {
@@ -162,15 +260,11 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
       );
 
       if (widget.isAfterGoogleSignIn && widget.userId != null) {
-        // For Google sign-in users, just link the phone credential
-        // Don't create a new auth user, just update the existing document
         final currentUser = _auth.currentUser;
         if (currentUser != null && currentUser.uid == widget.userId) {
-          // Link phone credential to existing Google account
           await currentUser.linkWithCredential(credential);
         }
 
-        // Update the SAME document with phone verification
         await FirebaseFirestore.instance
             .collection('Users')
             .doc(widget.userId)
@@ -180,16 +274,45 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
               'otpVerified': true,
               'timestamp': FieldValue.serverTimestamp(),
             });
+      } else {
+        await _auth.signInWithCredential(credential);
+
+        await FirebaseFirestore.instance
+            .collection('Users')
+            .doc(_auth.currentUser!.uid)
+            .set({
+              'name': widget.fullName,
+              'phone': widget.phone,
+              'otpVerified': true,
+              'phoneVerified': true,
+              'profileCompleted': true,
+              'timestamp': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
       }
 
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const NamePage()),
-        (route) => false,
-      );
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const NamePage()),
+          (route) => false,
+        );
+      }
     } on FirebaseAuthException catch (e) {
-      setState(() => _isVerifying = false);
-      _showSnackBar('OTP Error: ${e.message}', isError: true);
+      if (mounted) {
+        setState(() => _isVerifying = false);
+        String errorMessage = 'OTP verification failed';
+        if (e.code == 'invalid-verification-code') {
+          errorMessage = 'Invalid OTP. Please try again.';
+        } else if (e.code == 'session-expired') {
+          errorMessage = 'OTP expired. Please request a new one.';
+        }
+        _showSnackBar(errorMessage, isError: true);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isVerifying = false);
+        _showSnackBar('An error occurred. Please try again.', isError: true);
+      }
     }
   }
 
@@ -213,8 +336,35 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
     );
   }
 
-  void _resendCode() {
-    _showSnackBar('Code resent successfully');
+  void _resendCode() async {
+    setState(() => _isVerifying = true);
+    try {
+      await _auth.verifyPhoneNumber(
+        phoneNumber: widget.phone,
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          final smsCode = credential.smsCode;
+          if (smsCode != null && smsCode.length == 6) {
+            _fillOtpAutomatically(smsCode);
+          }
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          if (mounted) {
+            _showSnackBar('Failed to resend code', isError: true);
+          }
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          if (mounted) {
+            _showSnackBar('Code resent successfully');
+          }
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {},
+        timeout: const Duration(seconds: 60),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isVerifying = false);
+      }
+    }
   }
 
   Widget _buildAnimatedElement({
@@ -224,7 +374,13 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
     return AnimatedBuilder(
       animation: animation,
       builder: (context, child) {
-        return Opacity(opacity: animation.value, child: child);
+        return Opacity(
+          opacity: Curves.easeInOut.transform(animation.value),
+          child: Transform.translate(
+            offset: Offset(0, (1 - animation.value) * 20),
+            child: child,
+          ),
+        );
       },
       child: child,
     );
@@ -265,7 +421,8 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
           ),
           keyboardType: TextInputType.number,
           maxLength: 1,
-          showCursor: false,
+          showCursor: true,
+          autofillHints: index == 0 ? const [AutofillHints.oneTimeCode] : null,
           decoration: const InputDecoration(
             counterText: '',
             border: InputBorder.none,
@@ -273,6 +430,12 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
           ),
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           onChanged: (value) => _onDigitChanged(value, index),
+          onTap: () {
+            _controllers[index].selection = TextSelection(
+              baseOffset: 0,
+              extentOffset: _controllers[index].text.length,
+            );
+          },
         ),
       ),
     );
@@ -280,7 +443,6 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 360;
     final scaleFactor = isSmallScreen ? 0.9 : 1.0;
@@ -290,7 +452,6 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
       backgroundColor: const Color(0xff5FB567),
       body: Stack(
         children: [
-          // Background Image
           Positioned.fill(
             child: Image.asset(
               'assets/images/bgg.png',
@@ -299,8 +460,6 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
                   Container(color: const Color(0xff5FB567)),
             ),
           ),
-
-          // Content
           SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(
@@ -310,7 +469,6 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Back Button with Loading Bar - Animated
                   _buildAnimatedElement(
                     animation: _backButtonAnimation,
                     child: Row(
@@ -331,34 +489,36 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
                           ),
                         ),
                         SizedBox(width: 12 * scaleFactor),
-                        // Loading Bar
                         Expanded(
-                          child: Container(
-                            height: 4 * scaleFactor,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                            child: FractionallySizedBox(
-                              alignment: Alignment.centerLeft,
-                              widthFactor: _isOtpComplete ? 0.5 : 0.25,
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
+                          child: AnimatedBuilder(
+                            animation: _progressAnimation,
+                            builder: (context, _) {
+                              return Container(
+                                height: 4 * scaleFactor,
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: Colors.white.withOpacity(0.3),
                                   borderRadius: BorderRadius.circular(2),
                                 ),
-                              ),
-                            ),
+                                child: FractionallySizedBox(
+                                  alignment: Alignment.centerLeft,
+                                  widthFactor: _isOtpComplete
+                                      ? _progressAnimation.value
+                                      : 0.25,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ],
                     ),
                   ),
-
                   const Spacer(),
-
-                  // OTP Boxes with smooth staggered fade-in
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(6, (index) {
@@ -370,18 +530,17 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
                       );
                     }),
                   ),
-
                   SizedBox(height: 24 * scaleFactor),
-
-                  // Resend OTP - Animated
                   _buildAnimatedElement(
                     animation: _resendAnimation,
                     child: GestureDetector(
-                      onTap: _resendCode,
+                      onTap: _isVerifying ? null : _resendCode,
                       child: Text(
                         'Resend OTP',
                         style: GoogleFonts.poppins(
-                          color: Colors.white,
+                          color: _isVerifying
+                              ? Colors.white.withOpacity(0.5)
+                              : Colors.white,
                           fontSize: 14 * scaleFactor,
                           fontWeight: FontWeight.w500,
                           decoration: TextDecoration.underline,
@@ -390,10 +549,7 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-
                   SizedBox(height: 30 * scaleFactor),
-
-                  // Verify Button - Animated
                   _buildAnimatedElement(
                     animation: _verifyButtonAnimation,
                     child: AnimatedContainer(
@@ -468,10 +624,7 @@ class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-
                   const Spacer(),
-
-                  // Bottom Text - Animated
                   _buildAnimatedElement(
                     animation: _bottomTextAnimation,
                     child: Padding(

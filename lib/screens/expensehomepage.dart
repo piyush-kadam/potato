@@ -914,7 +914,6 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                       ),
                       padding: EdgeInsets.symmetric(
                         horizontal: screenWidth * 0.04,
-                        vertical: screenHeight * 0.015,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.7),

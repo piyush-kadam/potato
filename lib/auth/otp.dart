@@ -35,7 +35,7 @@ class _OTPPageState extends State<OTPPage>
   final FirebaseAuth _auth = FirebaseAuth.instance;
   bool _isOtpComplete = false;
   bool _isVerifying = false;
-  String? _appSignature; // Store app signature
+  String? _appSignature;
 
   // Animation controllers
   late AnimationController _contentAnimationController;
@@ -128,6 +128,8 @@ class _OTPPageState extends State<OTPPage>
 
       // Also use the mixin's listenForCode
       listenForCode();
+
+      print('SMS Autofill initialized successfully');
     } catch (e) {
       print('Error initializing SMS listener: $e');
     }
@@ -136,9 +138,11 @@ class _OTPPageState extends State<OTPPage>
   // ✅ SMS Autofill callback - automatically called when OTP is detected
   @override
   void codeUpdated() {
+    print('SMS Code detected: $code'); // Debug log
     if (code != null && code!.length >= 6) {
       // Extract only digits from detected code
       final digits = code!.replaceAll(RegExp(r'[^0-9]'), '');
+      print('Extracted digits: $digits'); // Debug log
       if (digits.length >= 6) {
         _fillOtpAutomatically(digits.substring(0, 6));
       }
@@ -205,15 +209,20 @@ class _OTPPageState extends State<OTPPage>
       return;
     }
 
-    // ✅ Handle paste - if multiple characters detected
+    // ✅ Handle paste - if multiple characters detected (since maxLength is 1, this catches paste)
     if (value.length > 1) {
       _handlePaste(value, index);
       return;
     }
 
-    // Single digit entered
+    // Single digit entered - keep only the last character
     if (value.isNotEmpty) {
-      _controllers[index].text = value[0];
+      final digit = value[value.length - 1];
+      _controllers[index].text = digit;
+      _controllers[index].selection = TextSelection.fromPosition(
+        TextPosition(offset: _controllers[index].text.length),
+      );
+
       if (index < 5) {
         _focusNodes[index + 1].requestFocus();
       } else {
@@ -418,21 +427,17 @@ class _OTPPageState extends State<OTPPage>
             fontWeight: FontWeight.w600,
           ),
           keyboardType: TextInputType.number,
-          maxLength: 6,
+          maxLength: 1, // ✅ Changed to 1 for single digit per box
           showCursor: true,
-          // ✅ Enable autofill on first box for both iOS and Android
-          autofillHints: const [AutofillHints.oneTimeCode],
-
+          autofillHints: index == 0 ? const [AutofillHints.oneTimeCode] : null,
           decoration: const InputDecoration(
             counterText: '',
             border: InputBorder.none,
             contentPadding: EdgeInsets.zero,
           ),
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-
           onChanged: (value) => _onDigitChanged(value, index),
           onTap: () {
-            // Select all text when tapping (helps with replacing)
             _controllers[index].selection = TextSelection(
               baseOffset: 0,
               extentOffset: _controllers[index].text.length,
