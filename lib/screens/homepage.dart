@@ -93,6 +93,17 @@ class _HomePageState extends State<HomePage> {
 
       print('✅ Data saved to widget storage');
 
+      // ✅ ADD THIS - Verify data was actually saved
+      String? readBudgets = await HomeWidget.getWidgetData<String>(
+        'categoryBudgets',
+      );
+      String? readSpent = await HomeWidget.getWidgetData<String>(
+        'categorySpent',
+      );
+
+      print('🔍 VERIFY READ BACK - Budgets: $readBudgets');
+      print('🔍 VERIFY READ BACK - Spent: $readSpent');
+
       // Update the widget
       await HomeWidget.updateWidget(name: 'HomeWidget', iOSName: 'HomeWidget');
 
@@ -393,10 +404,6 @@ class _HomePageState extends State<HomePage> {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          updateWidgetData();
-        });
 
         var data = snapshot.data!.data() as Map<String, dynamic>;
         String username = data["username"] ?? "User";
