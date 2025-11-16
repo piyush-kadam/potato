@@ -17,16 +17,33 @@ struct Provider: TimelineProvider {
         completion(timeline)
     }
     
-    func loadData() -> SimpleEntry {
-        let data = UserDefaults(suiteName: "group.com.potato.slideme")
-        let budgetsData = data?.string(forKey: "categoryBudgets") ?? "{}"
-        let spentData = data?.string(forKey: "categorySpent") ?? "{}"
-        
-        let budgets = parseCategoryData(budgetsData)
-        let spent = parseCategoryData(spentData)
-        
-        return SimpleEntry(date: Date(), categoryBudgets: budgets, categorySpent: spent)
-    }
+  func loadData() -> SimpleEntry {
+    print("📱 WIDGET DEBUG - Starting load...")
+    
+    // Try to access UserDefaults with app group
+    let data = UserDefaults(suiteName: "group.com.potato.slideme")
+    print("📱 WIDGET DEBUG - UserDefaults exists: \(data != nil)")
+    
+    // Try to read the keys
+    let budgetsData = data?.string(forKey: "categoryBudgets") ?? "{}"
+    let spentData = data?.string(forKey: "categorySpent") ?? "{}"
+    
+    print("📱 WIDGET DEBUG - Budgets string length: \(budgetsData.count)")
+    print("📱 WIDGET DEBUG - Budgets raw: \(budgetsData)")
+    print("📱 WIDGET DEBUG - Spent string length: \(spentData.count)")
+    print("📱 WIDGET DEBUG - Spent raw: \(spentData)")
+    
+    // Parse the data
+    let budgets = parseCategoryData(budgetsData)
+    let spent = parseCategoryData(spentData)
+    
+    print("📱 WIDGET DEBUG - Parsed budgets count: \(budgets.count)")
+    print("📱 WIDGET DEBUG - Parsed budgets: \(budgets)")
+    print("📱 WIDGET DEBUG - Parsed spent count: \(spent.count)")
+    print("📱 WIDGET DEBUG - Parsed spent: \(spent)")
+    
+    return SimpleEntry(date: Date(), categoryBudgets: budgets, categorySpent: spent)
+}
     
     func parseCategoryData(_ jsonString: String) -> [String: Double] {
         guard let data = jsonString.data(using: .utf8),
