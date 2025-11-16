@@ -6,14 +6,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:neopop/widgets/buttons/neopop_button/neopop_button.dart';
 import 'package:slideme/screens/homepage.dart';
 import 'package:slideme/screens/welcome.dart';
-import 'package:sms_autofill/sms_autofill.dart';
 
 class GOTPPage extends StatefulWidget {
   final String verificationId;
   final String fullName;
   final String phone;
-  final bool isAfterGoogleSignIn;
-  final String? userId;
+  final bool isAfterGoogleSignIn; // Flag to check if after Google sign-in
+  final String? userId; // User ID from Google sign-in
 
   const GOTPPage({
     super.key,
@@ -28,8 +27,7 @@ class GOTPPage extends StatefulWidget {
   State<GOTPPage> createState() => _GOTPPageState();
 }
 
-class _GOTPPageState extends State<GOTPPage>
-    with TickerProviderStateMixin, CodeAutoFill {
+class _GOTPPageState extends State<GOTPPage> with TickerProviderStateMixin {
   final List<TextEditingController> _controllers = List.generate(
     6,
     (index) => TextEditingController(),
@@ -40,7 +38,7 @@ class _GOTPPageState extends State<GOTPPage>
   bool _isOtpComplete = false;
   bool _isVerifying = false;
 
-  // Animation controllers
+  // Animation controllers - INCREASED DURATION
   late AnimationController _contentAnimationController;
   late AnimationController _otpBoxesController;
   late Animation<double> _backButtonAnimation;
@@ -53,19 +51,19 @@ class _GOTPPageState extends State<GOTPPage>
   void initState() {
     super.initState();
 
-    // ✅ Start listening for SMS
-    listenForCode();
-
+    // INCREASED DURATION from 1000ms to 1800ms for more noticeable fade
     _contentAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1800),
       vsync: this,
     );
 
+    // INCREASED DURATION from 800ms to 1600ms for OTP boxes
     _otpBoxesController = AnimationController(
       duration: const Duration(milliseconds: 1600),
       vsync: this,
     );
 
+    // Extended intervals with slower fade curves
     _backButtonAnimation = CurvedAnimation(
       parent: _contentAnimationController,
       curve: const Interval(0.0, 0.35, curve: Curves.easeOut),
@@ -86,55 +84,30 @@ class _GOTPPageState extends State<GOTPPage>
       curve: const Interval(0.75, 1.0, curve: Curves.easeOut),
     );
 
+    // Create MORE NOTICEABLE staggered animations for each OTP box
     _otpBoxAnimations = List.generate(6, (index) {
-      final start = 0.0 + (index * 0.12);
-      final end = start + 0.35;
+      final start = 0.0 + (index * 0.12); // Increased spacing
+      final end = start + 0.35; // Longer duration per box
       return CurvedAnimation(
         parent: _otpBoxesController,
         curve: Interval(start, end, curve: Curves.easeOut),
       );
     });
 
+    // Add listeners to all controllers
     for (var controller in _controllers) {
       controller.addListener(_checkOtpComplete);
     }
 
+    // Start animations
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _contentAnimationController.forward();
       _otpBoxesController.forward();
     });
   }
 
-  // ✅ SMS Autofill callback - automatically called when OTP is detected
-  @override
-  void codeUpdated() {
-    if (code != null && code!.length == 6) {
-      _fillOtp(code!);
-    }
-  }
-
-  // Fill OTP into boxes
-  void _fillOtp(String otp) {
-    for (int i = 0; i < otp.length && i < 6; i++) {
-      _controllers[i].text = otp[i];
-    }
-    setState(() {
-      _checkOtpComplete();
-    });
-    // Unfocus to hide keyboard after auto-fill
-    FocusScope.of(context).unfocus();
-
-    // ✅ Auto-verify after a short delay
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted && _isOtpComplete) {
-        _verifyOtp();
-      }
-    });
-  }
-
   @override
   void dispose() {
-    cancel(); // ✅ Stop listening for SMS
     _contentAnimationController.dispose();
     _otpBoxesController.dispose();
     for (var controller in _controllers) {
@@ -159,56 +132,15 @@ class _GOTPPageState extends State<GOTPPage>
   String get _otp => _controllers.map((controller) => controller.text).join();
 
   void _onDigitChanged(String value, int index) {
-    if (value.length > 1) {
-      // Handle paste - distribute characters across boxes
-      _handlePaste(value, index);
-      return;
-    }
-
     if (value.isNotEmpty) {
       _controllers[index].text = value[0];
       if (index < 5) {
         _focusNodes[index + 1].requestFocus();
-      } else {
-        // Last box filled, unfocus
-        _focusNodes[index].unfocus();
       }
-    }
-  }
-
-  void _handlePaste(String pastedText, int startIndex) {
-    // Extract only digits from pasted text
-    final digits = pastedText.replaceAll(RegExp(r'[^0-9]'), '');
-
-    // Fill boxes starting from current index
-    for (int i = 0; i < digits.length && (startIndex + i) < 6; i++) {
-      _controllers[startIndex + i].text = digits[i];
-    }
-
-    // Move focus to the last filled box or next empty box
-    final lastFilledIndex = (startIndex + digits.length - 1).clamp(0, 5);
-    if (lastFilledIndex < 5 && digits.length < 6) {
-      _focusNodes[lastFilledIndex + 1].requestFocus();
     } else {
-      _focusNodes[lastFilledIndex].unfocus();
-    }
-
-    setState(() {
-      _checkOtpComplete();
-    });
-  }
-
-  void _onKeyEvent(KeyEvent event, int index) {
-    if (event is KeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.backspace) {
-        if (_controllers[index].text.isEmpty && index > 0) {
-          // If current box is empty and backspace pressed, move to previous box and clear it
-          _controllers[index - 1].clear();
-          _focusNodes[index - 1].requestFocus();
-        } else if (_controllers[index].text.isNotEmpty) {
-          // If current box has content, clear it
-          _controllers[index].clear();
-        }
+      // Handle backspace - move to previous field
+      if (index > 0) {
+        _focusNodes[index - 1].requestFocus();
       }
     }
   }
@@ -230,11 +162,15 @@ class _GOTPPageState extends State<GOTPPage>
       );
 
       if (widget.isAfterGoogleSignIn && widget.userId != null) {
+        // For Google sign-in users, just link the phone credential
+        // Don't create a new auth user, just update the existing document
         final currentUser = _auth.currentUser;
         if (currentUser != null && currentUser.uid == widget.userId) {
+          // Link phone credential to existing Google account
           await currentUser.linkWithCredential(credential);
         }
 
+        // Update the SAME document with phone verification
         await FirebaseFirestore.instance
             .collection('Users')
             .doc(widget.userId)
@@ -277,16 +213,7 @@ class _GOTPPageState extends State<GOTPPage>
     );
   }
 
-  void _resendCode() async {
-    // Clear existing OTP
-    for (var controller in _controllers) {
-      controller.clear();
-    }
-    _focusNodes[0].requestFocus();
-
-    // ✅ Restart SMS listener
-    listenForCode();
-
+  void _resendCode() {
     _showSnackBar('Code resent successfully');
   }
 
@@ -327,47 +254,25 @@ class _GOTPPageState extends State<GOTPPage>
             ),
           ],
         ),
-        child: KeyboardListener(
+        child: TextField(
+          controller: _controllers[index],
           focusNode: _focusNodes[index],
-          onKeyEvent: (event) => _onKeyEvent(event, index),
-          child: TextField(
-            controller: _controllers[index],
-            focusNode: _focusNodes[index],
-            textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
-              color: Colors.black87,
-              fontSize: 20 * scaleFactor,
-              fontWeight: FontWeight.w600,
-            ),
-            keyboardType: TextInputType.number,
-
-            // 🔥 allow full OTP paste
-            maxLength: 6,
-
-            showCursor: true,
-
-            // 🔥 enable autofill for EVERY box (required for Android/iOS)
-            autofillHints: const [AutofillHints.oneTimeCode],
-
-            decoration: const InputDecoration(
-              counterText: '',
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.zero,
-            ),
-
-            // 🔥 remove 6-limit filter (it breaks paste)
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-
-            onChanged: (value) => _onDigitChanged(value, index),
-
-            onTap: () {
-              // Select all to make pasting easier
-              _controllers[index].selection = TextSelection(
-                baseOffset: 0,
-                extentOffset: _controllers[index].text.length,
-              );
-            },
+          textAlign: TextAlign.center,
+          style: GoogleFonts.poppins(
+            color: Colors.black87,
+            fontSize: 20 * scaleFactor,
+            fontWeight: FontWeight.w600,
           ),
+          keyboardType: TextInputType.number,
+          maxLength: 1,
+          showCursor: false,
+          decoration: const InputDecoration(
+            counterText: '',
+            border: InputBorder.none,
+            contentPadding: EdgeInsets.zero,
+          ),
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          onChanged: (value) => _onDigitChanged(value, index),
         ),
       ),
     );
@@ -385,6 +290,7 @@ class _GOTPPageState extends State<GOTPPage>
       backgroundColor: const Color(0xff5FB567),
       body: Stack(
         children: [
+          // Background Image
           Positioned.fill(
             child: Image.asset(
               'assets/images/bgg.png',
@@ -393,6 +299,8 @@ class _GOTPPageState extends State<GOTPPage>
                   Container(color: const Color(0xff5FB567)),
             ),
           ),
+
+          // Content
           SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(
@@ -402,6 +310,7 @@ class _GOTPPageState extends State<GOTPPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  // Back Button with Loading Bar - Animated
                   _buildAnimatedElement(
                     animation: _backButtonAnimation,
                     child: Row(
@@ -422,6 +331,7 @@ class _GOTPPageState extends State<GOTPPage>
                           ),
                         ),
                         SizedBox(width: 12 * scaleFactor),
+                        // Loading Bar
                         Expanded(
                           child: Container(
                             height: 4 * scaleFactor,
@@ -445,7 +355,10 @@ class _GOTPPageState extends State<GOTPPage>
                       ],
                     ),
                   ),
+
                   const Spacer(),
+
+                  // OTP Boxes with smooth staggered fade-in
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(6, (index) {
@@ -457,7 +370,10 @@ class _GOTPPageState extends State<GOTPPage>
                       );
                     }),
                   ),
+
                   SizedBox(height: 24 * scaleFactor),
+
+                  // Resend OTP - Animated
                   _buildAnimatedElement(
                     animation: _resendAnimation,
                     child: GestureDetector(
@@ -474,7 +390,10 @@ class _GOTPPageState extends State<GOTPPage>
                       ),
                     ),
                   ),
+
                   SizedBox(height: 30 * scaleFactor),
+
+                  // Verify Button - Animated
                   _buildAnimatedElement(
                     animation: _verifyButtonAnimation,
                     child: AnimatedContainer(
@@ -549,7 +468,10 @@ class _GOTPPageState extends State<GOTPPage>
                       ),
                     ),
                   ),
+
                   const Spacer(),
+
+                  // Bottom Text - Animated
                   _buildAnimatedElement(
                     animation: _bottomTextAnimation,
                     child: Padding(
