@@ -369,6 +369,7 @@ class _HomePageState extends State<HomePage> {
           {"categoryBudgets": result},
         );
       }
+      await updateWidgetData();
     }
   }
 
@@ -392,6 +393,10 @@ class _HomePageState extends State<HomePage> {
             body: Center(child: CircularProgressIndicator()),
           );
         }
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          updateWidgetData();
+        });
 
         var data = snapshot.data!.data() as Map<String, dynamic>;
         String username = data["username"] ?? "User";
