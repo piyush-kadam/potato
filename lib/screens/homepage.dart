@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:liquid_progress_indicator_v2/liquid_progress_indicator.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:slideme/auth/subscription.dart';
 import 'package:slideme/screens/chatbot.dart';
 import 'package:slideme/screens/expensecategory.dart';
@@ -61,8 +62,6 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> updateWidgetData() async {
     try {
-      await HomeWidget.setAppGroupId('group.com.potato.slideme');
-
       String? userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) {
         print('❌ Widget Update: No user logged in');
@@ -91,22 +90,23 @@ class _HomePageState extends State<HomePage> {
       print('📝 Widget Update - Budgets JSON: $budgetsJson');
       print('📝 Widget Update - Spent JSON: $spentJson');
 
-      // Save with home_widget
-      await HomeWidget.saveWidgetData<String>('categoryBudgets', budgetsJson);
-      await HomeWidget.saveWidgetData<String>('categorySpent', spentJson);
+      // USE SHAREDPREFERENCES DIRECTLY
+      final prefs = await SharedPreferences.getInstance();
 
-      print('✅ Data saved to widget storage');
+      // Save with exact key names that Swift expects
+      await prefs.setString('categoryBudgets', budgetsJson);
+      await prefs.setString('categorySpent', spentJson);
 
-      String? readBudgets = await HomeWidget.getWidgetData<String>(
-        'categoryBudgets',
-      );
-      String? readSpent = await HomeWidget.getWidgetData<String>(
-        'categorySpent',
-      );
+      print('✅ Data saved with SharedPreferences');
 
-      print('🔍 VERIFY READ BACK - Budgets: $readBudgets');
-      print('🔍 VERIFY READ BACK - Spent: $readSpent');
+      // Verify it was saved
+      String? readBudgets = prefs.getString('categoryBudgets');
+      String? readSpent = prefs.getString('categorySpent');
 
+      print('🔍 VERIFY SharedPreferences - Budgets: $readBudgets');
+      print('🔍 VERIFY SharedPreferences - Spent: $readSpent');
+
+      // Still trigger the widget update
       await HomeWidget.updateWidget(name: 'HomeWidget', iOSName: 'HomeWidget');
 
       print('✅ Widget update triggered');
