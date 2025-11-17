@@ -3,7 +3,7 @@ import SwiftUI
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), categoryBudgets: [:], categorySpent: [:])
+        SimpleEntry(date: Date(), categoryBudgets: [:], categorySpent: [:], debugInfo: "Loading...")
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
@@ -18,57 +18,98 @@ struct Provider: TimelineProvider {
     }
     
     func loadData() -> SimpleEntry {
-        guard let data = UserDefaults(suiteName: "group.com.potato.slideme") else {
-            return SimpleEntry(date: Date(), categoryBudgets: [:], categorySpent: [:])
+        guard let sharedDefaults = UserDefaults(suiteName: "group.com.potato.slideme") else {
+            return SimpleEntry(date: Date(), categoryBudgets: [:], categorySpent: [:], 
+                             debugInfo: "❌ Cannot access App Group")
         }
         
-        // Try ALL possible key variations
-        var budgetsData: String? = nil
-        var spentData: String? = nil
+        // Get ALL keys from UserDefaults
+        var debugInfo = "🔍 Found Keys:\n"
+        let allKeys = sharedDefaults.dictionaryRepresentation().keys.sorted()
         
-        // Try 1: Direct keys
-        budgetsData = data.string(forKey: "categoryBudgets")
-        spentData = data.string(forKey: "categorySpent")
-        
-        // Try 2: flutter. prefix
-        if budgetsData == nil {
-            budgetsData = data.string(forKey: "flutter.categoryBudgets")
-        }
-        if spentData == nil {
-            spentData = data.string(forKey: "flutter.categorySpent")
+        if allKeys.isEmpty {
+            debugInfo = "❌ No keys found in UserDefaults"
+        } else {
+            for key in allKeys.prefix(10) {
+                let value = sharedDefaults.object(forKey: key)
+                let valuePreview = String(describing: value).prefix(30)
+                debugInfo += "• \(key): \(valuePreview)...\n"
+            }
         }
         
-        // Try 3: HomeWidget. prefix
-        if budgetsData == nil {
-            budgetsData = data.string(forKey: "HomeWidget.categoryBudgets")
-        }
-        if spentData == nil {
-            spentData = data.string(forKey: "HomeWidget.categorySpent")
+        // Try to read the data
+        var budgetsJson: String? = nil
+        var spentJson: String? = nil
+        var foundBudgetKey = "none"
+        var foundSpentKey = "none"
+        
+        // Try different key patterns
+        let possibleBudgetKeys = [
+            "categoryBudgets",
+            "HomeWidget.categoryBudgets",
+            "flutter.categoryBudgets"
+        ]
+        
+        let possibleSpentKeys = [
+            "categorySpent",
+            "HomeWidget.categorySpent",
+            "flutter.categorySpent"
+        ]
+        
+        for key in possibleBudgetKeys {
+            if let value = sharedDefaults.string(forKey: key) {
+                budgetsJson = value
+                foundBudgetKey = key
+                break
+            }
         }
         
-        let budgets = parseCategoryData(budgetsData ?? "{}")
-        let spent = parseCategoryData(spentData ?? "{}")
+        for key in possibleSpentKeys {
+            if let value = sharedDefaults.string(forKey: key) {
+                spentJson = value
+                foundSpentKey = key
+                break
+            }
+        }
         
-        return SimpleEntry(date: Date(), categoryBudgets: budgets, categorySpent: spent)
+        debugInfo += "\n✅ Budget key: \(foundBudgetKey)"
+        debugInfo += "\n✅ Spent key: \(foundSpentKey)"
+        
+        let budgets = parseCategoryData(budgetsJson ?? "{}")
+        let spent = parseCategoryData(spentJson ?? "{}")
+        
+        debugInfo += "\n📊 Budgets: \(budgets.count) items"
+        debugInfo += "\n📊 Spent: \(spent.count) items"
+        
+        return SimpleEntry(date: Date(), categoryBudgets: budgets, categorySpent: spent, debugInfo: debugInfo)
     }
     
     func parseCategoryData(_ jsonString: String) -> [String: Double] {
-        guard let data = jsonString.data(using: .utf8),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+        guard let data = jsonString.data(using: .utf8) else {
             return [:]
         }
         
-        var result: [String: Double] = [:]
-        for (key, value) in json {
-            if let numValue = value as? NSNumber {
-                result[key] = numValue.doubleValue
-            } else if let intValue = value as? Int {
-                result[key] = Double(intValue)
-            } else if let doubleValue = value as? Double {
-                result[key] = doubleValue
+        do {
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                return [:]
             }
+            
+            var result: [String: Double] = [:]
+            for (key, value) in json {
+                if let numValue = value as? NSNumber {
+                    result[key] = numValue.doubleValue
+                } else if let intValue = value as? Int {
+                    result[key] = Double(intValue)
+                } else if let doubleValue = value as? Double {
+                    result[key] = doubleValue
+                } else if let stringValue = value as? String, let doubleValue = Double(stringValue) {
+                    result[key] = doubleValue
+                }
+            }
+            return result
+        } catch {
+            return [:]
         }
-        return result
     }
 }
 
@@ -76,11 +117,15 @@ struct SimpleEntry: TimelineEntry {
     let date: Date
     let categoryBudgets: [String: Double]
     let categorySpent: [String: Double]
+    let debugInfo: String
 }
 
 struct HomeWidgetEntryView: View {
     var entry: Provider.Entry
     @Environment(\.widgetFamily) var family
+    
+    // Add this state to toggle debug mode
+    @State private var showDebug = true
     
     func extractEmoji(from text: String) -> String {
         let emojiRegex = try! NSRegularExpression(pattern: "[\\p{Emoji_Presentation}\\p{Emoji}]", options: [])
@@ -111,14 +156,16 @@ struct HomeWidgetEntryView: View {
                 }
                 .padding(.bottom, 4)
                 
+                // SHOW DEBUG INFO ALWAYS (for now)
                 if entry.categoryBudgets.isEmpty {
-                    Spacer()
-                    Text("No budget data available")
-                        .font(.system(size: 14))
-                        .foregroundColor(.gray)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                    Spacer()
+                    ScrollView {
+                        Text(entry.debugInfo)
+                            .font(.system(size: 9, design: .monospaced))
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 } else {
+                    // Show normal budget display
                     let sortedCategories = entry.categoryBudgets.keys.sorted()
                     let displayCount = family == .systemLarge ? min(6, sortedCategories.count) : min(3, sortedCategories.count)
                     
@@ -134,7 +181,7 @@ struct HomeWidgetEntryView: View {
                                 .font(.system(size: family == .systemLarge ? 28 : 24))
                             
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(name.capitalized)
+                                Text(name.isEmpty ? "Category" : name.capitalized)
                                     .font(.system(size: family == .systemLarge ? 14 : 12, weight: .semibold))
                                     .foregroundColor(.black)
                                     .lineLimit(1)
@@ -144,9 +191,11 @@ struct HomeWidgetEntryView: View {
                                         RoundedRectangle(cornerRadius: 4)
                                             .fill(Color.gray.opacity(0.2))
                                         
-                                        RoundedRectangle(cornerRadius: 4)
-                                            .fill(remaining > 0 ? Color.green : Color.red)
-                                            .frame(width: geo.size.width * CGFloat(min(spent / budget, 1.0)))
+                                        if budget > 0 {
+                                            RoundedRectangle(cornerRadius: 4)
+                                                .fill(remaining > 0 ? Color.green : Color.red)
+                                                .frame(width: geo.size.width * CGFloat(min(spent / budget, 1.0)))
+                                        }
                                     }
                                 }
                                 .frame(height: 6)
