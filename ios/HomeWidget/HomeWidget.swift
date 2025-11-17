@@ -1,82 +1,69 @@
 import WidgetKit
 import SwiftUI
+import FirebaseCore
+import FirebaseFirestore
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), categoryBudgets: [:], categorySpent: [:])
+        SimpleEntry(date: Date(), categoryBudgets: [:], categorySpent: [:], isLoading: true)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
-        let entry = loadData()
+        // For preview, return placeholder
+        let entry = SimpleEntry(date: Date(), categoryBudgets: [:], categorySpent: [:], isLoading: true)
         completion(entry)
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        let entry = loadData()
-        let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(900))) // Update every 15 minutes
-        completion(timeline)
-    }
-    
-    func loadData() -> SimpleEntry {
-        print("📱 WIDGET DEBUG - Starting load...")
-        
-        guard let data = UserDefaults(suiteName: "group.com.potato.slideme") else {
-            print("📱 WIDGET DEBUG - Failed to create UserDefaults")
-            return SimpleEntry(date: Date(), categoryBudgets: [:], categorySpent: [:])
+        // Initialize Firebase if needed
+        if FirebaseApp.app() == nil {
+            FirebaseApp.configure()
         }
         
-        print("📱 WIDGET DEBUG - UserDefaults exists: true")
+        // Get the user ID (you'll need to store this in UserDefaults from Flutter)
+        let userId = UserDefaults(suiteName: "group.com.potato.slideme")?.string(forKey: "userId") ?? ""
         
-        // ✅ List ALL keys to see what's actually there
-        print("📱 WIDGET DEBUG - All UserDefaults keys:")
-        let dict = data.dictionaryRepresentation()
-        for key in dict.keys.sorted() {
-            print("📱 WIDGET DEBUG - Key found: \(key)")
+        if userId.isEmpty {
+            // No user ID, return empty entry
+            let entry = SimpleEntry(date: Date(), categoryBudgets: [:], categorySpent: [:], isLoading: false)
+            let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(900)))
+            completion(timeline)
+            return
         }
         
-        // Try different key variations
-        var budgetsData = data.string(forKey: "categoryBudgets")
-        var spentData = data.string(forKey: "categorySpent")
-        
-        print("📱 WIDGET DEBUG - Direct key 'categoryBudgets': \(budgetsData ?? "nil")")
-        print("📱 WIDGET DEBUG - Direct key 'categorySpent': \(spentData ?? "nil")")
-        
-        // Try with HomeWidget prefix
-        if budgetsData == nil {
-            budgetsData = data.string(forKey: "HomeWidget.categoryBudgets")
-            print("📱 WIDGET DEBUG - Prefixed key 'HomeWidget.categoryBudgets': \(budgetsData ?? "nil")")
-        }
-        if spentData == nil {
-            spentData = data.string(forKey: "HomeWidget.categorySpent")
-            print("📱 WIDGET DEBUG - Prefixed key 'HomeWidget.categorySpent': \(spentData ?? "nil")")
-        }
-        
-        let budgets = parseCategoryData(budgetsData ?? "{}")
-        let spent = parseCategoryData(spentData ?? "{}")
-        
-        print("📱 WIDGET DEBUG - Parsed budgets count: \(budgets.count)")
-        print("📱 WIDGET DEBUG - Parsed spent count: \(spent.count)")
-        
-        return SimpleEntry(date: Date(), categoryBudgets: budgets, categorySpent: spent)
-    }
-    
-    func parseCategoryData(_ jsonString: String) -> [String: Double] {
-        guard let data = jsonString.data(using: .utf8),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            return [:]
-        }
-        
-        var result: [String: Double] = [:]
-        for (key, value) in json {
-            if let numValue = value as? NSNumber {
-                result[key] = numValue.doubleValue
-            } else if let intValue = value as? Int {
-                result[key] = Double(intValue)
-            } else if let doubleValue = value as? Double {
-                result[key] = doubleValue
+        // Fetch data from Firestore
+        let db = Firestore.firestore()
+        db.collection("Users").document(userId).getDocument { document, error in
+            var budgets: [String: Double] = [:]
+            var spent: [String: Double] = [:]
+            
+            if let document = document, document.exists {
+                let data = document.data()
+                
+                // Parse categoryBudgets
+                if let categoryBudgets = data?["categoryBudgets"] as? [String: Any] {
+                    for (key, value) in categoryBudgets {
+                        if let numValue = value as? NSNumber {
+                            budgets[key] = numValue.doubleValue
+                        }
+                    }
+                }
+                
+                // Parse categorySpent
+                if let categorySpent = data?["categorySpent"] as? [String: Any] {
+                    for (key, value) in categorySpent {
+                        if let numValue = value as? NSNumber {
+                            spent[key] = numValue.doubleValue
+                        }
+                    }
+                }
             }
+            
+            let entry = SimpleEntry(date: Date(), categoryBudgets: budgets, categorySpent: spent, isLoading: false)
+            // Refresh every 15 minutes
+            let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(900)))
+            completion(timeline)
         }
-        return result
     }
 }
 
@@ -84,61 +71,111 @@ struct SimpleEntry: TimelineEntry {
     let date: Date
     let categoryBudgets: [String: Double]
     let categorySpent: [String: Double]
+    let isLoading: Bool
 }
 
 struct HomeWidgetEntryView: View {
     var entry: Provider.Entry
     @Environment(\.widgetFamily) var family
     
+    func extractEmoji(from text: String) -> String {
+        let emojiRegex = try! NSRegularExpression(pattern: "[\\p{Emoji_Presentation}\\p{Emoji}]", options: [])
+        if let match = emojiRegex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) {
+            if let range = Range(match.range, in: text) {
+                return String(text[range])
+            }
+        }
+        return "📦"
+    }
+    
+    func extractName(from text: String) -> String {
+        let emojiRegex = try! NSRegularExpression(pattern: "[\\p{Emoji_Presentation}\\p{Emoji}]", options: [])
+        let result = emojiRegex.stringByReplacingMatches(in: text, range: NSRange(text.startIndex..., in: text), withTemplate: "")
+        return result.trimmingCharacters(in: .whitespaces)
+    }
+    
     var body: some View {
         ZStack {
             Color(red: 0.89, green: 0.95, blue: 0.99)
             
-            VStack(alignment: .leading, spacing: 4) {
-                Text("💰 Budget Tracker DEBUG")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.black)
+            VStack(alignment: .leading, spacing: family == .systemLarge ? 12 : 8) {
+                // Header
+                HStack {
+                    Text("💰 Budget Tracker")
+                        .font(.system(size: family == .systemLarge ? 18 : 16, weight: .bold))
+                        .foregroundColor(.black)
+                    Spacer()
+                }
+                .padding(.bottom, 4)
                 
-                Divider()
-                
-                // Show what keys exist in UserDefaults
-                if let data = UserDefaults(suiteName: "group.com.potato.slideme") {
-                    let dict = data.dictionaryRepresentation()
+                if entry.isLoading {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                } else if entry.categoryBudgets.isEmpty {
+                    Spacer()
+                    Text("No budget data available")
+                        .font(.system(size: 14))
+                        .foregroundColor(.gray)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    Spacer()
+                } else {
+                    // Categories
+                    let sortedCategories = entry.categoryBudgets.keys.sorted()
+                    let displayCount = family == .systemLarge ? min(6, sortedCategories.count) : min(3, sortedCategories.count)
                     
-                    Text("📊 Total keys: \(dict.keys.count)")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.blue)
-                    
-                    Text("🔑 Keys found:")
-                        .font(.system(size: 9))
-                        .foregroundColor(.purple)
-                    
-                    // Show all keys (scrollable if needed)
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 2) {
-                            ForEach(Array(dict.keys.sorted()), id: \.self) { key in
-                                Text("• \(key)")
-                                    .font(.system(size: 8))
-                                    .foregroundColor(.red)
-                                    .lineLimit(2)
+                    ForEach(sortedCategories.prefix(displayCount), id: \.self) { category in
+                        let budget = entry.categoryBudgets[category] ?? 0
+                        let spent = entry.categorySpent[category] ?? 0
+                        let remaining = budget - spent
+                        let emoji = extractEmoji(from: category)
+                        let name = extractName(from: category)
+                        
+                        HStack(spacing: 10) {
+                            // Emoji
+                            Text(emoji)
+                                .font(.system(size: family == .systemLarge ? 28 : 24))
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(name.capitalized)
+                                    .font(.system(size: family == .systemLarge ? 14 : 12, weight: .semibold))
+                                    .foregroundColor(.black)
+                                    .lineLimit(1)
+                                
+                                // Progress bar
+                                GeometryReader { geo in
+                                    ZStack(alignment: .leading) {
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(Color.gray.opacity(0.2))
+                                        
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(remaining > 0 ? Color.green : Color.red)
+                                            .frame(width: geo.size.width * CGFloat(min(spent / budget, 1.0)))
+                                    }
+                                }
+                                .frame(height: 6)
+                            }
+                            
+                            Spacer()
+                            
+                            // Amount
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text("\(Int(spent))/\(Int(budget))")
+                                    .font(.system(size: family == .systemLarge ? 13 : 11, weight: .bold))
+                                    .foregroundColor(.black)
+                                
+                                Text("₹\(Int(remaining))")
+                                    .font(.system(size: family == .systemLarge ? 11 : 9))
+                                    .foregroundColor(remaining > 0 ? .green : .red)
                             }
                         }
+                        .padding(.vertical, 4)
                     }
                     
-                    Divider()
-                    
-                    Text("Parsed: B:\(entry.categoryBudgets.count) S:\(entry.categorySpent.count)")
-                        .font(.system(size: 9))
-                        .foregroundColor(.green)
-                } else {
-                    Text("❌ Cannot access UserDefaults")
-                        .font(.system(size: 10))
-                        .foregroundColor(.red)
+                    Spacer()
                 }
-                
-                Spacer()
             }
-            .padding(8)
+            .padding(family == .systemLarge ? 16 : 12)
         }
     }
 }
@@ -146,6 +183,13 @@ struct HomeWidgetEntryView: View {
 @main
 struct HomeWidget: Widget {
     let kind: String = "HomeWidget"
+    
+    init() {
+        // Initialize Firebase when widget loads
+        if FirebaseApp.app() == nil {
+            FirebaseApp.configure()
+        }
+    }
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in

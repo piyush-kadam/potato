@@ -48,6 +48,10 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     HomeWidget.setAppGroupId('group.com.potato.slideme');
+    String? userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      HomeWidget.saveWidgetData<String>('userId', userId);
+    }
     _checkProStatus();
     _fetchCurrencySymbol();
     _checkAndShowMonthlyWrap();
