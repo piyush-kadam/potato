@@ -62,6 +62,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> updateWidgetData() async {
     try {
       await HomeWidget.setAppGroupId('group.com.potato.slideme');
+
       String? userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) {
         print('❌ Widget Update: No user logged in');
@@ -84,20 +85,18 @@ class _HomePageState extends State<HomePage> {
       print('📊 Widget Update - Budgets: $categoryBudgets');
       print('📊 Widget Update - Spent: $categorySpent');
 
-      // Convert maps to JSON strings
       String budgetsJson = jsonEncode(categoryBudgets);
       String spentJson = jsonEncode(categorySpent);
 
       print('📝 Widget Update - Budgets JSON: $budgetsJson');
       print('📝 Widget Update - Spent JSON: $spentJson');
 
-      // Save to shared storage
+      // Save with home_widget
       await HomeWidget.saveWidgetData<String>('categoryBudgets', budgetsJson);
       await HomeWidget.saveWidgetData<String>('categorySpent', spentJson);
 
       print('✅ Data saved to widget storage');
 
-      // ✅ ADD THIS - Verify data was actually saved
       String? readBudgets = await HomeWidget.getWidgetData<String>(
         'categoryBudgets',
       );
@@ -108,7 +107,6 @@ class _HomePageState extends State<HomePage> {
       print('🔍 VERIFY READ BACK - Budgets: $readBudgets');
       print('🔍 VERIFY READ BACK - Spent: $readSpent');
 
-      // Update the widget
       await HomeWidget.updateWidget(name: 'HomeWidget', iOSName: 'HomeWidget');
 
       print('✅ Widget update triggered');

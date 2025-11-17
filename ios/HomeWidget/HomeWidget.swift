@@ -1,69 +1,74 @@
 import WidgetKit
 import SwiftUI
-import FirebaseCore
-import FirebaseFirestore
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), categoryBudgets: [:], categorySpent: [:], isLoading: true)
+        SimpleEntry(date: Date(), categoryBudgets: [:], categorySpent: [:])
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
-        // For preview, return placeholder
-        let entry = SimpleEntry(date: Date(), categoryBudgets: [:], categorySpent: [:], isLoading: true)
+        let entry = loadData()
         completion(entry)
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        // Initialize Firebase if needed
-        if FirebaseApp.app() == nil {
-            FirebaseApp.configure()
+        let entry = loadData()
+        let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(900)))
+        completion(timeline)
+    }
+    
+    func loadData() -> SimpleEntry {
+        guard let data = UserDefaults(suiteName: "group.com.potato.slideme") else {
+            return SimpleEntry(date: Date(), categoryBudgets: [:], categorySpent: [:])
         }
         
-        // Get the user ID (you'll need to store this in UserDefaults from Flutter)
-        let userId = UserDefaults(suiteName: "group.com.potato.slideme")?.string(forKey: "userId") ?? ""
+        // Try ALL possible key variations
+        var budgetsData: String? = nil
+        var spentData: String? = nil
         
-        if userId.isEmpty {
-            // No user ID, return empty entry
-            let entry = SimpleEntry(date: Date(), categoryBudgets: [:], categorySpent: [:], isLoading: false)
-            let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(900)))
-            completion(timeline)
-            return
+        // Try 1: Direct keys
+        budgetsData = data.string(forKey: "categoryBudgets")
+        spentData = data.string(forKey: "categorySpent")
+        
+        // Try 2: flutter. prefix
+        if budgetsData == nil {
+            budgetsData = data.string(forKey: "flutter.categoryBudgets")
+        }
+        if spentData == nil {
+            spentData = data.string(forKey: "flutter.categorySpent")
         }
         
-        // Fetch data from Firestore
-        let db = Firestore.firestore()
-        db.collection("Users").document(userId).getDocument { document, error in
-            var budgets: [String: Double] = [:]
-            var spent: [String: Double] = [:]
-            
-            if let document = document, document.exists {
-                let data = document.data()
-                
-                // Parse categoryBudgets
-                if let categoryBudgets = data?["categoryBudgets"] as? [String: Any] {
-                    for (key, value) in categoryBudgets {
-                        if let numValue = value as? NSNumber {
-                            budgets[key] = numValue.doubleValue
-                        }
-                    }
-                }
-                
-                // Parse categorySpent
-                if let categorySpent = data?["categorySpent"] as? [String: Any] {
-                    for (key, value) in categorySpent {
-                        if let numValue = value as? NSNumber {
-                            spent[key] = numValue.doubleValue
-                        }
-                    }
-                }
+        // Try 3: HomeWidget. prefix
+        if budgetsData == nil {
+            budgetsData = data.string(forKey: "HomeWidget.categoryBudgets")
+        }
+        if spentData == nil {
+            spentData = data.string(forKey: "HomeWidget.categorySpent")
+        }
+        
+        let budgets = parseCategoryData(budgetsData ?? "{}")
+        let spent = parseCategoryData(spentData ?? "{}")
+        
+        return SimpleEntry(date: Date(), categoryBudgets: budgets, categorySpent: spent)
+    }
+    
+    func parseCategoryData(_ jsonString: String) -> [String: Double] {
+        guard let data = jsonString.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return [:]
+        }
+        
+        var result: [String: Double] = [:]
+        for (key, value) in json {
+            if let numValue = value as? NSNumber {
+                result[key] = numValue.doubleValue
+            } else if let intValue = value as? Int {
+                result[key] = Double(intValue)
+            } else if let doubleValue = value as? Double {
+                result[key] = doubleValue
             }
-            
-            let entry = SimpleEntry(date: Date(), categoryBudgets: budgets, categorySpent: spent, isLoading: false)
-            // Refresh every 15 minutes
-            let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(900)))
-            completion(timeline)
         }
+        return result
     }
 }
 
@@ -71,7 +76,6 @@ struct SimpleEntry: TimelineEntry {
     let date: Date
     let categoryBudgets: [String: Double]
     let categorySpent: [String: Double]
-    let isLoading: Bool
 }
 
 struct HomeWidgetEntryView: View {
@@ -99,7 +103,6 @@ struct HomeWidgetEntryView: View {
             Color(red: 0.89, green: 0.95, blue: 0.99)
             
             VStack(alignment: .leading, spacing: family == .systemLarge ? 12 : 8) {
-                // Header
                 HStack {
                     Text("💰 Budget Tracker")
                         .font(.system(size: family == .systemLarge ? 18 : 16, weight: .bold))
@@ -108,11 +111,7 @@ struct HomeWidgetEntryView: View {
                 }
                 .padding(.bottom, 4)
                 
-                if entry.isLoading {
-                    Spacer()
-                    ProgressView()
-                    Spacer()
-                } else if entry.categoryBudgets.isEmpty {
+                if entry.categoryBudgets.isEmpty {
                     Spacer()
                     Text("No budget data available")
                         .font(.system(size: 14))
@@ -120,7 +119,6 @@ struct HomeWidgetEntryView: View {
                         .frame(maxWidth: .infinity, alignment: .center)
                     Spacer()
                 } else {
-                    // Categories
                     let sortedCategories = entry.categoryBudgets.keys.sorted()
                     let displayCount = family == .systemLarge ? min(6, sortedCategories.count) : min(3, sortedCategories.count)
                     
@@ -132,7 +130,6 @@ struct HomeWidgetEntryView: View {
                         let name = extractName(from: category)
                         
                         HStack(spacing: 10) {
-                            // Emoji
                             Text(emoji)
                                 .font(.system(size: family == .systemLarge ? 28 : 24))
                             
@@ -142,7 +139,6 @@ struct HomeWidgetEntryView: View {
                                     .foregroundColor(.black)
                                     .lineLimit(1)
                                 
-                                // Progress bar
                                 GeometryReader { geo in
                                     ZStack(alignment: .leading) {
                                         RoundedRectangle(cornerRadius: 4)
@@ -158,7 +154,6 @@ struct HomeWidgetEntryView: View {
                             
                             Spacer()
                             
-                            // Amount
                             VStack(alignment: .trailing, spacing: 2) {
                                 Text("\(Int(spent))/\(Int(budget))")
                                     .font(.system(size: family == .systemLarge ? 13 : 11, weight: .bold))
@@ -183,13 +178,6 @@ struct HomeWidgetEntryView: View {
 @main
 struct HomeWidget: Widget {
     let kind: String = "HomeWidget"
-    
-    init() {
-        // Initialize Firebase when widget loads
-        if FirebaseApp.app() == nil {
-            FirebaseApp.configure()
-        }
-    }
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
