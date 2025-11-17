@@ -20,31 +20,42 @@ struct Provider: TimelineProvider {
     func loadData() -> SimpleEntry {
         print("📱 WIDGET DEBUG - Starting load...")
         
-        // Try to access UserDefaults with app group
         guard let data = UserDefaults(suiteName: "group.com.potato.slideme") else {
-            print("📱 WIDGET DEBUG - Failed to create UserDefaults with suite name")
+            print("📱 WIDGET DEBUG - Failed to create UserDefaults")
             return SimpleEntry(date: Date(), categoryBudgets: [:], categorySpent: [:])
         }
         
         print("📱 WIDGET DEBUG - UserDefaults exists: true")
         
-        // Try to read the keys
-        let budgetsData = data.string(forKey: "categoryBudgets") ?? "{}"
-        let spentData = data.string(forKey: "categorySpent") ?? "{}"
+        // ✅ List ALL keys to see what's actually there
+        print("📱 WIDGET DEBUG - All UserDefaults keys:")
+        let dict = data.dictionaryRepresentation()
+        for key in dict.keys.sorted() {
+            print("📱 WIDGET DEBUG - Key found: \(key)")
+        }
         
-        print("📱 WIDGET DEBUG - Budgets string length: \(budgetsData.count)")
-        print("📱 WIDGET DEBUG - Budgets raw: \(budgetsData)")
-        print("📱 WIDGET DEBUG - Spent string length: \(spentData.count)")
-        print("📱 WIDGET DEBUG - Spent raw: \(spentData)")
+        // Try different key variations
+        var budgetsData = data.string(forKey: "categoryBudgets")
+        var spentData = data.string(forKey: "categorySpent")
         
-        // Parse the data
-        let budgets = parseCategoryData(budgetsData)
-        let spent = parseCategoryData(spentData)
+        print("📱 WIDGET DEBUG - Direct key 'categoryBudgets': \(budgetsData ?? "nil")")
+        print("📱 WIDGET DEBUG - Direct key 'categorySpent': \(spentData ?? "nil")")
+        
+        // Try with HomeWidget prefix
+        if budgetsData == nil {
+            budgetsData = data.string(forKey: "HomeWidget.categoryBudgets")
+            print("📱 WIDGET DEBUG - Prefixed key 'HomeWidget.categoryBudgets': \(budgetsData ?? "nil")")
+        }
+        if spentData == nil {
+            spentData = data.string(forKey: "HomeWidget.categorySpent")
+            print("📱 WIDGET DEBUG - Prefixed key 'HomeWidget.categorySpent': \(spentData ?? "nil")")
+        }
+        
+        let budgets = parseCategoryData(budgetsData ?? "{}")
+        let spent = parseCategoryData(spentData ?? "{}")
         
         print("📱 WIDGET DEBUG - Parsed budgets count: \(budgets.count)")
-        print("📱 WIDGET DEBUG - Parsed budgets: \(budgets)")
         print("📱 WIDGET DEBUG - Parsed spent count: \(spent.count)")
-        print("📱 WIDGET DEBUG - Parsed spent: \(spent)")
         
         return SimpleEntry(date: Date(), categoryBudgets: budgets, categorySpent: spent)
     }
@@ -79,112 +90,55 @@ struct HomeWidgetEntryView: View {
     var entry: Provider.Entry
     @Environment(\.widgetFamily) var family
     
-    func extractEmoji(from text: String) -> String {
-        let emojiRegex = try! NSRegularExpression(pattern: "[\\p{Emoji_Presentation}\\p{Emoji}]", options: [])
-        if let match = emojiRegex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) {
-            if let range = Range(match.range, in: text) {
-                return String(text[range])
-            }
-        }
-        return "📦"
-    }
-    
-    func extractName(from text: String) -> String {
-        let emojiRegex = try! NSRegularExpression(pattern: "[\\p{Emoji_Presentation}\\p{Emoji}]", options: [])
-        let result = emojiRegex.stringByReplacingMatches(in: text, range: NSRange(text.startIndex..., in: text), withTemplate: "")
-        return result.trimmingCharacters(in: .whitespaces)
-    }
-    
     var body: some View {
         ZStack {
             Color(red: 0.89, green: 0.95, blue: 0.99)
             
-            VStack(alignment: .leading, spacing: family == .systemLarge ? 12 : 8) {
-                // Header
-                HStack {
-                    Text("💰 Budget Tracker")
-                        .font(.system(size: family == .systemLarge ? 18 : 16, weight: .bold))
-                        .foregroundColor(.black)
-                    Spacer()
-                }
-                .padding(.bottom, 4)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("💰 Budget Tracker DEBUG")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.black)
                 
-                // ✅ DEBUG INFO - Shows count even if empty
-                Text("Budgets: \(entry.categoryBudgets.count) | Spent: \(entry.categorySpent.count)")
-                    .font(.system(size: 10))
-                    .foregroundColor(.red)
-                    .padding(.bottom, 4)
+                Divider()
                 
-                if entry.categoryBudgets.isEmpty {
-                    Spacer()
-                    VStack(spacing: 8) {
-                        Text("No budget data available")
-                            .font(.system(size: 14))
-                            .foregroundColor(.gray)
-                        
-                        Text("Check console logs")
-                            .font(.system(size: 10))
-                            .foregroundColor(.red)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    Spacer()
-                } else {
-                    // Categories
-                    let sortedCategories = entry.categoryBudgets.keys.sorted()
-                    let displayCount = family == .systemLarge ? min(6, sortedCategories.count) : min(3, sortedCategories.count)
+                // Show what keys exist in UserDefaults
+                if let data = UserDefaults(suiteName: "group.com.potato.slideme") {
+                    let dict = data.dictionaryRepresentation()
                     
-                    ForEach(sortedCategories.prefix(displayCount), id: \.self) { category in
-                        let budget = entry.categoryBudgets[category] ?? 0
-                        let spent = entry.categorySpent[category] ?? 0
-                        let remaining = budget - spent
-                        let emoji = extractEmoji(from: category)
-                        let name = extractName(from: category)
-                        
-                        HStack(spacing: 10) {
-                            // Emoji
-                            Text(emoji)
-                                .font(.system(size: family == .systemLarge ? 28 : 24))
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(name.capitalized)
-                                    .font(.system(size: family == .systemLarge ? 14 : 12, weight: .semibold))
-                                    .foregroundColor(.black)
-                                    .lineLimit(1)
-                                
-                                // Progress bar
-                                GeometryReader { geo in
-                                    ZStack(alignment: .leading) {
-                                        RoundedRectangle(cornerRadius: 4)
-                                            .fill(Color.gray.opacity(0.2))
-                                        
-                                        RoundedRectangle(cornerRadius: 4)
-                                            .fill(remaining > 0 ? Color.green : Color.red)
-                                            .frame(width: geo.size.width * CGFloat(min(spent / budget, 1.0)))
-                                    }
-                                }
-                                .frame(height: 6)
-                            }
-                            
-                            Spacer()
-                            
-                            // Amount
-                            VStack(alignment: .trailing, spacing: 2) {
-                                Text("\(Int(spent))/\(Int(budget))")
-                                    .font(.system(size: family == .systemLarge ? 13 : 11, weight: .bold))
-                                    .foregroundColor(.black)
-                                
-                                Text("₹\(Int(remaining))")
-                                    .font(.system(size: family == .systemLarge ? 11 : 9))
-                                    .foregroundColor(remaining > 0 ? .green : .red)
+                    Text("📊 Total keys: \(dict.keys.count)")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.blue)
+                    
+                    Text("🔑 Keys found:")
+                        .font(.system(size: 9))
+                        .foregroundColor(.purple)
+                    
+                    // Show all keys (scrollable if needed)
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 2) {
+                            ForEach(Array(dict.keys.sorted()), id: \.self) { key in
+                                Text("• \(key)")
+                                    .font(.system(size: 8))
+                                    .foregroundColor(.red)
+                                    .lineLimit(2)
                             }
                         }
-                        .padding(.vertical, 4)
                     }
                     
-                    Spacer()
+                    Divider()
+                    
+                    Text("Parsed: B:\(entry.categoryBudgets.count) S:\(entry.categorySpent.count)")
+                        .font(.system(size: 9))
+                        .foregroundColor(.green)
+                } else {
+                    Text("❌ Cannot access UserDefaults")
+                        .font(.system(size: 10))
+                        .foregroundColor(.red)
                 }
+                
+                Spacer()
             }
-            .padding(family == .systemLarge ? 16 : 12)
+            .padding(8)
         }
     }
 }
