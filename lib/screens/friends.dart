@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -89,6 +90,7 @@ class _FriendsAndFamilyPageState extends State<FriendsAndFamilyPage> {
 
   /// 🔹 Show bottom sheet to add friend
   void _showAddFriendSheet() {
+    HapticFeedback.heavyImpact();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -162,6 +164,7 @@ class _FriendsAndFamilyPageState extends State<FriendsAndFamilyPage> {
               height: 50,
               child: ElevatedButton(
                 onPressed: () {
+                  HapticFeedback.heavyImpact();
                   Navigator.pop(context);
                   _connectUser(_codeController.text.trim());
                 },

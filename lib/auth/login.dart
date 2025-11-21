@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -135,6 +136,7 @@ class _LoginPageState extends State<LoginPage> {
 
   // Send OTP to Phone Number
   Future<void> sendOTP() async {
+    HapticFeedback.heavyImpact();
     String phoneNumber = phoneController.text.trim();
 
     if (phoneNumber.isEmpty) {
@@ -220,6 +222,7 @@ class _LoginPageState extends State<LoginPage> {
   // Google Sign-In
   // Google Sign-In
   Future<void> signInWithGoogle() async {
+    HapticFeedback.heavyImpact();
     try {
       setState(() => isLoading = true);
 
@@ -299,6 +302,7 @@ class _LoginPageState extends State<LoginPage> {
   // Apple Sign-In
 
   Future<void> signInWithApple() async {
+    HapticFeedback.heavyImpact();
     try {
       setState(() => isLoading = true);
 

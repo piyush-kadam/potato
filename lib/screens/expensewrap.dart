@@ -98,7 +98,7 @@ class ExpenseHomePageContent extends StatelessWidget {
         const ExpenseHomePage(),
         // Page Indicators positioned at bottom
         Positioned(
-          bottom: 32,
+          bottom: 17,
           left: 0,
           right: 0,
           child: Center(

@@ -105,7 +105,7 @@ class _AgePageState extends State<AgePage> with TickerProviderStateMixin {
   }
 
   Future<void> _saveAge() async {
-    HapticFeedback.mediumImpact();
+    HapticFeedback.heavyImpact();
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {

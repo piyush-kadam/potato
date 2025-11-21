@@ -97,7 +97,7 @@ class CompletionPage extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        HapticFeedback.mediumImpact();
+                        HapticFeedback.heavyImpact();
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(

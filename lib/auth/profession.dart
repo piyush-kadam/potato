@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -98,6 +99,7 @@ class _ProfessionPageState extends State<ProfessionPage>
   }
 
   Future<void> _saveProfession() async {
+    HapticFeedback.heavyImpact();
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       _showSnackBar("User not logged in");

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:liquid_progress_indicator_v2/liquid_progress_indicator.dart';
@@ -200,6 +201,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
   }
 
   Future<void> _navigateToBudgetMode() async {
+    HapticFeedback.heavyImpact();
     if (_isNavigating) return;
 
     setState(() => _isNavigating = true);
@@ -639,7 +641,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                                   8.0,
                                   15.0,
                                 ),
-                                childAspectRatio: 1.2,
+                                childAspectRatio: 1.19,
                               ),
                           itemCount: sortedCategories.length + 1,
                           itemBuilder: (context, index) {
@@ -910,10 +912,11 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                         screenWidth * 0.04,
                         0,
                         screenWidth * 0.04,
-                        screenHeight * 0.015,
+                        screenHeight * 0.035,
                       ),
                       padding: EdgeInsets.symmetric(
                         horizontal: screenWidth * 0.04,
+                        vertical: screenHeight * 0.02,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.7),
@@ -1027,6 +1030,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                               ),
                               GestureDetector(
                                 onTap: () {
+                                  HapticFeedback.heavyImpact();
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(

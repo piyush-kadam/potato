@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:liquid_progress_indicator_v2/liquid_progress_indicator.dart';
@@ -310,6 +311,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _navigateToExpenseMode() async {
+    HapticFeedback.heavyImpact();
     if (_isNavigating) return;
 
     setState(() => _isNavigating = true);
@@ -487,6 +489,7 @@ class _HomePageState extends State<HomePage> {
                         children: [
                           GestureDetector(
                             onTap: () {
+                              HapticFeedback.heavyImpact();
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -662,6 +665,7 @@ class _HomePageState extends State<HomePage> {
                             ),
 
                             onPressed: () async {
+                              HapticFeedback.heavyImpact();
                               var result = await showDialog(
                                 context: context,
                                 builder: (_) => PayNowPopup(
@@ -1184,6 +1188,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   GestureDetector(
                                     onTap: () {
+                                      HapticFeedback.heavyImpact();
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(

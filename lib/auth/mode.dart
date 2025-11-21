@@ -48,7 +48,7 @@ class _ModeSelectionPageState extends State<ModeSelectionPage>
   }
 
   Future<void> _saveMode() async {
-    HapticFeedback.mediumImpact();
+    HapticFeedback.heavyImpact();
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       _showSnackBar("User not logged in");

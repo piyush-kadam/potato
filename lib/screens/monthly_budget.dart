@@ -137,7 +137,7 @@ class _BudgetPageState extends State<BudgetPage>
   }
 
   Future<void> _saveBudget() async {
-    HapticFeedback.mediumImpact();
+    HapticFeedback.heavyImpact();
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 

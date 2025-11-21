@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -222,6 +223,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     children: [
                       GestureDetector(
                         onTap: () {
+                          HapticFeedback.mediumImpact();
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -334,6 +336,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           Expanded(
                             child: GestureDetector(
                               onTap: () {
+                                HapticFeedback.heavyImpact();
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -444,6 +447,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _logoutUser() async {
+    HapticFeedback.heavyImpact();
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(

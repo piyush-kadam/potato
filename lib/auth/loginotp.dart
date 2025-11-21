@@ -96,6 +96,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage>
   }
 
   Future<void> _verifyOtp() async {
+    HapticFeedback.heavyImpact();
     String otp = otpControllers.map((c) => c.text).join();
     if (otp.length != 6) return;
 

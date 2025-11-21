@@ -191,7 +191,7 @@ class _CategoryBudgetPageState extends State<CategoryBudgetPage> {
   }
 
   void _autoSetBudgets() {
-    HapticFeedback.mediumImpact();
+    HapticFeedback.heavyImpact();
     if (_monthlyBudget <= 0) return;
 
     final keys = _categories.keys.toList();
@@ -507,7 +507,7 @@ class _CategoryBudgetPageState extends State<CategoryBudgetPage> {
   }
 
   Future<void> _saveBudgets() async {
-    HapticFeedback.mediumImpact();
+    HapticFeedback.heavyImpact();
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 

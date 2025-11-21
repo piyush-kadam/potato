@@ -30,30 +30,30 @@ struct CategoryItem {
 
 struct LiquidWave: Shape {
     var offset: CGFloat
-
+    
     var animatableData: CGFloat {
         get { offset }
         set { offset = newValue }
     }
-
+    
     func path(in rect: CGRect) -> Path {
         var path = Path()
         let width = rect.width
         let height = rect.height
-
+        
         path.move(to: CGPoint(x: 0, y: height * 0.2))
-
+        
         for x in stride(from: 0, through: width, by: 1) {
             let relativeX = x / width
             let sine = sin(relativeX * .pi * 2 + offset)
             let y = height * 0.2 + sine * 5
             path.addLine(to: CGPoint(x: x, y: y))
         }
-
+        
         path.addLine(to: CGPoint(x: width, y: height))
         path.addLine(to: CGPoint(x: 0, y: height))
         path.closeSubpath()
-
+        
         return path
     }
 }
@@ -62,7 +62,7 @@ struct LiquidContainer: View {
     let emoji: String
     let liquidColor: Color
     @State private var waveOffset: CGFloat = 0
-
+    
     var body: some View {
         ZStack {
             Circle()
@@ -81,11 +81,11 @@ struct LiquidContainer: View {
                         .stroke(Color.white.opacity(0.5), lineWidth: 2)
                 )
                 .shadow(color: Color.black.opacity(0.15), radius: 5, x: 0, y: 3)
-
+            
             Circle()
                 .fill(liquidColor.opacity(0.85))
                 .padding(4)
-
+            
             LiquidWave(offset: waveOffset)
                 .fill(
                     LinearGradient(
@@ -104,7 +104,7 @@ struct LiquidContainer: View {
                         waveOffset = .pi * 2
                     }
                 }
-
+            
             Circle()
                 .fill(
                     RadialGradient(
@@ -118,7 +118,7 @@ struct LiquidContainer: View {
                     )
                 )
                 .blur(radius: 1)
-
+            
             Text(emoji)
                 .font(.system(size: 32))
                 .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 2)
@@ -128,17 +128,17 @@ struct LiquidContainer: View {
 
 struct NeoPopButton: View {
     let family: WidgetFamily
-
+    
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.black.opacity(0.3))
                 .offset(x: 4, y: 4)
-
+            
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(red: 0.2, green: 0.5, blue: 0.2))
                 .offset(x: 2, y: 2)
-
+            
             RoundedRectangle(cornerRadius: 12)
                 .fill(
                     LinearGradient(
@@ -154,7 +154,7 @@ struct NeoPopButton: View {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(Color(red: 0.4, green: 0.8, blue: 0.4), lineWidth: 2)
                 )
-
+            
             HStack(spacing: 8) {
                 Text("💳")
                     .font(.system(size: family == .systemLarge ? 20 : 18))
@@ -170,7 +170,7 @@ struct NeoPopButton: View {
 struct HomeWidgetEntryView: View {
     var entry: Provider.Entry
     @Environment(\.widgetFamily) var family
-
+    
     let categories = [
         CategoryItem(emoji: "🍔", name: "Food", liquidColor: Color(red: 1.0, green: 0.6, blue: 0.2)),
         CategoryItem(emoji: "🛍️", name: "Shopping", liquidColor: Color(red: 0.9, green: 0.3, blue: 0.5)),
@@ -178,7 +178,7 @@ struct HomeWidgetEntryView: View {
         CategoryItem(emoji: "🎬", name: "Entertainment", liquidColor: Color(red: 0.7, green: 0.3, blue: 0.9)),
         CategoryItem(emoji: "💰", name: "Savings", liquidColor: Color(red: 1.0, green: 0.8, blue: 0.2))
     ]
-
+    
     var body: some View {
         ZStack {
             if let bgImage = UIImage(named: "bgg") {
@@ -187,13 +187,14 @@ struct HomeWidgetEntryView: View {
                     .scaledToFill()
                     .opacity(0.3)
             }
-
+            
             Color(red: 0.3, green: 0.69, blue: 0.31)
                 .opacity(0.85)
-
+            
             VStack(spacing: 0) {
-                Spacer().frame(height: family == .systemLarge ? 20 : 16)
-
+                Spacer()
+                    .frame(height: family == .systemLarge ? 20 : 16)
+                
                 HStack(spacing: 12) {
                     if let mascotImage = UIImage(named: "mascot") {
                         Image(uiImage: mascotImage)
@@ -201,15 +202,15 @@ struct HomeWidgetEntryView: View {
                             .scaledToFit()
                             .frame(height: family == .systemLarge ? 50 : 40)
                     }
-
+                    
                     NeoPopButton(family: family)
                         .frame(height: family == .systemLarge ? 50 : 40)
-                        .widgetURL(URL(string: "slideme://open"))
                 }
                 .padding(.horizontal, family == .systemLarge ? 24 : 20)
-
-                Spacer().frame(height: family == .systemLarge ? 24 : 18)
-
+                
+                Spacer()
+                    .frame(height: family == .systemLarge ? 24 : 18)
+                
                 HStack {
                     Text("Categories")
                         .font(.system(size: family == .systemLarge ? 16 : 14, weight: .bold))
@@ -219,9 +220,9 @@ struct HomeWidgetEntryView: View {
                 }
                 .padding(.horizontal, family == .systemLarge ? 24 : 20)
                 .padding(.bottom, family == .systemLarge ? 12 : 8)
-
+                
                 let containerSize: CGFloat = family == .systemLarge ? 60 : 50
-
+                
                 HStack(spacing: family == .systemLarge ? 14 : 10) {
                     ForEach(0..<5, id: \.self) { index in
                         VStack(spacing: 4) {
@@ -230,7 +231,7 @@ struct HomeWidgetEntryView: View {
                                 liquidColor: categories[index].liquidColor
                             )
                             .frame(width: containerSize, height: containerSize)
-
+                            
                             if family == .systemLarge {
                                 Text(categories[index].name)
                                     .font(.system(size: 10, weight: .medium))
@@ -239,14 +240,15 @@ struct HomeWidgetEntryView: View {
                                     .lineLimit(1)
                             }
                         }
-                        .widgetURL(URL(string: "slideme://open"))
                     }
                 }
                 .padding(.horizontal, family == .systemLarge ? 24 : 20)
-
+                
                 Spacer()
             }
         }
+        // This makes the entire widget tappable and opens the app directly
+        .widgetURL(URL(string: "slideme://open"))
     }
 }
 

@@ -244,6 +244,7 @@ class _GOTPPageState extends State<GOTPPage>
   }
 
   void _verifyOtp() async {
+    HapticFeedback.heavyImpact();
     final otp = _otp;
 
     if (otp.length != 6) {

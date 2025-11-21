@@ -111,7 +111,7 @@ class _PhoneInputPageState extends State<PhoneInputPage>
   }
 
   void _sendOTP() async {
-    HapticFeedback.mediumImpact();
+    HapticFeedback.heavyImpact();
     final phone = _phoneController.text.trim();
 
     if (phone.isEmpty) {

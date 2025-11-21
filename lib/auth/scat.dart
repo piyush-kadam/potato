@@ -301,7 +301,7 @@ class _SpendCategoriesPageState extends State<SpendCategoriesPage>
                       child: GestureDetector(
                         onTap: _selectedCategories.isNotEmpty
                             ? () {
-                                HapticFeedback.mediumImpact();
+                                HapticFeedback.heavyImpact();
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(

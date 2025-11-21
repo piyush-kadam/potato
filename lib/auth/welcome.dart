@@ -280,7 +280,7 @@ class _PressableButtonState extends State<_PressableButton>
             elevation: 0,
             child: InkWell(
               onTap: () {
-                HapticFeedback.mediumImpact();
+                HapticFeedback.heavyImpact();
 
                 Navigator.push(
                   context,

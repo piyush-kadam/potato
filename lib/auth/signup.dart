@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:neopop/widgets/buttons/neopop_button/neopop_button.dart';
@@ -43,6 +44,7 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   void _signInWithGoogle() async {
+    HapticFeedback.heavyImpact();
     setState(() => isLoading = true);
 
     try {
@@ -74,6 +76,7 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   void _signInWithApple() async {
+    HapticFeedback.heavyImpact();
     setState(() => isLoading = true);
 
     try {
@@ -152,6 +155,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     color: Colors.transparent,
                     animationDuration: const Duration(milliseconds: 400),
                     onTapUp: () {
+                      HapticFeedback.heavyImpact();
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => WelcomePage()),
@@ -192,6 +196,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     color: Colors.transparent,
                     animationDuration: const Duration(milliseconds: 400),
                     onTapUp: () {
+                      HapticFeedback.heavyImpact();
                       Navigator.push(
                         context,
                         MaterialPageRoute(

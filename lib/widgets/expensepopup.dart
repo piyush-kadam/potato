@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -343,6 +344,7 @@ class _ExpensePayNowPopupState extends State<ExpensePayNowPopup> {
   }
 
   bool _canProceed() {
+    HapticFeedback.heavyImpact();
     if (currentStep == 0) return enteredAmount > 0;
     if (currentStep == 1) return selectedCategory != null;
     if (currentStep == 2) return paymentMethod != null;

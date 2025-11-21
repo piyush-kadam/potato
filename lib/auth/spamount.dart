@@ -350,7 +350,7 @@ class _SpendAmountPageState extends State<SpendAmountPage>
                     ),
                     child: GestureDetector(
                       onTap: () {
-                        HapticFeedback.mediumImpact(); // 👈 Added haptic feedback
+                        HapticFeedback.heavyImpact(); // 👈 Added haptic feedback
                         Navigator.push(
                           context,
                           MaterialPageRoute(

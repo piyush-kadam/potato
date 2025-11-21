@@ -164,7 +164,7 @@ class _CountryPageState extends State<CountryPage>
   }
 
   Future<void> _saveCountry() async {
-    HapticFeedback.mediumImpact();
+    HapticFeedback.heavyImpact();
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
