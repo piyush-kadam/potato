@@ -28,19 +28,50 @@ struct CategoryItem {
     let liquidColor: Color
 }
 
+struct LiquidWave: Shape {
+    var offset: CGFloat
+    
+    var animatableData: CGFloat {
+        get { offset }
+        set { offset = newValue }
+    }
+    
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let width = rect.width
+        let height = rect.height
+        
+        path.move(to: CGPoint(x: 0, y: height * 0.2))
+        
+        // Create wave
+        for x in stride(from: 0, through: width, by: 1) {
+            let relativeX = x / width
+            let sine = sin(relativeX * .pi * 2 + offset)
+            let y = height * 0.2 + sine * 5
+            path.addLine(to: CGPoint(x: x, y: y))
+        }
+        
+        path.addLine(to: CGPoint(x: width, y: height))
+        path.addLine(to: CGPoint(x: 0, y: height))
+        path.closeSubpath()
+        
+        return path
+    }
+}
+
 struct LiquidContainer: View {
     let emoji: String
     let liquidColor: Color
-    let fillPercentage: Double = 0.6 // 60% filled for visual appeal
+    @State private var waveOffset: CGFloat = 0
     
     var body: some View {
         ZStack {
-            // Glass container
+            // Glass container background
             Circle()
                 .fill(
                     LinearGradient(
                         gradient: Gradient(colors: [
-                            Color.white.opacity(0.3),
+                            Color.white.opacity(0.25),
                             Color.white.opacity(0.1)
                         ]),
                         startPoint: .topLeading,
@@ -49,53 +80,98 @@ struct LiquidContainer: View {
                 )
                 .overlay(
                     Circle()
-                        .stroke(Color.white.opacity(0.4), lineWidth: 1.5)
+                        .stroke(Color.white.opacity(0.5), lineWidth: 2)
                 )
-                .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                .shadow(color: Color.black.opacity(0.15), radius: 5, x: 0, y: 3)
             
-            // Liquid inside
-            GeometryReader { geo in
-                let size = geo.size.width
-                let fillHeight = size * CGFloat(fillPercentage)
-                
-                ZStack {
-                    // Liquid with wave effect
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    liquidColor.opacity(0.8),
-                                    liquidColor.opacity(0.6)
-                                ]),
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .frame(width: size * 0.85, height: size * 0.85)
-                        .blur(radius: 2)
-                    
-                    // Shine effect
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                gradient: Gradient(colors: [
-                                    Color.white.opacity(0.3),
-                                    Color.clear
-                                ]),
-                                center: .topLeading,
-                                startRadius: 0,
-                                endRadius: size * 0.5
-                            )
-                        )
-                        .frame(width: size * 0.4, height: size * 0.4)
-                        .offset(x: -size * 0.15, y: -size * 0.15)
+            // Liquid fill (full)
+            Circle()
+                .fill(liquidColor.opacity(0.85))
+                .padding(4)
+            
+            // Animated wave on top
+            LiquidWave(offset: waveOffset)
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            liquidColor.opacity(0.6),
+                            liquidColor.opacity(0.4)
+                        ]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .clipShape(Circle())
+                .padding(4)
+                .onAppear {
+                    withAnimation(Animation.linear(duration: 2).repeatForever(autoreverses: false)) {
+                        waveOffset = .pi * 2
+                    }
                 }
-            }
+            
+            // Glass shine effect
+            Circle()
+                .fill(
+                    RadialGradient(
+                        gradient: Gradient(colors: [
+                            Color.white.opacity(0.4),
+                            Color.clear
+                        ]),
+                        center: UnitPoint(x: 0.3, y: 0.3),
+                        startRadius: 0,
+                        endRadius: 30
+                    )
+                )
+                .blur(radius: 1)
             
             // Emoji on top
             Text(emoji)
-                .font(.system(size: 28))
-                .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 1)
+                .font(.system(size: 32))
+                .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 2)
+        }
+    }
+}
+
+struct NeoPopButton: View {
+    let family: WidgetFamily
+    
+    var body: some View {
+        ZStack {
+            // Shadow layers for 3D effect
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.black.opacity(0.3))
+                .offset(x: 4, y: 4)
+            
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(red: 0.2, green: 0.5, blue: 0.2))
+                .offset(x: 2, y: 2)
+            
+            // Main button
+            RoundedRectangle(cornerRadius: 12)
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color(red: 0.35, green: 0.75, blue: 0.35),
+                            Color(red: 0.3, green: 0.69, blue: 0.31)
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(red: 0.4, green: 0.8, blue: 0.4), lineWidth: 2)
+                )
+            
+            // Button content
+            HStack(spacing: 8) {
+                Text("💳")
+                    .font(.system(size: family == .systemLarge ? 20 : 18))
+                Text("Pay Now")
+                    .font(.system(size: family == .systemLarge ? 18 : 16, weight: .bold))
+                    .foregroundColor(.white)
+                    .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
+            }
         }
     }
 }
@@ -107,7 +183,7 @@ struct HomeWidgetEntryView: View {
     let categories = [
         CategoryItem(emoji: "🍔", name: "Food", liquidColor: Color(red: 1.0, green: 0.6, blue: 0.2)),
         CategoryItem(emoji: "🛍️", name: "Shopping", liquidColor: Color(red: 0.9, green: 0.3, blue: 0.5)),
-        CategoryItem(emoji: "✈️", name: "Travel", liquidColor: Color(red: 0.2, green: 0.6, blue: 1.0)),
+        CategoryItem(emoji: "✈️", name: "Travel", liquidColor: Color(red: 0.3, green: 0.7, blue: 1.0)),
         CategoryItem(emoji: "🎬", name: "Entertainment", liquidColor: Color(red: 0.7, green: 0.3, blue: 0.9)),
         CategoryItem(emoji: "💰", name: "Savings", liquidColor: Color(red: 1.0, green: 0.8, blue: 0.2))
     ]
@@ -126,7 +202,7 @@ struct HomeWidgetEntryView: View {
             Color(red: 0.3, green: 0.69, blue: 0.31)
                 .opacity(0.85)
             
-            VStack(spacing: family == .systemLarge ? 16 : 12) {
+            VStack(spacing: family == .systemLarge ? 20 : 14) {
                 // Top section: Mascot + Pay Now button
                 HStack(spacing: 12) {
                     // Mascot image
@@ -137,61 +213,48 @@ struct HomeWidgetEntryView: View {
                             .frame(height: family == .systemLarge ? 50 : 40)
                     }
                     
-                    // Pay Now button
+                    // Pay Now button with NeoPop style
                     Link(destination: URL(string: "slideme://open")!) {
-                        HStack {
-                            Text("💳 Pay Now")
-                                .font(.system(size: family == .systemLarge ? 18 : 16, weight: .bold))
-                                .foregroundColor(.white)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: family == .systemLarge ? 50 : 40)
-                        .background(
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    Color(red: 0.3, green: 0.69, blue: 0.31),
-                                    Color(red: 0.25, green: 0.6, blue: 0.26)
-                                ]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .cornerRadius(12)
-                        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+                        NeoPopButton(family: family)
+                            .frame(height: family == .systemLarge ? 50 : 40)
                     }
                 }
                 .padding(.horizontal, family == .systemLarge ? 20 : 16)
-                .padding(.top, family == .systemLarge ? 20 : 16)
+                .padding(.top, family == .systemLarge ? 16 : 12)
                 
-                // Categories section
-                let displayCount = family == .systemLarge ? 5 : 3
-                let containerSize: CGFloat = family == .systemLarge ? 70 : 55
+                // Categories section - ALWAYS SHOW 5
+                let containerSize: CGFloat = family == .systemLarge ? 65 : 50
                 
-                HStack(spacing: family == .systemLarge ? 20 : 12) {
-                    ForEach(0..<displayCount, id: \.self) { index in
-                        if index < categories.count {
-                            Link(destination: URL(string: "slideme://open")!) {
-                                VStack(spacing: 4) {
-                                    LiquidContainer(
-                                        emoji: categories[index].emoji,
-                                        liquidColor: categories[index].liquidColor
-                                    )
-                                    .frame(width: containerSize, height: containerSize)
-                                    
-                                    if family == .systemLarge {
-                                        Text(categories[index].name)
-                                            .font(.system(size: 11, weight: .medium))
-                                            .foregroundColor(.white)
-                                            .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
-                                    }
+                HStack(spacing: family == .systemLarge ? 16 : 10) {
+                    ForEach(0..<5, id: \.self) { index in
+                        Link(destination: URL(string: "slideme://open")!) {
+                            VStack(spacing: 4) {
+                                LiquidContainer(
+                                    emoji: categories[index].emoji,
+                                    liquidColor: categories[index].liquidColor
+                                )
+                                .frame(width: containerSize, height: containerSize)
+                                
+                                if family == .systemLarge {
+                                    Text(categories[index].name)
+                                        .font(.system(size: 10, weight: .medium))
+                                        .foregroundColor(.white)
+                                        .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
+                                        .lineLimit(1)
                                 }
                             }
                         }
                     }
                 }
-                .padding(.horizontal, family == .systemLarge ? 20 : 16)
+                .padding(.horizontal, family == .systemLarge ? 16 : 12)
                 
                 Spacer()
+                
+                // Footer text
+                Text("Potato Book")
+                    .font(.system(size: family == .systemLarge ? 13 : 11, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.8))
+                    .padding(.bottom, family == .systemLarge ? 12 : 8)
             }
         }
     }
