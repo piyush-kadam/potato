@@ -3,223 +3,196 @@ import SwiftUI
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), categoryBudgets: [:], categorySpent: [:], debugInfo: "Loading...")
+        SimpleEntry(date: Date())
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
-        let entry = loadData()
+        let entry = SimpleEntry(date: Date())
         completion(entry)
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        let entry = loadData()
+        let entry = SimpleEntry(date: Date())
         let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(900)))
         completion(timeline)
-    }
-    
-    func loadData() -> SimpleEntry {
-        guard let sharedDefaults = UserDefaults(suiteName: "group.com.potato.slideme") else {
-            return SimpleEntry(date: Date(), categoryBudgets: [:], categorySpent: [:], 
-                             debugInfo: "❌ Cannot access App Group")
-        }
-        
-        // Get ALL keys from UserDefaults
-        var debugInfo = "🔍 Found Keys:\n"
-        let allKeys = sharedDefaults.dictionaryRepresentation().keys.sorted()
-        
-        if allKeys.isEmpty {
-            debugInfo = "❌ No keys found in UserDefaults"
-        } else {
-            for key in allKeys.prefix(10) {
-                let value = sharedDefaults.object(forKey: key)
-                let valuePreview = String(describing: value).prefix(30)
-                debugInfo += "• \(key): \(valuePreview)...\n"
-            }
-        }
-        
-        // Try to read the data
-        var budgetsJson: String? = nil
-        var spentJson: String? = nil
-        var foundBudgetKey = "none"
-        var foundSpentKey = "none"
-        
-        // Try different key patterns
-        let possibleBudgetKeys = [
-            "categoryBudgets",
-            "HomeWidget.categoryBudgets",
-            "flutter.categoryBudgets"
-        ]
-        
-        let possibleSpentKeys = [
-            "categorySpent",
-            "HomeWidget.categorySpent",
-            "flutter.categorySpent"
-        ]
-        
-        for key in possibleBudgetKeys {
-            if let value = sharedDefaults.string(forKey: key) {
-                budgetsJson = value
-                foundBudgetKey = key
-                break
-            }
-        }
-        
-        for key in possibleSpentKeys {
-            if let value = sharedDefaults.string(forKey: key) {
-                spentJson = value
-                foundSpentKey = key
-                break
-            }
-        }
-        
-        debugInfo += "\n✅ Budget key: \(foundBudgetKey)"
-        debugInfo += "\n✅ Spent key: \(foundSpentKey)"
-        
-        let budgets = parseCategoryData(budgetsJson ?? "{}")
-        let spent = parseCategoryData(spentJson ?? "{}")
-        
-        debugInfo += "\n📊 Budgets: \(budgets.count) items"
-        debugInfo += "\n📊 Spent: \(spent.count) items"
-        
-        return SimpleEntry(date: Date(), categoryBudgets: budgets, categorySpent: spent, debugInfo: debugInfo)
-    }
-    
-    func parseCategoryData(_ jsonString: String) -> [String: Double] {
-        guard let data = jsonString.data(using: .utf8) else {
-            return [:]
-        }
-        
-        do {
-            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                return [:]
-            }
-            
-            var result: [String: Double] = [:]
-            for (key, value) in json {
-                if let numValue = value as? NSNumber {
-                    result[key] = numValue.doubleValue
-                } else if let intValue = value as? Int {
-                    result[key] = Double(intValue)
-                } else if let doubleValue = value as? Double {
-                    result[key] = doubleValue
-                } else if let stringValue = value as? String, let doubleValue = Double(stringValue) {
-                    result[key] = doubleValue
-                }
-            }
-            return result
-        } catch {
-            return [:]
-        }
     }
 }
 
 struct SimpleEntry: TimelineEntry {
     let date: Date
-    let categoryBudgets: [String: Double]
-    let categorySpent: [String: Double]
-    let debugInfo: String
+}
+
+struct CategoryItem {
+    let emoji: String
+    let name: String
+    let liquidColor: Color
+}
+
+struct LiquidContainer: View {
+    let emoji: String
+    let liquidColor: Color
+    let fillPercentage: Double = 0.6 // 60% filled for visual appeal
+    
+    var body: some View {
+        ZStack {
+            // Glass container
+            Circle()
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.white.opacity(0.3),
+                            Color.white.opacity(0.1)
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(
+                    Circle()
+                        .stroke(Color.white.opacity(0.4), lineWidth: 1.5)
+                )
+                .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+            
+            // Liquid inside
+            GeometryReader { geo in
+                let size = geo.size.width
+                let fillHeight = size * CGFloat(fillPercentage)
+                
+                ZStack {
+                    // Liquid with wave effect
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    liquidColor.opacity(0.8),
+                                    liquidColor.opacity(0.6)
+                                ]),
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .frame(width: size * 0.85, height: size * 0.85)
+                        .blur(radius: 2)
+                    
+                    // Shine effect
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                gradient: Gradient(colors: [
+                                    Color.white.opacity(0.3),
+                                    Color.clear
+                                ]),
+                                center: .topLeading,
+                                startRadius: 0,
+                                endRadius: size * 0.5
+                            )
+                        )
+                        .frame(width: size * 0.4, height: size * 0.4)
+                        .offset(x: -size * 0.15, y: -size * 0.15)
+                }
+            }
+            
+            // Emoji on top
+            Text(emoji)
+                .font(.system(size: 28))
+                .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 1)
+        }
+    }
 }
 
 struct HomeWidgetEntryView: View {
     var entry: Provider.Entry
     @Environment(\.widgetFamily) var family
     
-    // Add this state to toggle debug mode
-    @State private var showDebug = true
-    
-    func extractEmoji(from text: String) -> String {
-        let emojiRegex = try! NSRegularExpression(pattern: "[\\p{Emoji_Presentation}\\p{Emoji}]", options: [])
-        if let match = emojiRegex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) {
-            if let range = Range(match.range, in: text) {
-                return String(text[range])
-            }
-        }
-        return "📦"
-    }
-    
-    func extractName(from text: String) -> String {
-        let emojiRegex = try! NSRegularExpression(pattern: "[\\p{Emoji_Presentation}\\p{Emoji}]", options: [])
-        let result = emojiRegex.stringByReplacingMatches(in: text, range: NSRange(text.startIndex..., in: text), withTemplate: "")
-        return result.trimmingCharacters(in: .whitespaces)
-    }
+    let categories = [
+        CategoryItem(emoji: "🍔", name: "Food", liquidColor: Color(red: 1.0, green: 0.6, blue: 0.2)),
+        CategoryItem(emoji: "🛍️", name: "Shopping", liquidColor: Color(red: 0.9, green: 0.3, blue: 0.5)),
+        CategoryItem(emoji: "✈️", name: "Travel", liquidColor: Color(red: 0.2, green: 0.6, blue: 1.0)),
+        CategoryItem(emoji: "🎬", name: "Entertainment", liquidColor: Color(red: 0.7, green: 0.3, blue: 0.9)),
+        CategoryItem(emoji: "💰", name: "Savings", liquidColor: Color(red: 1.0, green: 0.8, blue: 0.2))
+    ]
     
     var body: some View {
         ZStack {
-            Color(red: 0.89, green: 0.95, blue: 0.99)
+            // Background image
+            if let bgImage = UIImage(named: "bgg") {
+                Image(uiImage: bgImage)
+                    .resizable()
+                    .scaledToFill()
+                    .opacity(0.3)
+            }
             
-            VStack(alignment: .leading, spacing: family == .systemLarge ? 12 : 8) {
-                HStack {
-                    Text("💰 Budget Tracker")
-                        .font(.system(size: family == .systemLarge ? 18 : 16, weight: .bold))
-                        .foregroundColor(.black)
-                    Spacer()
-                }
-                .padding(.bottom, 4)
-                
-                // SHOW DEBUG INFO ALWAYS (for now)
-                if entry.categoryBudgets.isEmpty {
-                    ScrollView {
-                        Text(entry.debugInfo)
-                            .font(.system(size: 9, design: .monospaced))
-                            .foregroundColor(.black)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+            // Background color overlay
+            Color(red: 0.3, green: 0.69, blue: 0.31)
+                .opacity(0.85)
+            
+            VStack(spacing: family == .systemLarge ? 16 : 12) {
+                // Top section: Mascot + Pay Now button
+                HStack(spacing: 12) {
+                    // Mascot image
+                    if let mascotImage = UIImage(named: "mascot") {
+                        Image(uiImage: mascotImage)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: family == .systemLarge ? 50 : 40)
                     }
-                } else {
-                    // Show normal budget display
-                    let sortedCategories = entry.categoryBudgets.keys.sorted()
-                    let displayCount = family == .systemLarge ? min(6, sortedCategories.count) : min(3, sortedCategories.count)
                     
-                    ForEach(sortedCategories.prefix(displayCount), id: \.self) { category in
-                        let budget = entry.categoryBudgets[category] ?? 0
-                        let spent = entry.categorySpent[category] ?? 0
-                        let remaining = budget - spent
-                        let emoji = extractEmoji(from: category)
-                        let name = extractName(from: category)
-                        
-                        HStack(spacing: 10) {
-                            Text(emoji)
-                                .font(.system(size: family == .systemLarge ? 28 : 24))
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(name.isEmpty ? "Category" : name.capitalized)
-                                    .font(.system(size: family == .systemLarge ? 14 : 12, weight: .semibold))
-                                    .foregroundColor(.black)
-                                    .lineLimit(1)
-                                
-                                GeometryReader { geo in
-                                    ZStack(alignment: .leading) {
-                                        RoundedRectangle(cornerRadius: 4)
-                                            .fill(Color.gray.opacity(0.2))
-                                        
-                                        if budget > 0 {
-                                            RoundedRectangle(cornerRadius: 4)
-                                                .fill(remaining > 0 ? Color.green : Color.red)
-                                                .frame(width: geo.size.width * CGFloat(min(spent / budget, 1.0)))
-                                        }
+                    // Pay Now button
+                    Link(destination: URL(string: "slideme://open")!) {
+                        HStack {
+                            Text("💳 Pay Now")
+                                .font(.system(size: family == .systemLarge ? 18 : 16, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: family == .systemLarge ? 50 : 40)
+                        .background(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    Color(red: 0.3, green: 0.69, blue: 0.31),
+                                    Color(red: 0.25, green: 0.6, blue: 0.26)
+                                ]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .cornerRadius(12)
+                        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+                    }
+                }
+                .padding(.horizontal, family == .systemLarge ? 20 : 16)
+                .padding(.top, family == .systemLarge ? 20 : 16)
+                
+                // Categories section
+                let displayCount = family == .systemLarge ? 5 : 3
+                let containerSize: CGFloat = family == .systemLarge ? 70 : 55
+                
+                HStack(spacing: family == .systemLarge ? 20 : 12) {
+                    ForEach(0..<displayCount, id: \.self) { index in
+                        if index < categories.count {
+                            Link(destination: URL(string: "slideme://open")!) {
+                                VStack(spacing: 4) {
+                                    LiquidContainer(
+                                        emoji: categories[index].emoji,
+                                        liquidColor: categories[index].liquidColor
+                                    )
+                                    .frame(width: containerSize, height: containerSize)
+                                    
+                                    if family == .systemLarge {
+                                        Text(categories[index].name)
+                                            .font(.system(size: 11, weight: .medium))
+                                            .foregroundColor(.white)
+                                            .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
                                     }
                                 }
-                                .frame(height: 6)
-                            }
-                            
-                            Spacer()
-                            
-                            VStack(alignment: .trailing, spacing: 2) {
-                                Text("\(Int(spent))/\(Int(budget))")
-                                    .font(.system(size: family == .systemLarge ? 13 : 11, weight: .bold))
-                                    .foregroundColor(.black)
-                                
-                                Text("₹\(Int(remaining))")
-                                    .font(.system(size: family == .systemLarge ? 11 : 9))
-                                    .foregroundColor(remaining > 0 ? .green : .red)
                             }
                         }
-                        .padding(.vertical, 4)
                     }
-                    
-                    Spacer()
                 }
+                .padding(.horizontal, family == .systemLarge ? 20 : 16)
+                
+                Spacer()
             }
-            .padding(family == .systemLarge ? 16 : 12)
         }
     }
 }
@@ -232,8 +205,8 @@ struct HomeWidget: Widget {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             HomeWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("Budget Tracker")
-        .description("Track your category budgets and spending.")
+        .configurationDisplayName("SlideMe Budget")
+        .description("Quick access to your budget categories.")
         .supportedFamilies([.systemMedium, .systemLarge])
     }
 }
