@@ -280,8 +280,8 @@ class _PressableButtonState extends State<_PressableButton>
             elevation: 0,
             child: InkWell(
               onTap: () {
-                //HapticFeedback.mediumImpact();
-                Vibration.vibrate();
+                HapticFeedback.mediumImpact();
+
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => PhoneInputPage()),
