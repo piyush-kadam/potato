@@ -16,6 +16,15 @@
                 <string>com.googleusercontent.apps.202409214260-i9quo023dk7pqu0v8hlep135m2v6d4sf</string>
             </array>
         </dict>
+        <!-- Widget Deep Link -->
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>slideme</string>
+            </array>
+        </dict>
     </array>
 
     <!-- App Info -->
