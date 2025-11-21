@@ -270,6 +270,7 @@ class _OTPPageState extends State<OTPPage>
   }
 
   void _verifyOtp() async {
+    HapticFeedback.mediumImpact();
     final otp = _otp;
     if (otp.length != 6) {
       _showSnackBar('Enter valid 6-digit OTP', isError: true);

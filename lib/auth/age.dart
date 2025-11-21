@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -104,6 +105,7 @@ class _AgePageState extends State<AgePage> with TickerProviderStateMixin {
   }
 
   Future<void> _saveAge() async {
+    HapticFeedback.mediumImpact();
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {

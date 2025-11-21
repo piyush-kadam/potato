@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:slideme/auth/mode.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
@@ -96,6 +97,7 @@ class CompletionPage extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
+                        HapticFeedback.mediumImpact();
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(

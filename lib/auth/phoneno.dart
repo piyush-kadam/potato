@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:neopop/widgets/buttons/neopop_button/neopop_button.dart';
 import 'package:slideme/auth/otp.dart';
@@ -110,6 +111,7 @@ class _PhoneInputPageState extends State<PhoneInputPage>
   }
 
   void _sendOTP() async {
+    HapticFeedback.mediumImpact();
     final phone = _phoneController.text.trim();
 
     if (phone.isEmpty) {

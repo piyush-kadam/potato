@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -348,12 +349,15 @@ class _SpendAmountPageState extends State<SpendAmountPage>
                       bottom: 30,
                     ),
                     child: GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SpendCategoriesPage(),
-                        ),
-                      ),
+                      onTap: () {
+                        HapticFeedback.mediumImpact(); // 👈 Added haptic feedback
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SpendCategoriesPage(),
+                          ),
+                        );
+                      },
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 18),

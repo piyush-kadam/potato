@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -121,6 +122,7 @@ class _NamePageState extends State<NamePage> with TickerProviderStateMixin {
   }
 
   Future<void> _saveName() async {
+    HapticFeedback.mediumImpact();
     final user = FirebaseAuth.instance.currentUser;
     final name = _nameController.text.trim();
 

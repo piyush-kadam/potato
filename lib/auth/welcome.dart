@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:slideme/auth/phoneno.dart';
+import 'package:flutter/services.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -278,6 +279,7 @@ class _PressableButtonState extends State<_PressableButton>
             elevation: 0,
             child: InkWell(
               onTap: () {
+                HapticFeedback.mediumImpact();
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => PhoneInputPage()),

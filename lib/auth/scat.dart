@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:slideme/auth/completion.dart';
 
@@ -300,6 +301,7 @@ class _SpendCategoriesPageState extends State<SpendCategoriesPage>
                       child: GestureDetector(
                         onTap: _selectedCategories.isNotEmpty
                             ? () {
+                                HapticFeedback.mediumImpact();
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
