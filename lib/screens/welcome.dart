@@ -122,7 +122,7 @@ class _NamePageState extends State<NamePage> with TickerProviderStateMixin {
   }
 
   Future<void> _saveName() async {
-    HapticFeedback.mediumImpact();
+    HapticFeedback.vibrate();
     final user = FirebaseAuth.instance.currentUser;
     final name = _nameController.text.trim();
 

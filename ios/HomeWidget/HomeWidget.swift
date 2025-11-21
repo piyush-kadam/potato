@@ -202,7 +202,11 @@ struct HomeWidgetEntryView: View {
             Color(red: 0.3, green: 0.69, blue: 0.31)
                 .opacity(0.85)
             
-            VStack(spacing: family == .systemLarge ? 20 : 14) {
+            VStack(spacing: 0) {
+                // Top spacing
+                Spacer()
+                    .frame(height: family == .systemLarge ? 20 : 16)
+                
                 // Top section: Mascot + Pay Now button
                 HStack(spacing: 12) {
                     // Mascot image
@@ -219,13 +223,27 @@ struct HomeWidgetEntryView: View {
                             .frame(height: family == .systemLarge ? 50 : 40)
                     }
                 }
-                .padding(.horizontal, family == .systemLarge ? 20 : 16)
-                .padding(.top, family == .systemLarge ? 16 : 12)
+                .padding(.horizontal, family == .systemLarge ? 24 : 20)
+                
+                // Space between button and categories
+                Spacer()
+                    .frame(height: family == .systemLarge ? 24 : 18)
+                
+                // "Categories" label
+                HStack {
+                    Text("Categories")
+                        .font(.system(size: family == .systemLarge ? 16 : 14, weight: .bold))
+                        .foregroundColor(.white)
+                        .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 1)
+                    Spacer()
+                }
+                .padding(.horizontal, family == .systemLarge ? 24 : 20)
+                .padding(.bottom, family == .systemLarge ? 12 : 8)
                 
                 // Categories section - ALWAYS SHOW 5
-                let containerSize: CGFloat = family == .systemLarge ? 65 : 50
+                let containerSize: CGFloat = family == .systemLarge ? 60 : 50
                 
-                HStack(spacing: family == .systemLarge ? 16 : 10) {
+                HStack(spacing: family == .systemLarge ? 14 : 10) {
                     ForEach(0..<5, id: \.self) { index in
                         Link(destination: URL(string: "slideme://open")!) {
                             VStack(spacing: 4) {
@@ -246,15 +264,9 @@ struct HomeWidgetEntryView: View {
                         }
                     }
                 }
-                .padding(.horizontal, family == .systemLarge ? 16 : 12)
+                .padding(.horizontal, family == .systemLarge ? 24 : 20)
                 
                 Spacer()
-                
-                // Footer text
-                Text("Potato Book")
-                    .font(.system(size: family == .systemLarge ? 13 : 11, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.8))
-                    .padding(.bottom, family == .systemLarge ? 12 : 8)
             }
         }
     }

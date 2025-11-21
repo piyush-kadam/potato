@@ -1,14 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.slideme">
 
-    <!-- 🔔 Required for push notifications on Android 13+ -->
+    <!-- 🔔 Notification & SMS permissions -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_SMS"/>
     <uses-permission android:name="android.permission.READ_SMS"/>
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove"/>
-    
+    <uses-permission android:name="android.permission.VIBRATE"/>
 
-    <!-- Required for Android 11+ so the share sheet can find compatible apps -->
+
     <queries>
         <intent>
             <action android:name="android.intent.action.SEND" />
@@ -25,12 +26,10 @@
         android:label="Potato Book"
         android:icon="@mipmap/ic_launcher">
 
-        <!-- 🔥 High importance notification channel (required by FCM) -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="high_importance_channel" />
 
-        <!-- ⭐ Must be present for Firebase Messaging -->
         <service
             android:name="com.google.firebase.messaging.FirebaseMessagingService"
             android:exported="false">
@@ -39,7 +38,6 @@
             </intent-filter>
         </service>
 
-        <!-- ⭐ (Optional but recommended) Handles new FCM token updates -->
         <service
             android:name="com.google.firebase.iid.FirebaseInstanceIdService"
             android:exported="false">
@@ -48,7 +46,6 @@
             </intent-filter>
         </service>
 
-        <!-- MainActivity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
