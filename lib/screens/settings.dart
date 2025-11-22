@@ -8,6 +8,9 @@ import 'package:intl/intl.dart';
 import 'package:slideme/auth/authservice.dart';
 import 'package:slideme/auth/login.dart';
 import 'package:slideme/auth/subscription.dart';
+import 'package:slideme/info_pages/faq.dart';
+import 'package:slideme/info_pages/policy.dart';
+import 'package:slideme/info_pages/terms.dart';
 import 'package:slideme/screens/monthlywrap.dart';
 import 'package:slideme/screens/profile.dart';
 
@@ -221,9 +224,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
+                      // Profile Container
                       GestureDetector(
                         onTap: () {
-                          HapticFeedback.mediumImpact();
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -258,7 +261,6 @@ class _SettingsPageState extends State<SettingsPage> {
                               ),
                               child: Column(
                                 children: [
-                                  // 🔥 Updated Profile Photo Container
                                   Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: BoxDecoration(
@@ -289,9 +291,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                           : null,
                                     ),
                                   ),
-
                                   const SizedBox(height: 12),
-
                                   Text(
                                     username,
                                     style: GoogleFonts.poppins(
@@ -301,7 +301,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                     ),
                                   ),
                                   const SizedBox(height: 16),
-
                                   Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceEvenly,
@@ -331,38 +330,163 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       const SizedBox(height: 16),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                HapticFeedback.heavyImpact();
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const SubscriptionPage(),
+                      // Pro Container
+                      GestureDetector(
+                        onTap: () {
+                          HapticFeedback.heavyImpact();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const SubscriptionPage(),
+                            ),
+                          );
+                        },
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.green.withOpacity(0.7),
+                                    Colors.green.shade700.withOpacity(0.8),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.green.withOpacity(0.3),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 5),
                                   ),
-                                );
-                              },
-                              child: _buildActionCard(
-                                title: "Get Pro",
-                                icon: Icons.north_east_outlined,
-                                color: Colors.green,
+                                ],
+                              ),
+                              padding: const EdgeInsets.all(20),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(
+                                      Icons.north_east_outlined,
+                                      color: Colors.white,
+                                      size: 28,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Get PotatoBook Pro",
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          "Unlock premium features",
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 13,
+                                            color: Colors.white.withOpacity(
+                                              0.9,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: _logoutUser,
-                              child: _buildActionCard(
-                                title: "Logout",
-                                icon: Icons.logout_rounded,
-                                color: Colors.red,
-                              ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Settings Options
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: Column(
+                              children: [
+                                _buildSettingsTile(
+                                  icon: Icons.help_outline_rounded,
+                                  title: "FAQ",
+                                  onTap: () {
+                                    HapticFeedback.heavyImpact();
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const FAQScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: Colors.white.withOpacity(0.3),
+                                ),
+                                _buildSettingsTile(
+                                  icon: Icons.privacy_tip_outlined,
+                                  title: "Privacy Policy",
+                                  onTap: () {
+                                    HapticFeedback.heavyImpact();
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const PrivacyPolicyPage(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: Colors.white.withOpacity(0.3),
+                                ),
+                                _buildSettingsTile(
+                                  icon: Icons.description_outlined,
+                                  title: "Terms and Conditions",
+                                  onTap: () {
+                                    HapticFeedback.heavyImpact();
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const TermsAndConditionsPage(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
@@ -395,124 +519,33 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildActionCard({
-    required String title,
+  Widget _buildSettingsTile({
     required IconData icon,
-    required Color color,
+    required String title,
+    required VoidCallback onTap,
   }) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.5), width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(0.2),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(height: 8),
-              Text(
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.black87, size: 24),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
                 title,
                 style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: color,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
                 ),
               ),
-            ],
-          ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.black54, size: 24),
+          ],
         ),
       ),
     );
-  }
-
-  Future<void> _logoutUser() async {
-    HapticFeedback.heavyImpact();
-    final shouldLogout = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          "Logout",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-        ),
-        content: Text(
-          "Are you sure you want to logout?",
-          style: GoogleFonts.poppins(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              "Cancel",
-              style: GoogleFonts.poppins(color: Colors.grey[600]),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(
-              "Logout",
-              style: GoogleFonts.poppins(
-                color: Colors.red,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (shouldLogout == true) {
-      try {
-        if (context.mounted) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) =>
-                const Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        await AuthService().signOut();
-
-        if (context.mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => LoginPage(onTap: () {})),
-          );
-        }
-      } catch (e) {
-        if (context.mounted) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                "Error logging out: ${e.toString()}",
-                style: GoogleFonts.poppins(),
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
   }
 }
