@@ -53,11 +53,11 @@ class PrivacyPolicyPage extends StatelessWidget {
                   "• Login credentials\n"
                   "• Manually entered financial notes or categories\n\n"
                   "2.2 Financial Information\n"
-                  "Potato Book allows users to manually enter financial data. We do not access bank accounts or perform automated financial operations.\n"
+                  "Potato Book allows users to manually enter their financial data. We do not access bank accounts or perform any automated financial operations.\n"
                   "Information you may choose to enter includes:\n"
                   "• Income records\n• Expenses\n• Savings or budget entries\n• User-added notes\n\n"
                   "2.3 Device & Usage Information\n"
-                  "Automatically collected data may include:\n"
+                  "Automatically collected technical data may include:\n"
                   "• Device type and operating system\n"
                   "• IP address\n"
                   "• App performance analytics\n"
@@ -72,7 +72,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                   "• Maintain account access\n"
                   "• Improve app performance and reliability\n"
                   "• Provide support and respond to inquiries\n"
-                  "• Analyze trends to enhance user experience\n"
+                  "• Analyze general trends to enhance user experience\n"
                   "• Send notifications (only when permitted by the user)\n\n"
                   "We do not use your financial entries for advertising or profiling.",
             ),
@@ -80,51 +80,53 @@ class PrivacyPolicyPage extends StatelessWidget {
             _buildSection(
               title: "4. Data Storage & Security",
               content:
-                  "We take appropriate measures to protect your data against unauthorized access or misuse.\n\n"
+                  "We take appropriate security measures to protect your data against unauthorized access or misuse.\n\n"
                   "4.1 Data Storage\n"
-                  "Your information may be stored securely on:\n"
+                  "Your information may be stored securely in:\n"
                   "• Encrypted cloud servers\n"
                   "• Local device storage (depending on design)\n\n"
                   "4.2 Protection Measures\n"
                   "• Encrypted data transfer (SSL/HTTPS)\n"
                   "• Authentication safeguards\n"
-                  "• Controlled data access\n"
+                  "• Controlled access to data\n"
                   "• Regular monitoring for vulnerabilities\n\n"
-                  "While no system is fully immune to risk, we follow industry-standard practices.",
+                  "While no system is completely immune to security risks, we follow standard protective practices.",
             ),
             _divider(),
             _buildSection(
               title: "5. Sharing of Information",
               content:
-                  "We do not sell or trade your personal data. Information may be shared only under limited circumstances:\n\n"
+                  "We do not sell or trade your personal data.\n\nInformation may be shared only under limited circumstances:\n\n"
                   "5.1 Service Providers\n"
-                  "For hosting, analytics, crash reporting, or performance optimization — all under strict confidentiality.\n\n"
+                  "We may use trusted third-party services for:\n"
+                  "• Hosting\n• Analytics\n• Crash reporting\n• Performance optimization\n"
+                  "These partners follow strict confidentiality requirements.\n\n"
                   "5.2 Legal Requirements\n"
-                  "We may disclose data when required by law, judicial order, or government authorities.",
+                  "We may disclose data if required by law, judicial process, or government authorities.",
             ),
             _divider(),
             _buildSection(
               title: "6. Your Rights",
               content:
-                  "Depending on your region, you may request:\n"
+                  "Depending on your region, you may have rights such as:\n"
                   "• Access to your data\n"
-                  "• Correction of inaccurate information\n"
-                  "• Data deletion\n"
+                  "• Correction of incorrect information\n"
+                  "• Request for deletion\n"
                   "• Withdrawal of consent\n"
-                  "• Restriction on data processing\n"
+                  "• Restriction on processing\n"
                   "• Account closure\n\n"
-                  "Contact us to exercise these rights.",
+                  "You may contact us to exercise any of these rights.",
             ),
             _divider(),
             _buildSection(
               title: "7. Data Retention",
               content:
-                  "We retain information only as necessary for:\n"
+                  "We retain information only as long as necessary for:\n"
                   "• Providing services\n"
-                  "• Account maintenance\n"
-                  "• Legal compliance\n"
-                  "• Troubleshooting & security\n\n"
-                  "You may request deletion at any time.",
+                  "• Maintaining account operations\n"
+                  "• Complying with legal obligations\n"
+                  "• Security or troubleshooting purposes\n\n"
+                  "You may request data deletion at any time.",
             ),
             _divider(),
             _buildSection(
@@ -133,39 +135,37 @@ class PrivacyPolicyPage extends StatelessWidget {
                   "The app may use:\n"
                   "• Local storage\n"
                   "• Tracking tools for performance enhancement\n\n"
-                  "Users may manage permissions through device settings.",
+                  "These technologies help improve functionality. Users may manage permissions through device settings.",
             ),
             _divider(),
             _buildSection(
               title: "9. Children’s Privacy",
               content:
-                  "This app is not intended for users under age 13.\n"
-                  "We do not knowingly collect data from children. If detected, it will be removed immediately.",
+                  "This app is not intended for users under the age of 13.\nWe do not knowingly collect personal data from children. If such data is identified, it will be removed promptly.",
             ),
             _divider(),
             _buildSection(
               title: "10. Third-Party Links",
               content:
-                  "The app may include links to external services. We are not responsible for their content or privacy practices. Please review third-party policies before use.",
+                  "The app may contain links to third-party services.\nWe are not responsible for the privacy practices or content of these external platforms. Users should review third-party privacy policies before engaging with them.",
             ),
             _divider(),
             _buildSection(
               title: "11. Updates to This Policy",
               content:
-                  "We may update this Privacy Policy periodically. Changes will be indicated by the 'Last Updated' date. Continued use of the app signifies acceptance.",
+                  "We may update this Privacy Policy from time to time.\nRevisions will be indicated by the 'Last Updated' date.\nContinued use of the app after updates constitutes acceptance of the revised policy.",
             ),
             _divider(),
             _buildSection(
               title: "12. Contact Information",
               content:
-                  "For questions or privacy-related requests, contact us at:\n\n"
+                  "For questions, feedback, or data-related requests, you may contact us at:\n\n"
                   "Hyphen Corporation\n"
                   "Building No./Flat No.: 1289\n"
                   "In front of Sardar Bant Singh Dhaba\n"
                   "G.T. Road Highway, Bewar\n"
                   "Mainpuri, Uttar Pradesh – 205301\n\n"
-                  "Email: [Insert Support Email]\n"
-                  "Phone: [Insert Contact Number]",
+                  "Email: potatopayco@gmail.com",
             ),
             const SizedBox(height: 20),
             Center(
@@ -183,37 +183,37 @@ class PrivacyPolicyPage extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildSection({required String title, required String content}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
+Widget _buildSection({required String title, required String content}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        title,
+        style: GoogleFonts.poppins(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Colors.black,
         ),
-        const SizedBox(height: 6),
-        Text(
-          content,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            color: Colors.black,
-            height: 1.5,
-          ),
+      ),
+      const SizedBox(height: 6),
+      Text(
+        content,
+        style: GoogleFonts.poppins(
+          fontSize: 12,
+          color: Colors.black,
+          height: 1.5,
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 
-  Widget _divider() {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 12),
-      height: 1,
-      color: Colors.grey.withOpacity(0.2),
-    );
-  }
+Widget _divider() {
+  return Container(
+    margin: const EdgeInsets.symmetric(vertical: 12),
+    height: 1,
+    color: Colors.grey.withOpacity(0.2),
+  );
 }

@@ -11,40 +11,45 @@ class FAQScreen extends StatefulWidget {
 class _FAQScreenState extends State<FAQScreen> {
   final List<Map<String, dynamic>> _faqList = [
     {
-      "question": "How do I add an expense or budget in PotatoPay?",
+      "question": "Is my financial data safe?",
       "answer":
-          "Go to the home screen and select either Expense or Budget mode. Add a category, enter an amount, and choose a date. PotatoPay automatically updates your summary and analytics in real-time.",
+          "Yes. We use encrypted storage and secure communication methods to protect your data. Your entries are stored safely, and we never share your personal or financial information with advertisers.",
       "isOpen": true,
     },
     {
-      "question":
-          "What is the difference between Expense mode and Budget mode?",
+      "question": "Does Potato Book connect to my bank?",
       "answer":
-          "Expense mode helps you track daily spending category-wise. Budget mode helps you plan monthly or weekly limits for categories like Food, Travel, Bills, and more — and alerts you before you overspend.",
+          "No. All financial entries are added manually by you. We do not access your bank accounts, bank credentials, or transaction history.",
       "isOpen": false,
     },
     {
-      "question": "How does the AI chatbot help me manage finances?",
+      "question": "Can I use the app on multiple devices?",
       "answer":
-          "PotatoPay’s AI assistant analyzes your spending patterns, suggests saving tips, helps you set smarter budgets, and can answer financial queries instantly like ‘How much did I spend on food last month?’",
+          "Yes, as long as you log in with the same account credentials. Your data will sync securely.",
       "isOpen": false,
     },
     {
-      "question": "Can I share my dashboard with friends or family?",
+      "question": "What happens if I reinstall the app?",
       "answer":
-          "Yes! You can securely share your dashboard with selected contacts for split bills, shared expenses, or family finance tracking. You have full control over permissions and visibility.",
+          "Once you log in again, your entries will be restored automatically.",
       "isOpen": false,
     },
     {
-      "question": "How do categories work in PotatoPay?",
+      "question": "How do I delete my account?",
       "answer":
-          "You can choose from built-in categories such as Food, Travel, Bills, Shopping, Health, etc. You can also create custom categories with icons and colors to personalize your tracking style.",
+          "You can request account deletion by contacting us at: [Insert Support Email]. We will verify your request and delete your data upon confirmation.",
       "isOpen": false,
     },
     {
-      "question": "What should I do if I face syncing or payment issues?",
+      "question": "Can I export my data?",
       "answer":
-          "If something doesn’t look right, contact support at support@potatopay.in or use the ‘Chat with Support’ button. Our team typically responds within a few hours.",
+          "This depends on the version of the app. If enabled, you can export data through the account settings. If not, you may request export via email.",
+      "isOpen": false,
+    },
+    {
+      "question": "Why am I not receiving notifications?",
+      "answer":
+          "Ensure notifications are enabled in iOS settings, you are logged in, and your device is connected to the internet.",
       "isOpen": false,
     },
   ];

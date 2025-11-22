@@ -8,70 +8,69 @@ class TermsAndConditionsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<Map<String, String>> sections = [
       {
-        "title": "1. Overview",
+        "title": "1. Company Information",
         "content":
-            "1.1 What We Do\nPotatoPay is a personal finance platform designed to help users manage expenses, create budgets, analyze spending patterns, and make smarter financial decisions. Users can track spending by category, create custom budgets, collaborate with friends & family, and access AI-powered insights.\n\n"
-            "1.2 Changes to Terms\nPotatoPay may update these Terms periodically to reflect product improvements or regulatory compliance. Any major changes will be communicated through the app or email. Continued use of the platform means you accept the latest Terms.",
+            "Potato Book is a digital finance management application developed by Hyphen Corporation, a registered proprietorship based in India. The application provides tools to help individuals record, organize, and track their personal finances securely and efficiently.\n\nThese Terms govern your use of the Potato Book app and all related services offered by Hyphen Corporation.",
       },
       {
-        "title": "2. Account Access & Responsibilities",
+        "title": "2. Acceptance of Terms",
         "content":
-            "You must create an account to use core features such as expense tracking, budget planning, AI insights, and shared dashboards.\n\n"
-            "By registering, you agree to provide accurate and updated personal information.\n\n"
-            "You are responsible for safeguarding your login credentials and activity within your account.\n\n"
-            "PotatoPay may limit or suspend accounts that misuse features, violate security, or provide false information.",
+            "By downloading, accessing, or using this app, you confirm that you:\n• Have read, understood, and agree to be bound by these Terms\n• Are legally capable of entering a binding contract\n• Are at least 18 years old, or using the app under supervision of a parent or guardian\n\nHyphen Corporation reserves the right to modify or update these Terms at any time without prior notice. Continued use of the app constitutes acceptance of revised Terms.",
       },
       {
-        "title": "3. Expense Tracking & Budgeting",
+        "title": "3. Use of the Application",
         "content":
-            "3.1 Adding Expenses\nTrack daily expenses by assigning categories such as Food, Travel, Shopping, Bills, etc. You may also create custom categories.\nReal-time insights will update your spending summary and analytics dashboard.\n\n"
-            "3.2 Budget Mode\nBudget Mode enables users to set weekly or monthly spending limits per category. Alerts notify you when you're nearing or exceeding limits.\n\n"
-            "3.3 Data Accuracy & Editing\nUsers are responsible for ensuring correct financial entries. Expenses and budgets can be edited or deleted unless locked for reporting.",
+            "You agree to use Potato Book solely for lawful and personal financial management purposes.\n\nYou must not:\n• Use the app for fraudulent or illegal activities\n• Interfere with or disrupt the app’s functionality\n• Attempt to reverse engineer, copy, or modify the app\n• Use the app to transmit malware or harmful content\n• Share false or misleading information\n\nHyphen Corporation may suspend or terminate accounts that violate these terms.",
       },
       {
-        "title": "4. Shared Dashboards & Group Finance",
+        "title": "4. User Account & Security",
         "content":
-            "PotatoPay allows sharing dashboards with friends and family for group budgeting, bill splitting, and collective tracking.\n• You determine permissions such as view-only or edit access.\n• Shared groups must follow respectful and transparent financial behavior.\nPotatoPay may restrict groups that violate community safety or trust guidelines.",
+            "To access certain features, you may be required to create an account.\nYou are responsible for:\n• Maintaining the confidentiality of login credentials\n• Providing accurate and up-to-date information\n• Notifying support immediately in case of unauthorized access\n\nHyphen Corporation is not liable for losses caused by failure to secure account access.",
       },
       {
-        "title": "5. AI Insights & Assistance",
+        "title": "5. Data & Privacy",
         "content":
-            "PotatoPay includes an AI financial assistant that provides smart insights, budget recommendations, spending analysis, and predictive suggestions.\nThe chatbot may analyze expense history to improve accuracy and personalization.\nAI responses should be used as guidance and not as certified financial or legal advice.",
+            "Your privacy is important to us. All personal information is handled in accordance with our Privacy Policy, which forms an integral part of these Terms.\n\nYou can review the full Privacy Policy at: _____",
       },
       {
-        "title": "6. Subscription & Payment",
+        "title": "6. Intellectual Property Rights",
         "content":
-            "Some premium features such as advanced analytics, multi-group collaboration, and personalized AI recommendations may require subscription.\nPayments are securely processed through certified third-party gateways.\nPotatoPay does not store any card, UPI, or banking information internally.",
+            "All intellectual property in Potato Book—including the app design, features, content, and code—is owned or licensed by Hyphen Corporation.\nUsers are granted a limited, non-exclusive, non-transferable license for personal use.\n\nYou may not copy, distribute, or create derivative works from any part of the app without written permission.",
       },
       {
-        "title": "7. Content & Usage Guidelines",
+        "title": "7. Disclaimer of Warranties",
         "content":
-            "Users agree not to:\n• Upload incorrect or misleading data\n• Use PotatoPay for fraudulent accounting or illegal activity\n• Share offensive, harmful, or abusive content within group dashboards\nPotatoPay may review and remove inappropriate content or restrict accounts accordingly.",
+            "Potato Book is provided on an 'as is' and 'as available' basis.\n\nWe do not guarantee that:\n• The app will always function without errors or interruptions\n• Data will always be accurate or up-to-date\n• Bugs or issues will be immediately fixed\n\nAll warranties, express or implied, are disclaimed including merchantability and fitness for a particular purpose.",
       },
       {
-        "title": "8. Platform Availability",
+        "title": "8. Limitation of Liability",
         "content":
-            "PotatoPay strives for smooth and reliable service, but we do not guarantee uninterrupted accessibility, real-time backups, or error-free operation at all times. Maintenance, upgrades, or network issues may temporarily limit functionality.",
+            "Hyphen Corporation is not liable for any direct, indirect, incidental, or consequential damages arising from:\n• Your use or inability to use the app\n• Data loss or corruption\n• Unauthorized account access\n• Technical failures\n\nYou agree that using the app is at your sole risk.",
       },
       {
-        "title": "9. Limitation of Liability",
+        "title": "9. Third-Party Services",
         "content":
-            "PotatoPay is a financial tracking tool and not a registered financial advisory service. We are not responsible for:\n• Personal misuse or incorrect data entries\n• Losses due to financial decisions based on app analytics\n• Banking, payment gateway, or third-party service failures\nBy using the platform, you agree to hold PotatoPay harmless regarding such outcomes.",
+            "Potato Book may include integrations or links to third-party services. Hyphen Corporation is not responsible for their content, performance, or policies.\nUsers are encouraged to review third-party terms and privacy policies independently.",
       },
       {
         "title": "10. Termination",
         "content":
-            "PotatoPay may suspend or terminate account access without notice for policy violations, fraudulent activity, or security breaches.",
+            "We may suspend or terminate your access to the app if:\n• You violate these terms\n• Your actions risk system security or other users\n• You misuse app data or features\n\nUpon termination, all rights granted to you under these terms end immediately.",
       },
       {
-        "title": "11. Governing Law",
+        "title": "11. Indemnification",
         "content":
-            "These Terms are governed by the laws of India. Any disputes shall be resolved under the exclusive jurisdiction of courts in Mumbai, Maharashtra.",
+            "You agree to indemnify and hold harmless Hyphen Corporation and affiliates against claims or losses arising from:\n• Violation of these terms\n• Misuse of the app\n• Infringement of rights or intellectual property.",
       },
       {
-        "title": "12. Contact Us",
+        "title": "12. Governing Law & Jurisdiction",
         "content":
-            "For help or support, reach out at:\nPotatoPay Support\n📧 support@potatopay.in\n📍 Mumbai, Maharashtra – India",
+            "These Terms are governed by the laws of India.\nAll legal disputes shall be under the exclusive jurisdiction of courts in Mainpuri, Uttar Pradesh.",
+      },
+      {
+        "title": "13. Contact Information",
+        "content":
+            "Hyphen Corporation\nBuilding No./Flat No.: 1289\nIn front of Sardar Bant Singh Dhaba\nG.T. Road Highway, Bewar\nMainpuri, Uttar Pradesh – 205301\n\n📧 Email: potatopayco@gmail.com",
       },
     ];
 
