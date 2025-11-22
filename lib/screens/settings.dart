@@ -10,6 +10,7 @@ import 'package:slideme/auth/login.dart';
 import 'package:slideme/auth/subscription.dart';
 import 'package:slideme/info_pages/faq.dart';
 import 'package:slideme/info_pages/policy.dart';
+import 'package:slideme/info_pages/report.dart';
 import 'package:slideme/info_pages/terms.dart';
 import 'package:slideme/screens/monthlywrap.dart';
 import 'package:slideme/screens/profile.dart';
@@ -479,6 +480,24 @@ class _SettingsPageState extends State<SettingsPage> {
                                       MaterialPageRoute(
                                         builder: (_) =>
                                             const TermsAndConditionsPage(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: Colors.white.withOpacity(0.3),
+                                ),
+                                _buildSettingsTile(
+                                  icon: Icons.privacy_tip_outlined,
+                                  title: "Report an Issue",
+                                  onTap: () {
+                                    HapticFeedback.heavyImpact();
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const ReportIssuePage(),
                                       ),
                                     );
                                   },
