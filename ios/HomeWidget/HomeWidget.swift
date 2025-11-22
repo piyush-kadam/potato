@@ -171,11 +171,9 @@ struct HomeWidgetEntryView: View {
 
     var body: some View {
         ZStack {
-            // Background that fills entire widget - using ignoresSafeArea for better compatibility
             Color(red: 0.3, green: 0.69, blue: 0.31)
                 .ignoresSafeArea()
             
-            // Optional background image overlay
             if let bgImage = UIImage(named: "bgg") {
                 Image(uiImage: bgImage)
                     .resizable()
@@ -184,12 +182,10 @@ struct HomeWidgetEntryView: View {
                     .ignoresSafeArea()
             }
             
-            // Content with proper padding for large widget
             VStack(spacing: 0) {
                 Spacer()
                     .frame(height: family == .systemLarge ? 20 : 16)
                 
-                // Top section with mascot and button(s)
                 HStack(spacing: 12) {
                     if let mascotImage = UIImage(named: "mascot") {
                         Image(uiImage: mascotImage)
@@ -198,8 +194,6 @@ struct HomeWidgetEntryView: View {
                             .frame(height: family == .systemLarge ? 50 : 40)
                     }
                     
-                    // For medium widget: just Pay Now
-                    // For large widget: vertical stack with both buttons
                     if family == .systemMedium {
                         NeoPopButton(family: family, text: "Pay Now", emoji: "💳")
                             .frame(height: 40)
@@ -211,7 +205,6 @@ struct HomeWidgetEntryView: View {
                             Spacer()
                                 .frame(height: 16)
                             
-                            // Title for AI Chat
                             HStack {
                                 Text("Need Help?")
                                     .font(.system(size: 12, weight: .semibold))
@@ -231,7 +224,6 @@ struct HomeWidgetEntryView: View {
                 Spacer()
                     .frame(height: family == .systemLarge ? 24 : 18)
                 
-                // Categories label
                 HStack {
                     Text("Categories")
                         .font(.system(size: family == .systemLarge ? 16 : 14, weight: .bold))
@@ -242,7 +234,6 @@ struct HomeWidgetEntryView: View {
                 .padding(.horizontal, family == .systemLarge ? 24 : 20)
                 .padding(.bottom, family == .systemLarge ? 12 : 8)
                 
-                // Categories section
                 let containerSize: CGFloat = family == .systemLarge ? 60 : 50
                 HStack(spacing: family == .systemLarge ? 14 : 10) {
                     ForEach(0..<5, id: \.self) { index in
@@ -266,7 +257,13 @@ struct HomeWidgetEntryView: View {
                 
                 Spacer()
             }
-            .padding(family == .systemLarge ? 16 : 0)
+            .padding(EdgeInsets(
+                top: family == .systemLarge ? 28 : 12,
+                leading: family == .systemLarge ? 24 : 12,
+                bottom: family == .systemLarge ? 28 : 12,
+                trailing: family == .systemLarge ? 24 : 12
+            ))
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
         .ignoresSafeArea()
     }
