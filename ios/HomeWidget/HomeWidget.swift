@@ -283,7 +283,7 @@ struct HomeWidgetEntryView: View {
                                     .frame(width: 64, height: 64)
                                     
                                     Text(categories[index].name)
-                                        .font(.system(size: 10, weight: .medium))
+                                        .font(.system(size: 13, weight: .medium))
                                         .foregroundColor(.white)
                                         .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
                                         .lineLimit(1)
@@ -304,7 +304,7 @@ struct HomeWidgetEntryView: View {
                                     .frame(width: 64, height: 64)
                                     
                                     Text(categories[index].name)
-                                        .font(.system(size: 10, weight: .medium))
+                                        .font(.system(size: 13, weight: .medium))
                                         .foregroundColor(.white)
                                         .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
                                         .lineLimit(1)
