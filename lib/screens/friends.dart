@@ -335,6 +335,7 @@ class _FriendsAndFamilyPageState extends State<FriendsAndFamilyPage> {
             fit: BoxFit.cover,
           ),
         ),
+        padding: const EdgeInsets.only(bottom: 50),
         child: SafeArea(
           child: Column(
             children: [
@@ -668,38 +669,6 @@ class _FriendsAndFamilyPageState extends State<FriendsAndFamilyPage> {
                   ),
 
                   // Bottom bubbles (pill + circle)
-                  Positioned(
-                    bottom: 15,
-                    left: 0,
-                    right: 0,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          width: 20,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF4CAF50),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.grey.withOpacity(0.5),
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ],

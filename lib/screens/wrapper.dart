@@ -14,7 +14,6 @@ class MainPageWithSlider extends StatefulWidget {
 
 class _MainPageWithSliderState extends State<MainPageWithSlider> {
   final PageController _pageController = PageController(initialPage: 1);
-
   int _currentPage = 1;
 
   @override
@@ -44,25 +43,36 @@ class _MainPageWithSliderState extends State<MainPageWithSlider> {
         bool isDarkMode = data["isDarkMode"] ?? false;
 
         return Scaffold(
-          body: PageView(
-            controller: PageController(
-              initialPage: 1,
-            ), // 👈 Start from HomePage (index 1)
-            onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-              });
-            },
+          body: Stack(
             children: [
-              // 👈 Put Friends page first (so it’s on the left)
-              FriendsAndFamilyPage(isDarkMode: isDarkMode, username: username),
-
-              // 👇 Then HomePage second (so it’s the initial page)
-              Stack(
+              // PageView with both pages
+              PageView(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentPage = index;
+                  });
+                },
                 children: [
-                  HomePageContent(
+                  // Friends page (index 0 - left side)
+                  FriendsAndFamilyPage(
+                    isDarkMode: isDarkMode,
+                    username: username,
+                  ),
+                  // HomePage (index 1 - center/right side)
+                  const HomePage(),
+                ],
+              ),
+
+              // Fixed Page Indicators at bottom (stays persistent across pages)
+              Positioned(
+                bottom: 25,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: PageIndicators(
                     currentPage: _currentPage,
-                    onPageIndicatorTap: (index) {
+                    onTap: (index) {
                       _pageController.animateToPage(
                         index,
                         duration: const Duration(milliseconds: 300),
@@ -70,45 +80,12 @@ class _MainPageWithSliderState extends State<MainPageWithSlider> {
                       );
                     },
                   ),
-                ],
+                ),
               ),
             ],
           ),
         );
       },
-    );
-  }
-}
-
-// Wrapper for HomePage content with page indicators
-class HomePageContent extends StatelessWidget {
-  final int currentPage;
-  final Function(int) onPageIndicatorTap;
-
-  const HomePageContent({
-    super.key,
-    required this.currentPage,
-    required this.onPageIndicatorTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        const HomePage(),
-        // Page Indicators positioned at bottom
-        Positioned(
-          bottom: 25,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: PageIndicators(
-              currentPage: currentPage,
-              onTap: onPageIndicatorTap,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

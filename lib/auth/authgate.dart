@@ -50,13 +50,15 @@ class AuthGate extends StatelessWidget {
     }
 
     // MODE CHECK
+    // MODE CHECK
     if (!data.containsKey("mode")) {
-      return const BudgetPage(); // fallback
+      return const BudgetPage(); // fallback if mode missing
     }
 
     final String mode = data["mode"];
 
     if (mode == "budget") {
+      // Only run budget flow
       if (!data.containsKey("monthlyBudget") || data["monthlyBudget"] == null) {
         return const BudgetPage();
       }
@@ -67,9 +69,8 @@ class AuthGate extends StatelessWidget {
       }
 
       return const MainPageWithSlider();
-    }
-
-    if (mode == "expense") {
+    } else if (mode == "expense") {
+      // Only run expense flow
       if (!data.containsKey("expenseCategories") ||
           data["expenseCategories"] == null) {
         return const ExpenseCategoryPage();
@@ -78,6 +79,7 @@ class AuthGate extends StatelessWidget {
       return const ExpensePageWithSlider();
     }
 
+    // fallback
     return const MainPageWithSlider();
   }
 
