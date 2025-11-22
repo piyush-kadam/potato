@@ -1,11 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:slideme/auth/age.dart';
+import 'package:slideme/auth/country.dart';
 
 import 'package:slideme/auth/signup.dart';
 import 'package:slideme/auth/gphone.dart';
 import 'package:slideme/screens/category.dart';
-
+import 'package:slideme/screens/expensecategory.dart';
+import 'package:slideme/screens/expensewrap.dart';
+import 'package:slideme/screens/monthly_budget.dart';
 import 'package:slideme/screens/welcome.dart';
 import 'package:slideme/screens/wrapper.dart';
 
@@ -19,34 +23,61 @@ class AuthGate extends StatelessWidget {
         .get();
 
     if (!doc.exists) {
-      // New user, no document yet → go to phone verification
       return GPhoneInputPage(isAfterGoogleSignIn: true, userId: user.uid);
     }
 
     final data = doc.data() ?? {};
 
-    // CRITICAL: Check phone verification FIRST
+    // PHONE VERIFIED CHECK
     final phoneVerified = data['phoneVerified'] ?? false;
     if (!phoneVerified) {
       return GPhoneInputPage(isAfterGoogleSignIn: true, userId: user.uid);
     }
 
-    // Username check
+    // USERNAME
     if (!data.containsKey("username") || (data["username"] as String).isEmpty) {
       return const NamePage();
     }
 
-    // Budget check
-    if (!data.containsKey("monthlyBudget")) {
-      return const NamePage();
+    // AGE
+    if (!data.containsKey("age") || data["age"] == null) {
+      return AgePage(userName: data["username"]);
     }
 
-    // Category Budgets check
-    if (!data.containsKey("categoryBudgets")) {
-      return const CategoryBudgetPage();
+    // COUNTRY
+    if (!data.containsKey("country") || (data["country"] as String).isEmpty) {
+      return CountryPage(userName: data["username"]);
     }
 
-    // All fields exist → go to home
+    // MODE CHECK
+    if (!data.containsKey("mode")) {
+      return const BudgetPage(); // fallback
+    }
+
+    final String mode = data["mode"];
+
+    if (mode == "budget") {
+      if (!data.containsKey("monthlyBudget") || data["monthlyBudget"] == null) {
+        return const BudgetPage();
+      }
+
+      if (!data.containsKey("categoryBudgets") ||
+          data["categoryBudgets"] == null) {
+        return const CategoryBudgetPage();
+      }
+
+      return const MainPageWithSlider();
+    }
+
+    if (mode == "expense") {
+      if (!data.containsKey("expenseCategories") ||
+          data["expenseCategories"] == null) {
+        return const ExpenseCategoryPage();
+      }
+
+      return const ExpensePageWithSlider();
+    }
+
     return const MainPageWithSlider();
   }
 

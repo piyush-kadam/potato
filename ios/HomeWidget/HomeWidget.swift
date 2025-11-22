@@ -170,102 +170,103 @@ struct HomeWidgetEntryView: View {
     ]
 
     var body: some View {
-        ZStack {
-            Color(red: 0.3, green: 0.69, blue: 0.31)
-                .ignoresSafeArea()
-            
-            if let bgImage = UIImage(named: "bgg") {
-                Image(uiImage: bgImage)
-                    .resizable()
-                    .scaledToFill()
-                    .opacity(0.3)
+        GeometryReader { geometry in
+            ZStack {
+                Color(red: 0.3, green: 0.69, blue: 0.31)
                     .ignoresSafeArea()
-            }
-            
-            VStack(spacing: 0) {
-                Spacer()
-                    .frame(height: family == .systemLarge ? 20 : 16)
                 
-                HStack(spacing: 12) {
-                    if let mascotImage = UIImage(named: "mascot") {
-                        Image(uiImage: mascotImage)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: family == .systemLarge ? 50 : 40)
-                    }
+                if let bgImage = UIImage(named: "bgg") {
+                    Image(uiImage: bgImage)
+                        .resizable()
+                        .scaledToFill()
+                        .opacity(0.3)
+                        .ignoresSafeArea()
+                }
+                
+                VStack(spacing: 0) {
+                    Spacer()
+                        .frame(height: family == .systemLarge ? 20 : 16)
                     
-                    if family == .systemMedium {
-                        NeoPopButton(family: family, text: "Pay Now", emoji: "💳")
-                            .frame(height: 40)
-                    } else {
-                        VStack(spacing: 0) {
+                    HStack(spacing: 12) {
+                        if let mascotImage = UIImage(named: "mascot") {
+                            Image(uiImage: mascotImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: family == .systemLarge ? 50 : 40)
+                        }
+                        
+                        if family == .systemMedium {
                             NeoPopButton(family: family, text: "Pay Now", emoji: "💳")
-                                .frame(height: 44)
-                            
-                            Spacer()
-                                .frame(height: 16)
-                            
-                            HStack {
-                                Text("Need Help?")
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.9))
-                                    .shadow(color: Color.black.opacity(0.2), radius: 1, x: 0, y: 1)
+                                .frame(height: 40)
+                        } else {
+                            VStack(spacing: 0) {
+                                NeoPopButton(family: family, text: "Pay Now", emoji: "💳")
+                                    .frame(height: 44)
+                                
                                 Spacer()
+                                    .frame(height: 16)
+                                
+                                HStack {
+                                    Text("Need Help?")
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.9))
+                                        .shadow(color: Color.black.opacity(0.2), radius: 1, x: 0, y: 1)
+                                    Spacer()
+                                }
+                                .padding(.bottom, 6)
+                                
+                                NeoPopButton(family: family, text: "Chat with AI", emoji: "🤖")
+                                    .frame(height: 44)
                             }
-                            .padding(.bottom, 6)
-                            
-                            NeoPopButton(family: family, text: "Chat with AI", emoji: "🤖")
-                                .frame(height: 44)
                         }
                     }
-                }
-                .padding(.horizontal, family == .systemLarge ? 24 : 20)
-                
-                Spacer()
-                    .frame(height: family == .systemLarge ? 24 : 18)
-                
-                HStack {
-                    Text("Categories")
-                        .font(.system(size: family == .systemLarge ? 16 : 14, weight: .bold))
-                        .foregroundColor(.white)
-                        .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 1)
+                    .padding(.horizontal, family == .systemLarge ? 24 : 20)
+                    
+                    Spacer()
+                        .frame(height: family == .systemLarge ? 24 : 18)
+                    
+                    HStack {
+                        Text("Categories")
+                            .font(.system(size: family == .systemLarge ? 16 : 14, weight: .bold))
+                            .foregroundColor(.white)
+                            .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 1)
+                        Spacer()
+                    }
+                    .padding(.horizontal, family == .systemLarge ? 24 : 20)
+                    .padding(.bottom, family == .systemLarge ? 12 : 8)
+                    
+                    let containerSize: CGFloat = family == .systemLarge ? 60 : 50
+                    HStack(spacing: family == .systemLarge ? 14 : 10) {
+                        ForEach(0..<5, id: \.self) { index in
+                            VStack(spacing: 4) {
+                                LiquidContainer(
+                                    emoji: categories[index].emoji,
+                                    liquidColor: categories[index].liquidColor
+                                )
+                                .frame(width: containerSize, height: containerSize)
+                                if family == .systemLarge {
+                                    Text(categories[index].name)
+                                        .font(.system(size: 10, weight: .medium))
+                                        .foregroundColor(.white)
+                                        .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
+                                        .lineLimit(1)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.horizontal, family == .systemLarge ? 24 : 20)
+                    
                     Spacer()
                 }
-                .padding(.horizontal, family == .systemLarge ? 24 : 20)
-                .padding(.bottom, family == .systemLarge ? 12 : 8)
-                
-                let containerSize: CGFloat = family == .systemLarge ? 60 : 50
-                HStack(spacing: family == .systemLarge ? 14 : 10) {
-                    ForEach(0..<5, id: \.self) { index in
-                        VStack(spacing: 4) {
-                            LiquidContainer(
-                                emoji: categories[index].emoji,
-                                liquidColor: categories[index].liquidColor
-                            )
-                            .frame(width: containerSize, height: containerSize)
-                            if family == .systemLarge {
-                                Text(categories[index].name)
-                                    .font(.system(size: 10, weight: .medium))
-                                    .foregroundColor(.white)
-                                    .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
-                                    .lineLimit(1)
-                            }
-                        }
-                    }
-                }
-                .padding(.horizontal, family == .systemLarge ? 24 : 20)
-                
-                Spacer()
+                .padding(EdgeInsets(
+                    top: family == .systemLarge ? 28 : 12,
+                    leading: family == .systemLarge ? 24 : 12,
+                    bottom: family == .systemLarge ? 28 : 12,
+                    trailing: family == .systemLarge ? 24 : 12
+                ))
+                .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
             }
-            .padding(EdgeInsets(
-                top: family == .systemLarge ? 28 : 12,
-                leading: family == .systemLarge ? 24 : 12,
-                bottom: family == .systemLarge ? 28 : 12,
-                trailing: family == .systemLarge ? 24 : 12
-            ))
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
-        .ignoresSafeArea()
     }
 }
 
