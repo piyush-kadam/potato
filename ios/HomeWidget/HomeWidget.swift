@@ -176,6 +176,7 @@ struct HomeWidgetEntryView: View {
         CategoryItem(emoji: "💰", name: "Savings", liquidColor: Color(red: 1.0, green: 0.8, blue: 0.2))
     ]
 
+    @ViewBuilder
     var body: some View {
         GeometryReader { geometry in
             ZStack {
