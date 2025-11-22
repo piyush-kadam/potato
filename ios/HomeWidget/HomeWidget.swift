@@ -182,11 +182,10 @@ struct HomeWidgetEntryView: View {
                         .opacity(0.3)
                         .ignoresSafeArea()
                 }
-                
+
                 VStack(spacing: 0) {
-                    Spacer()
-                        .frame(height: family == .systemLarge ? 20 : 16)
-                    
+                    Spacer().frame(height: family == .systemLarge ? 20 : 16)
+
                     HStack(spacing: 12) {
                         if let mascotImage = UIImage(named: "mascot") {
                             Image(uiImage: mascotImage)
@@ -194,7 +193,7 @@ struct HomeWidgetEntryView: View {
                                 .scaledToFit()
                                 .frame(height: family == .systemLarge ? 50 : 40)
                         }
-                        
+
                         if family == .systemMedium {
                             NeoPopButton(family: family, text: "Pay Now", emoji: "💳")
                                 .frame(height: 40)
@@ -202,10 +201,9 @@ struct HomeWidgetEntryView: View {
                             VStack(spacing: 0) {
                                 NeoPopButton(family: family, text: "Pay Now", emoji: "💳")
                                     .frame(height: 44)
-                                
-                                Spacer()
-                                    .frame(height: 16)
-                                
+
+                                Spacer().frame(height: 16)
+
                                 HStack {
                                     Text("Need Help?")
                                         .font(.system(size: 12, weight: .semibold))
@@ -214,17 +212,16 @@ struct HomeWidgetEntryView: View {
                                     Spacer()
                                 }
                                 .padding(.bottom, 6)
-                                
+
                                 NeoPopButton(family: family, text: "Chat with AI", emoji: "🤖")
                                     .frame(height: 44)
                             }
                         }
                     }
                     .padding(.horizontal, family == .systemLarge ? 24 : 20)
-                    
-                    Spacer()
-                        .frame(height: family == .systemLarge ? 24 : 18)
-                    
+
+                    Spacer().frame(height: family == .systemLarge ? 24 : 18)
+
                     HStack {
                         Text("Categories")
                             .font(.system(size: family == .systemLarge ? 16 : 14, weight: .bold))
@@ -234,7 +231,7 @@ struct HomeWidgetEntryView: View {
                     }
                     .padding(.horizontal, family == .systemLarge ? 24 : 20)
                     .padding(.bottom, family == .systemLarge ? 12 : 8)
-                    
+
                     let containerSize: CGFloat = family == .systemLarge ? 60 : 50
                     HStack(spacing: family == .systemLarge ? 14 : 10) {
                         ForEach(0..<5, id: \.self) { index in
@@ -255,7 +252,7 @@ struct HomeWidgetEntryView: View {
                         }
                     }
                     .padding(.horizontal, family == .systemLarge ? 24 : 20)
-                    
+
                     Spacer()
                 }
                 .padding(EdgeInsets(
@@ -281,5 +278,6 @@ struct HomeWidget: Widget {
         .configurationDisplayName("SlideMe Budget")
         .description("Quick access to your budget categories.")
         .supportedFamilies([.systemMedium, .systemLarge])
+        .containerBackground(Color(red: 0.3, green: 0.69, blue: 0.31), for: .widget)   // 👈 FIX ADDED HERE
     }
 }
