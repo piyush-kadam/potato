@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:pinput/pinput.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:slideme/screens/homepage.dart';
 
@@ -22,11 +23,8 @@ class OTPVerificationPage extends StatefulWidget {
 
 class _OTPVerificationPageState extends State<OTPVerificationPage>
     with TickerProviderStateMixin {
-  final List<TextEditingController> otpControllers = List.generate(
-    6,
-    (index) => TextEditingController(),
-  );
-  final List<FocusNode> focusNodes = List.generate(6, (index) => FocusNode());
+  final TextEditingController _pinController = TextEditingController();
+  final FocusNode _pinFocusNode = FocusNode();
 
   bool _isOtpComplete = false;
   bool _isVerifying = false;
@@ -62,6 +60,9 @@ class _OTPVerificationPageState extends State<OTPVerificationPage>
       lowerBound: 0.6,
       upperBound: 1.0,
     )..forward();
+
+    // Listen for OTP completion
+    _pinController.addListener(_checkOtpComplete);
   }
 
   @override
@@ -69,13 +70,16 @@ class _OTPVerificationPageState extends State<OTPVerificationPage>
     timer?.cancel();
     _fadeController.dispose();
     _verifyButtonAnimation.dispose();
-    for (var c in otpControllers) {
-      c.dispose();
-    }
-    for (var n in focusNodes) {
-      n.dispose();
-    }
+    _pinController.dispose();
+    _pinFocusNode.dispose();
     super.dispose();
+  }
+
+  void _checkOtpComplete() {
+    final isComplete = _pinController.text.length == 6;
+    if (isComplete != _isOtpComplete) {
+      setState(() => _isOtpComplete = isComplete);
+    }
   }
 
   void startTimer() {
@@ -97,7 +101,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage>
 
   Future<void> _verifyOtp() async {
     HapticFeedback.heavyImpact();
-    String otp = otpControllers.map((c) => c.text).join();
+    String otp = _pinController.text;
     if (otp.length != 6) return;
 
     setState(() => _isVerifying = true);
@@ -192,6 +196,43 @@ class _OTPVerificationPageState extends State<OTPVerificationPage>
     double scaleFactor = MediaQuery.of(context).textScaleFactor;
     double screenWidth = MediaQuery.of(context).size.width;
 
+    // Pinput theme
+    final defaultPinTheme = PinTheme(
+      width: 55,
+      height: 55,
+      textStyle: GoogleFonts.poppins(
+        fontSize: 22,
+        fontWeight: FontWeight.w600,
+        color: const Color(0xff2E5D33),
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(12),
+      ),
+    );
+
+    final focusedPinTheme = defaultPinTheme.copyWith(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xff4A8C51), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xff4A8C51).withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+    );
+
+    final submittedPinTheme = defaultPinTheme.copyWith(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(12),
+      ),
+    );
+
     return Scaffold(
       backgroundColor: const Color(0xff5FB567),
       body: Stack(
@@ -222,7 +263,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage>
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      "We’ve sent a code to ${widget.phoneNumber}",
+                      "We've sent a code to ${widget.phoneNumber}",
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                         color: Colors.white.withOpacity(0.9),
@@ -232,63 +273,29 @@ class _OTPVerificationPageState extends State<OTPVerificationPage>
 
                     const SizedBox(height: 40),
 
-                    // ✅ FIXED Responsive OTP Inputs
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        double boxWidth =
-                            (constraints.maxWidth - 30) / 6; // auto-fit
-                        boxWidth = boxWidth.clamp(40, 55); // prevent overflow
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(6, (index) {
-                            return Container(
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 2.5,
-                              ),
-                              width: boxWidth,
-                              height: 55,
-                              child: TextField(
-                                controller: otpControllers[index],
-                                focusNode: focusNodes[index],
-                                textAlign: TextAlign.center,
-                                keyboardType: TextInputType.number,
-                                maxLength: 1,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xff2E5D33),
-                                ),
-                                decoration: InputDecoration(
-                                  counterText: "",
-                                  filled: true,
-                                  fillColor: Colors.white.withOpacity(0.9),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                ),
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                ],
-                                onChanged: (value) {
-                                  if (value.isNotEmpty && index < 5) {
-                                    focusNodes[index + 1].requestFocus();
-                                  } else if (value.isEmpty && index > 0) {
-                                    focusNodes[index - 1].requestFocus();
-                                  }
-
-                                  setState(() {
-                                    _isOtpComplete =
-                                        otpControllers.every(
-                                          (c) => c.text.isNotEmpty,
-                                        ) &&
-                                        otpControllers.length == 6;
-                                  });
-                                },
-                              ),
-                            );
-                          }),
-                        );
+                    // Pinput OTP Input
+                    Pinput(
+                      controller: _pinController,
+                      focusNode: _pinFocusNode,
+                      length: 6,
+                      defaultPinTheme: defaultPinTheme,
+                      focusedPinTheme: focusedPinTheme,
+                      submittedPinTheme: submittedPinTheme,
+                      showCursor: true,
+                      cursor: Container(
+                        width: 2,
+                        height: 24,
+                        color: const Color(0xff4A8C51),
+                      ),
+                      keyboardType: TextInputType.number,
+                      hapticFeedbackType: HapticFeedbackType.lightImpact,
+                      autofillHints: const [AutofillHints.oneTimeCode],
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      onCompleted: (pin) {
+                        _pinFocusNode.unfocus();
+                        Future.delayed(const Duration(milliseconds: 300), () {
+                          if (mounted) _verifyOtp();
+                        });
                       },
                     ),
 
