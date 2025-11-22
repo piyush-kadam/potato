@@ -90,7 +90,7 @@ class _ExpensePageWithSliderState extends State<ExpensePageWithSlider> {
   }
 }
 
-// Page Indicators Widget with glass effect
+// Page Indicators Widget
 class PageIndicators extends StatelessWidget {
   final int currentPage;
   final Function(int) onTap;
@@ -103,27 +103,13 @@ class PageIndicators extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.8),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildIndicator(0),
-          const SizedBox(width: 8),
-          _buildIndicator(1),
-        ],
-      ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildIndicator(0),
+        const SizedBox(width: 8),
+        _buildIndicator(1),
+      ],
     );
   }
 
