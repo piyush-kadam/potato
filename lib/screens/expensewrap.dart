@@ -14,7 +14,6 @@ class ExpensePageWithSlider extends StatefulWidget {
 
 class _ExpensePageWithSliderState extends State<ExpensePageWithSlider> {
   final PageController _pageController = PageController(initialPage: 1);
-
   int _currentPage = 1;
 
   @override
@@ -44,25 +43,36 @@ class _ExpensePageWithSliderState extends State<ExpensePageWithSlider> {
         bool isDarkMode = data["isDarkMode"] ?? false;
 
         return Scaffold(
-          body: PageView(
-            controller: PageController(
-              initialPage: 1,
-            ), // 👈 Start from ExpenseHomePage (index 1)
-            onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-              });
-            },
+          body: Stack(
             children: [
-              // 👈 Put Friends page first (so it's on the left)
-              FriendsAndFamilyPage(isDarkMode: isDarkMode, username: username),
-
-              // 👇 Then ExpenseHomePage second (so it's the initial page)
-              Stack(
+              // PageView with both pages
+              PageView(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentPage = index;
+                  });
+                },
                 children: [
-                  ExpenseHomePageContent(
+                  // Friends page (index 0 - left side)
+                  FriendsAndFamilyPage(
+                    isDarkMode: isDarkMode,
+                    username: username,
+                  ),
+                  // ExpenseHomePage (index 1 - center/right side)
+                  const ExpenseHomePage(),
+                ],
+              ),
+
+              // Fixed Page Indicators at bottom (stays persistent across pages)
+              Positioned(
+                bottom: 25,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: PageIndicators(
                     currentPage: _currentPage,
-                    onPageIndicatorTap: (index) {
+                    onTap: (index) {
                       _pageController.animateToPage(
                         index,
                         duration: const Duration(milliseconds: 300),
@@ -70,7 +80,7 @@ class _ExpensePageWithSliderState extends State<ExpensePageWithSlider> {
                       );
                     },
                   ),
-                ],
+                ),
               ),
             ],
           ),
@@ -80,40 +90,7 @@ class _ExpensePageWithSliderState extends State<ExpensePageWithSlider> {
   }
 }
 
-// Wrapper for ExpenseHomePage content with page indicators
-class ExpenseHomePageContent extends StatelessWidget {
-  final int currentPage;
-  final Function(int) onPageIndicatorTap;
-
-  const ExpenseHomePageContent({
-    super.key,
-    required this.currentPage,
-    required this.onPageIndicatorTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        const ExpenseHomePage(),
-        // Page Indicators positioned at bottom
-        Positioned(
-          bottom: 17,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: PageIndicators(
-              currentPage: currentPage,
-              onTap: onPageIndicatorTap,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// Page Indicators Widget
+// Page Indicators Widget with glass effect
 class PageIndicators extends StatelessWidget {
   final int currentPage;
   final Function(int) onTap;
@@ -126,13 +103,27 @@ class PageIndicators extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildIndicator(0),
-        const SizedBox(width: 8),
-        _buildIndicator(1),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildIndicator(0),
+          const SizedBox(width: 8),
+          _buildIndicator(1),
+        ],
+      ),
     );
   }
 

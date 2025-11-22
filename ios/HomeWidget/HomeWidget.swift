@@ -192,58 +192,58 @@ struct HomeWidgetEntryView: View {
                 }
 
                 VStack(spacing: 0) {
-                    Spacer().frame(height: family == .systemLarge ? 20 : 16)
+                    Spacer().frame(height: family == .systemLarge ? 16 : 12)
 
                     HStack(spacing: 12) {
                         if let mascotImage = UIImage(named: "mascot") {
                             Image(uiImage: mascotImage)
                                 .resizable()
                                 .scaledToFit()
-                                .frame(height: family == .systemLarge ? 50 : 40)
+                                .frame(height: family == .systemLarge ? 45 : 35)
                         }
 
                         if family == .systemMedium {
                             NeoPopButton(family: family, text: "Pay Now", emoji: "💳")
-                                .frame(height: 40)
+                                .frame(height: 36)
                         } else {
                             VStack(spacing: 0) {
                                 NeoPopButton(family: family, text: "Pay Now", emoji: "💳")
-                                    .frame(height: 44)
+                                    .frame(height: 40)
 
-                                Spacer().frame(height: 16)
+                                Spacer().frame(height: 12)
 
                                 HStack {
                                     Text("Need Help?")
-                                        .font(.system(size: 12, weight: .semibold))
+                                        .font(.system(size: 11, weight: .semibold))
                                         .foregroundColor(.white.opacity(0.9))
                                         .shadow(color: Color.black.opacity(0.2), radius: 1, x: 0, y: 1)
                                     Spacer()
                                 }
-                                .padding(.bottom, 6)
+                                .padding(.bottom, 4)
 
                                 NeoPopButton(family: family, text: "Chat with AI", emoji: "🤖")
-                                    .frame(height: 44)
+                                    .frame(height: 40)
                             }
                         }
                     }
-                    .padding(.horizontal, family == .systemLarge ? 24 : 20)
+                    .padding(.horizontal, family == .systemLarge ? 20 : 16)
 
-                    Spacer().frame(height: family == .systemLarge ? 24 : 18)
+                    Spacer().frame(height: family == .systemLarge ? 16 : 12)
 
                     HStack {
                         Text("Categories")
-                            .font(.system(size: family == .systemLarge ? 16 : 14, weight: .bold))
+                            .font(.system(size: family == .systemLarge ? 15 : 13, weight: .bold))
                             .foregroundColor(.white)
                             .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 1)
                         Spacer()
                     }
-                    .padding(.horizontal, family == .systemLarge ? 24 : 20)
-                    .padding(.bottom, family == .systemLarge ? 12 : 8)
+                    .padding(.horizontal, family == .systemLarge ? 20 : 16)
+                    .padding(.bottom, family == .systemLarge ? 10 : 6)
 
-                    let containerSize: CGFloat = family == .systemLarge ? 60 : 50
-                    HStack(spacing: family == .systemLarge ? 14 : 10) {
+                    let containerSize: CGFloat = family == .systemLarge ? 55 : 48
+                    HStack(spacing: family == .systemLarge ? 12 : 8) {
                         ForEach(0..<5, id: \.self) { index in
-                            VStack(spacing: 4) {
+                            VStack(spacing: 3) {
                                 LiquidContainer(
                                     emoji: categories[index].emoji,
                                     liquidColor: categories[index].liquidColor
@@ -251,15 +251,16 @@ struct HomeWidgetEntryView: View {
                                 .frame(width: containerSize, height: containerSize)
                                 if family == .systemLarge {
                                     Text(categories[index].name)
-                                        .font(.system(size: 10, weight: .medium))
+                                        .font(.system(size: 9, weight: .medium))
                                         .foregroundColor(.white)
                                         .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
                                         .lineLimit(1)
+                                        .minimumScaleFactor(0.7)
                                 }
                             }
                         }
                     }
-                    .padding(.horizontal, family == .systemLarge ? 24 : 20)
+                    .padding(.horizontal, family == .systemLarge ? 20 : 16)
 
                     Spacer()
                 }
