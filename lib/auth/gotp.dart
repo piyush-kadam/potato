@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:neopop/widgets/buttons/neopop_button/neopop_button.dart';
+import 'package:pinput/pinput.dart';
 import 'package:slideme/screens/homepage.dart';
 import 'package:slideme/screens/welcome.dart';
 import 'package:sms_autofill/sms_autofill.dart';
@@ -30,11 +30,8 @@ class GOTPPage extends StatefulWidget {
 
 class _GOTPPageState extends State<GOTPPage>
     with TickerProviderStateMixin, CodeAutoFill {
-  final List<TextEditingController> _controllers = List.generate(
-    6,
-    (index) => TextEditingController(),
-  );
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  final TextEditingController _pinController = TextEditingController();
+  final FocusNode _pinFocusNode = FocusNode();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   bool _isOtpComplete = false;
@@ -50,7 +47,6 @@ class _GOTPPageState extends State<GOTPPage>
   late Animation<double> _resendAnimation;
   late Animation<double> _verifyButtonAnimation;
   late Animation<double> _bottomTextAnimation;
-  late List<Animation<double>> _otpBoxAnimations;
 
   @override
   void initState() {
@@ -95,28 +91,17 @@ class _GOTPPageState extends State<GOTPPage>
       curve: const Interval(0.8, 1.0, curve: Curves.easeOutCubic),
     );
 
-    _otpBoxAnimations = List.generate(6, (index) {
-      final start = 0.1 + (index * 0.08);
-      final end = start + 0.35;
-      return CurvedAnimation(
-        parent: _otpBoxesController,
-        curve: Interval(start, end, curve: Curves.easeOutCubic),
-      );
-    });
-
-    for (var controller in _controllers) {
-      controller.addListener(_checkOtpComplete);
-    }
+    _pinController.addListener(_checkOtpComplete);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _contentAnimationController.forward();
       _otpBoxesController.forward();
-      _focusNodes[0].requestFocus();
+      _pinFocusNode.requestFocus();
       _initSmsListener();
     });
   }
 
-  // ✅ Initialize SMS listener
+  // Initialize SMS listener
   Future<void> _initSmsListener() async {
     try {
       _appSignature = await SmsAutoFill().getAppSignature;
@@ -129,7 +114,7 @@ class _GOTPPageState extends State<GOTPPage>
     }
   }
 
-  // ✅ SMS Autofill callback
+  // SMS Autofill callback
   @override
   void codeUpdated() {
     print('SMS Code detected: $code');
@@ -145,16 +130,12 @@ class _GOTPPageState extends State<GOTPPage>
   void _fillOtpAutomatically(String otp) {
     if (!mounted) return;
 
-    for (int i = 0; i < 6 && i < otp.length; i++) {
-      _controllers[i].text = otp[i];
-    }
+    _pinController.setText(otp);
     setState(() {
       _isOtpComplete = true;
     });
 
-    for (var node in _focusNodes) {
-      node.unfocus();
-    }
+    _pinFocusNode.unfocus();
 
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted && _isOtpComplete) {
@@ -170,18 +151,13 @@ class _GOTPPageState extends State<GOTPPage>
     _contentAnimationController.dispose();
     _otpBoxesController.dispose();
     _progressController.dispose();
-    for (var c in _controllers) {
-      c.dispose();
-    }
-    for (var n in _focusNodes) {
-      n.dispose();
-    }
+    _pinController.dispose();
+    _pinFocusNode.dispose();
     super.dispose();
   }
 
   void _checkOtpComplete() {
-    final otp = _otp;
-    final isComplete = otp.length == 6;
+    final isComplete = _pinController.text.length == 6;
     if (isComplete != _isOtpComplete) {
       setState(() => _isOtpComplete = isComplete);
       if (isComplete) {
@@ -192,60 +168,9 @@ class _GOTPPageState extends State<GOTPPage>
     }
   }
 
-  String get _otp => _controllers.map((c) => c.text).join();
-
-  void _onDigitChanged(String value, int index) {
-    if (value.isEmpty) {
-      return;
-    }
-
-    // ✅ Handle paste
-    if (value.length > 1) {
-      _handlePaste(value, index);
-      return;
-    }
-
-    // Single digit entered
-    if (value.isNotEmpty) {
-      final digit = value[value.length - 1];
-      _controllers[index].text = digit;
-      _controllers[index].selection = TextSelection.fromPosition(
-        TextPosition(offset: _controllers[index].text.length),
-      );
-
-      if (index < 5) {
-        _focusNodes[index + 1].requestFocus();
-      } else {
-        _focusNodes[index].unfocus();
-      }
-    }
-  }
-
-  void _handlePaste(String pastedText, int startIndex) {
-    final digits = pastedText.replaceAll(RegExp(r'[^0-9]'), '');
-
-    if (digits.isEmpty) return;
-
-    for (int i = 0; i < 6; i++) {
-      if (i < digits.length) {
-        _controllers[i].text = digits[i];
-      } else {
-        _controllers[i].clear();
-      }
-    }
-
-    if (digits.length >= 6) {
-      _focusNodes[5].unfocus();
-    } else if (digits.length > 0 && digits.length < 6) {
-      _focusNodes[digits.length].requestFocus();
-    }
-
-    setState(() {});
-  }
-
   void _verifyOtp() async {
     HapticFeedback.heavyImpact();
-    final otp = _otp;
+    final otp = _pinController.text;
 
     if (otp.length != 6) {
       _showSnackBar('Enter valid 6-digit OTP', isError: true);
@@ -387,66 +312,62 @@ class _GOTPPageState extends State<GOTPPage>
     );
   }
 
-  Widget _buildOtpBox(int index) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth < 360;
-    final scaleFactor = isSmallScreen ? 0.85 : 1.0;
-
-    return AnimatedBuilder(
-      animation: _otpBoxAnimations[index],
-      builder: (context, child) {
-        return Opacity(opacity: _otpBoxAnimations[index].value, child: child);
-      },
-      child: Container(
-        width: 42 * scaleFactor,
-        height: 52 * scaleFactor,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: TextField(
-          controller: _controllers[index],
-          focusNode: _focusNodes[index],
-          textAlign: TextAlign.center,
-          style: GoogleFonts.poppins(
-            color: Colors.black87,
-            fontSize: 20 * scaleFactor,
-            fontWeight: FontWeight.w600,
-          ),
-          keyboardType: TextInputType.number,
-          maxLength: 1,
-          showCursor: true,
-          autofillHints: index == 0 ? const [AutofillHints.oneTimeCode] : null,
-          decoration: const InputDecoration(
-            counterText: '',
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.zero,
-          ),
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          onChanged: (value) => _onDigitChanged(value, index),
-          onTap: () {
-            _controllers[index].selection = TextSelection(
-              baseOffset: 0,
-              extentOffset: _controllers[index].text.length,
-            );
-          },
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 360;
     final scaleFactor = isSmallScreen ? 0.9 : 1.0;
+
+    // Pinput theme
+    final defaultPinTheme = PinTheme(
+      width: 42 * scaleFactor,
+      height: 52 * scaleFactor,
+      textStyle: GoogleFonts.poppins(
+        color: Colors.black87,
+        fontSize: 20 * scaleFactor,
+        fontWeight: FontWeight.w600,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+    );
+
+    final focusedPinTheme = defaultPinTheme.copyWith(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xff4A8C51), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xff4A8C51).withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+    );
+
+    final submittedPinTheme = defaultPinTheme.copyWith(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+    );
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -520,16 +441,32 @@ class _GOTPPageState extends State<GOTPPage>
                     ),
                   ),
                   const Spacer(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(6, (index) {
-                      return Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 3 * scaleFactor,
-                        ),
-                        child: _buildOtpBox(index),
-                      );
-                    }),
+                  FadeTransition(
+                    opacity: _otpBoxesController,
+                    child: Pinput(
+                      controller: _pinController,
+                      focusNode: _pinFocusNode,
+                      length: 6,
+                      defaultPinTheme: defaultPinTheme,
+                      focusedPinTheme: focusedPinTheme,
+                      submittedPinTheme: submittedPinTheme,
+                      showCursor: true,
+                      cursor: Container(
+                        width: 2,
+                        height: 24 * scaleFactor,
+                        color: const Color(0xff4A8C51),
+                      ),
+                      keyboardType: TextInputType.number,
+                      hapticFeedbackType: HapticFeedbackType.lightImpact,
+                      autofillHints: const [AutofillHints.oneTimeCode],
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      onCompleted: (pin) {
+                        _pinFocusNode.unfocus();
+                        Future.delayed(const Duration(milliseconds: 300), () {
+                          if (mounted) _verifyOtp();
+                        });
+                      },
+                    ),
                   ),
                   SizedBox(height: 24 * scaleFactor),
                   _buildAnimatedElement(

@@ -76,9 +76,11 @@ struct LiquidContainer: View {
                         .stroke(Color.white.opacity(0.5), lineWidth: 2)
                 )
                 .shadow(color: Color.black.opacity(0.15), radius: 5, x: 0, y: 3)
+
             Circle()
                 .fill(liquidColor.opacity(0.85))
                 .padding(4)
+
             LiquidWave(offset: waveOffset)
                 .fill(
                     LinearGradient(
@@ -97,6 +99,7 @@ struct LiquidContainer: View {
                         waveOffset = .pi * 2
                     }
                 }
+
             Circle()
                 .fill(
                     RadialGradient(
@@ -110,6 +113,7 @@ struct LiquidContainer: View {
                     )
                 )
                 .blur(radius: 1)
+
             Text(emoji)
                 .font(.system(size: 32))
                 .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 2)
@@ -127,9 +131,11 @@ struct NeoPopButton: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.black.opacity(0.3))
                 .offset(x: 4, y: 4)
+
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(red: 0.2, green: 0.5, blue: 0.2))
                 .offset(x: 2, y: 2)
+
             RoundedRectangle(cornerRadius: 12)
                 .fill(
                     LinearGradient(
@@ -145,6 +151,7 @@ struct NeoPopButton: View {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(Color(red: 0.4, green: 0.8, blue: 0.4), lineWidth: 2)
                 )
+
             HStack(spacing: 8) {
                 Text(emoji)
                     .font(.system(size: family == .systemLarge ? 20 : 18))
@@ -174,7 +181,7 @@ struct HomeWidgetEntryView: View {
             ZStack {
                 Color(red: 0.3, green: 0.69, blue: 0.31)
                     .ignoresSafeArea()
-                
+
                 if let bgImage = UIImage(named: "bgg") {
                     Image(uiImage: bgImage)
                         .resizable()
@@ -272,12 +279,20 @@ struct HomeWidget: Widget {
     let kind: String = "HomeWidget"
 
     var body: some WidgetConfiguration {
+        let config =
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             HomeWidgetEntryView(entry: entry)
         }
         .configurationDisplayName("SlideMe Budget")
         .description("Quick access to your budget categories.")
         .supportedFamilies([.systemMedium, .systemLarge])
-        .containerBackground(Color(red: 0.3, green: 0.69, blue: 0.31), for: .widget)   // 👈 FIX ADDED HERE
+
+        // MARK: Safe iOS 17+ container background
+        if #available(iOS 17.0, *) {
+            return config
+                .containerBackground(Color(red: 0.3, green: 0.69, blue: 0.31), for: .widget)
+        } else {
+            return config
+        }
     }
 }
