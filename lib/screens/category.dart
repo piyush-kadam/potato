@@ -536,293 +536,321 @@ class _CategoryBudgetPageState extends State<CategoryBudgetPage> {
               children: [
                 Image.asset('assets/images/bg.png', fit: BoxFit.cover),
                 SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 24),
-                        Text(
-                          "Set Category Budgets",
-                          style: GoogleFonts.poppins(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Tap categories to allocate your budget",
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        Expanded(
-                          child: GridView.count(
-                            physics: hasMoreThanSixCategories
-                                ? const AlwaysScrollableScrollPhysics()
-                                : const NeverScrollableScrollPhysics(),
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            childAspectRatio: 1.0,
-                            children: [
-                              ..._categories.keys.map((category) {
-                                return GestureDetector(
-                                  onTap: () => _openCategoryDialog(category),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.5),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: Colors.white.withOpacity(0.6),
-                                        width: 2,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.1),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          category.split(" ").first,
-                                          style: const TextStyle(fontSize: 42),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          category.substring(
-                                            category.indexOf(" ") + 1,
-                                          ),
-                                          style: GoogleFonts.poppins(
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 13,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          "$_currencySymbol${(_categories[category]! / 1000).toStringAsFixed(0)}k",
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 12,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }).toList()..add(
-                                GestureDetector(
-                                  onTap: _addNewCategory,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.3),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: _isProUser
-                                            ? Colors.white.withOpacity(0.5)
-                                            : Colors.amber.withOpacity(0.5),
-                                        width: 2,
-                                      ),
-                                    ),
-                                    child: Stack(
-                                      children: [
-                                        Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              _isProUser
-                                                  ? Icons.add
-                                                  : Icons.lock,
-                                              size: 42,
-                                              color: _isProUser
-                                                  ? Colors.black.withOpacity(
-                                                      0.7,
-                                                    )
-                                                  : Colors.amber,
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              _isProUser ? "Add" : "Pro",
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w500,
-                                                color: _isProUser
-                                                    ? Colors.black.withOpacity(
-                                                        0.7,
-                                                      )
-                                                    : Colors.amber,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        if (!_isProUser)
-                                          Positioned(
-                                            top: 8,
-                                            right: 8,
-                                            child: Icon(
-                                              Icons.star,
-                                              color: Colors.amber,
-                                              size: 20,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        /// Summary card
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 13,
-                            horizontal: 20,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.6),
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              _summaryItem(
-                                "Total",
-                                "$_currencySymbol${(_monthlyBudget / 1000).toStringAsFixed(0)}k",
-                                Colors.black87,
-                              ),
-                              _summaryItem(
-                                "Allocated",
-                                "$_currencySymbol${(_allocated / 1000).toStringAsFixed(0)}k",
-                                Colors.blue,
-                              ),
-                              _summaryItem(
-                                "Remaining",
-                                "$_currencySymbol${(_remaining / 1000).toStringAsFixed(0)}k",
-                                Colors.green,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        Row(
+                  child: Column(
+                    children: [
+                      // Fixed Header
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                        child: Column(
                           children: [
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(30),
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Colors.white.withOpacity(0.25),
-                                      Colors.white.withOpacity(0.15),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.4),
-                                    width: 1.5,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: _autoSetBudgets,
-                                    borderRadius: BorderRadius.circular(30),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 14,
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.auto_awesome,
-                                            size: 18,
-                                            color: Colors.yellow,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            "Auto-set",
-                                            style: GoogleFonts.poppins(
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.w500,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                            Text(
+                              "Set Category Budgets",
+                              style: GoogleFonts.poppins(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: _isBudgetAllocated
-                                    ? _saveBudgets
-                                    : null,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _isBudgetAllocated
-                                      ? const Color(0xff4A8C51)
-                                      : Colors.grey,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                  elevation: _isBudgetAllocated ? 4 : 0,
-                                ),
-                                child: const Text(
-                                  "START!",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 15,
-                                  ),
-                                ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Tap categories to allocate your budget",
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: Colors.black,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 24),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Scrollable Content
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column(
+                            children: [
+                              // Categories Grid
+                              GridView.count(
+                                physics: const NeverScrollableScrollPhysics(),
+                                shrinkWrap: true,
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                childAspectRatio: 1.0,
+                                children: [
+                                  ..._categories.keys.map((category) {
+                                    return GestureDetector(
+                                      onTap: () =>
+                                          _openCategoryDialog(category),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.5),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.white.withOpacity(
+                                              0.6,
+                                            ),
+                                            width: 2,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(
+                                                0.1,
+                                              ),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              category.split(" ").first,
+                                              style: const TextStyle(
+                                                fontSize: 42,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              category.substring(
+                                                category.indexOf(" ") + 1,
+                                              ),
+                                              style: GoogleFonts.poppins(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 13,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              "$_currencySymbol${(_categories[category]! / 1000).toStringAsFixed(0)}k",
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 12,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }).toList()..add(
+                                    GestureDetector(
+                                      onTap: _addNewCategory,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.3),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                          border: Border.all(
+                                            color: _isProUser
+                                                ? Colors.white.withOpacity(0.5)
+                                                : Colors.amber.withOpacity(0.5),
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Stack(
+                                          children: [
+                                            Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Icon(
+                                                  _isProUser
+                                                      ? Icons.add
+                                                      : Icons.lock,
+                                                  size: 42,
+                                                  color: _isProUser
+                                                      ? Colors.black
+                                                            .withOpacity(0.7)
+                                                      : Colors.amber,
+                                                ),
+                                                const SizedBox(height: 6),
+                                                Text(
+                                                  _isProUser ? "Add" : "Pro",
+                                                  style: GoogleFonts.poppins(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: _isProUser
+                                                        ? Colors.black
+                                                              .withOpacity(0.7)
+                                                        : Colors.amber,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            if (!_isProUser)
+                                              Positioned(
+                                                top: 8,
+                                                right: 8,
+                                                child: Icon(
+                                                  Icons.star,
+                                                  color: Colors.amber,
+                                                  size: 20,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Summary card
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 13,
+                                  horizontal: 20,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.6),
+                                    width: 2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: [
+                                    _summaryItem(
+                                      "Total",
+                                      "$_currencySymbol${(_monthlyBudget / 1000).toStringAsFixed(0)}k",
+                                      Colors.black87,
+                                    ),
+                                    _summaryItem(
+                                      "Allocated",
+                                      "$_currencySymbol${(_allocated / 1000).toStringAsFixed(0)}k",
+                                      Colors.blue,
+                                    ),
+                                    _summaryItem(
+                                      "Remaining",
+                                      "$_currencySymbol${(_remaining / 1000).toStringAsFixed(0)}k",
+                                      Colors.green,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Action Buttons
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(30),
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Colors.white.withOpacity(0.25),
+                                            Colors.white.withOpacity(0.15),
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.4),
+                                          width: 1.5,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                              0.1,
+                                            ),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          onTap: _autoSetBudgets,
+                                          borderRadius: BorderRadius.circular(
+                                            30,
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 14,
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Icon(
+                                                  Icons.auto_awesome,
+                                                  size: 18,
+                                                  color: Colors.yellow,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  "Auto-set",
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.black,
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: _isBudgetAllocated
+                                          ? _saveBudgets
+                                          : null,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: _isBudgetAllocated
+                                            ? const Color(0xff4A8C51)
+                                            : Colors.grey,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 14,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            30,
+                                          ),
+                                        ),
+                                        elevation: _isBudgetAllocated ? 4 : 0,
+                                      ),
+                                      child: const Text(
+                                        "START!",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 24),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

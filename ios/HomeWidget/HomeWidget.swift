@@ -271,6 +271,9 @@ struct HomeWidgetEntryView: View {
                 .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
             }
         }
+        .containerBackground(for: .widget) {
+            Color(red: 0.3, green: 0.69, blue: 0.31)
+        }
     }
 }
 
@@ -285,6 +288,5 @@ struct HomeWidget: Widget {
         .configurationDisplayName("SlideMe Budget")
         .description("Quick access to your budget categories.")
         .supportedFamilies([.systemMedium, .systemLarge])
-        .background(Color(red: 0.3, green: 0.69, blue: 0.31))   // UNIVERSAL FIX
     }
 }
