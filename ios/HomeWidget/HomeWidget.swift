@@ -279,20 +279,12 @@ struct HomeWidget: Widget {
     let kind: String = "HomeWidget"
 
     var body: some WidgetConfiguration {
-        let config =
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             HomeWidgetEntryView(entry: entry)
         }
         .configurationDisplayName("SlideMe Budget")
         .description("Quick access to your budget categories.")
         .supportedFamilies([.systemMedium, .systemLarge])
-
-        // MARK: Safe iOS 17+ container background
-        if #available(iOS 17.0, *) {
-            return config
-                .containerBackground(Color(red: 0.3, green: 0.69, blue: 0.31), for: .widget)
-        } else {
-            return config
-        }
+        .background(Color(red: 0.3, green: 0.69, blue: 0.31))   // UNIVERSAL FIX
     }
 }
