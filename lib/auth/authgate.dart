@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:slideme/auth/age.dart';
 import 'package:slideme/auth/country.dart';
+import 'package:slideme/auth/mode.dart';
 
 import 'package:slideme/auth/signup.dart';
 import 'package:slideme/auth/gphone.dart';
@@ -51,11 +52,11 @@ class AuthGate extends StatelessWidget {
 
     // MODE CHECK
     // MODE CHECK
-    if (!data.containsKey("mode")) {
-      return const BudgetPage(); // fallback if mode missing
+    if (!data.containsKey("trackingMode")) {
+      return const ModeSelectionPage(); // fallback if mode missing
     }
 
-    final String mode = data["mode"];
+    final String mode = data["trackingMode"];
 
     if (mode == "budget") {
       // Only run budget flow

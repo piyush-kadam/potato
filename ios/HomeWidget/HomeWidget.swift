@@ -187,21 +187,60 @@ struct HomeWidgetEntryView: View {
                     .opacity(0.3)
             }
 
-            VStack(spacing: 0) {
-                Spacer().frame(height: family == .systemLarge ? 14 : 6)
+            if family == .systemMedium {
+                // Small Widget Layout
+                VStack(spacing: 0) {
+                    Spacer().frame(height: 6)
 
-                HStack(spacing: 10) {
-                    if let mascotImage = UIImage(named: "mascot") {
-                        Image(uiImage: mascotImage)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: family == .systemLarge ? 42 : 32)
-                    }
+                    HStack(spacing: 10) {
+                        if let mascotImage = UIImage(named: "mascot") {
+                            Image(uiImage: mascotImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 32)
+                        }
 
-                    if family == .systemMedium {
                         NeoPopButton(family: family, text: "Pay Now", emoji: "💳")
                             .frame(height: 36)
-                    } else {
+                    }
+                    .padding(.horizontal, 12)
+
+                    Spacer().frame(height: 10)
+
+                    Text("Categories")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.white)
+                        .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 1)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.bottom, 6)
+
+                    HStack(spacing: 10) {
+                        ForEach(0..<5, id: \.self) { index in
+                            LiquidContainer(
+                                emoji: categories[index].emoji,
+                                liquidColor: categories[index].liquidColor
+                            )
+                            .frame(width: 44, height: 44)
+                        }
+                    }
+                    .padding(.horizontal, 12)
+
+                    Spacer().frame(height: 8)
+                }
+                .padding(.vertical, 4)
+            } else {
+                // Large Widget Layout
+                VStack(spacing: 0) {
+                    Spacer().frame(height: 12)
+
+                    HStack(spacing: 10) {
+                        if let mascotImage = UIImage(named: "mascot") {
+                            Image(uiImage: mascotImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 42)
+                        }
+
                         VStack(spacing: 0) {
                             NeoPopButton(family: family, text: "Pay Now", emoji: "💳")
                                 .frame(height: 38)
@@ -221,48 +260,66 @@ struct HomeWidgetEntryView: View {
                                 .frame(height: 38)
                         }
                     }
-                }
-                .padding(.horizontal, family == .systemLarge ? 16 : 12)
+                    .padding(.horizontal, 16)
 
-                Spacer().frame(height: family == .systemLarge ? 14 : 10)
+                    Spacer().frame(height: 20)
 
-                HStack {
                     Text("Categories")
-                        .font(.system(size: family == .systemLarge ? 14 : 12, weight: .bold))
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
                         .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 1)
-                    Spacer()
-                }
-                .padding(.horizontal, family == .systemLarge ? 16 : 12)
-                .padding(.bottom, family == .systemLarge ? 8 : 6)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.bottom, 12)
 
-                let containerSize: CGFloat = family == .systemLarge ? 52 : 44
-                HStack(spacing: family == .systemLarge ? 10 : 6) {
-                    ForEach(0..<5, id: \.self) { index in
-                        VStack(spacing: 2) {
-                            LiquidContainer(
-                                emoji: categories[index].emoji,
-                                liquidColor: categories[index].liquidColor
-                            )
-                            .frame(width: containerSize, height: containerSize)
-                            if family == .systemLarge {
-                                Text(categories[index].name)
-                                    .font(.system(size: 9, weight: .medium))
-                                    .foregroundColor(.white)
-                                    .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.5)
-                                    .frame(maxWidth: containerSize + 8)
+                    VStack(spacing: 12) {
+                        // First row - 3 items
+                        HStack(spacing: 16) {
+                            ForEach(0..<3, id: \.self) { index in
+                                VStack(spacing: 4) {
+                                    LiquidContainer(
+                                        emoji: categories[index].emoji,
+                                        liquidColor: categories[index].liquidColor
+                                    )
+                                    .frame(width: 64, height: 64)
+                                    
+                                    Text(categories[index].name)
+                                        .font(.system(size: 10, weight: .medium))
+                                        .foregroundColor(.white)
+                                        .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.5)
+                                }
                             }
                         }
+                        
+                        // Second row - 2 items centered
+                        HStack(spacing: 16) {
+                            Spacer()
+                            ForEach(3..<5, id: \.self) { index in
+                                VStack(spacing: 4) {
+                                    LiquidContainer(
+                                        emoji: categories[index].emoji,
+                                        liquidColor: categories[index].liquidColor
+                                    )
+                                    .frame(width: 64, height: 64)
+                                    
+                                    Text(categories[index].name)
+                                        .font(.system(size: 10, weight: .medium))
+                                        .foregroundColor(.white)
+                                        .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.5)
+                                }
+                            }
+                            Spacer()
+                        }
                     }
-                }
-                .padding(.horizontal, family == .systemLarge ? 16 : 12)
+                    .padding(.horizontal, 16)
 
-                Spacer()
-                    .frame(height: family == .systemMedium ? 8 : 0)
+                    Spacer()
+                }
+                .padding(.vertical, 8)
             }
-            .padding(.vertical, family == .systemLarge ? 8 : 4)
         }
         .containerBackground(for: .widget) {
             Color(red: 0.3, green: 0.69, blue: 0.31)

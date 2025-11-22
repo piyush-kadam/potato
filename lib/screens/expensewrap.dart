@@ -69,16 +69,19 @@ class _ExpensePageWithSliderState extends State<ExpensePageWithSlider> {
                 bottom: 25,
                 left: 0,
                 right: 0,
-                child: Center(
-                  child: PageIndicators(
-                    currentPage: _currentPage,
-                    onTap: (index) {
-                      _pageController.animateToPage(
-                        index,
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    },
+                child: IgnorePointer(
+                  ignoring: false,
+                  child: Center(
+                    child: PageIndicators(
+                      currentPage: _currentPage,
+                      onTap: (index) {
+                        _pageController.animateToPage(
+                          index,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -103,13 +106,16 @@ class PageIndicators extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildIndicator(0),
-        const SizedBox(width: 8),
-        _buildIndicator(1),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildIndicator(0),
+          const SizedBox(width: 8),
+          _buildIndicator(1),
+        ],
+      ),
     );
   }
 
