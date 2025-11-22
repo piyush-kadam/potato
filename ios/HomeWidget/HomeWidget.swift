@@ -171,8 +171,9 @@ struct HomeWidgetEntryView: View {
 
     var body: some View {
         ZStack {
-            // Background that fills entire widget
+            // Background that fills entire widget - using ignoresSafeArea for better compatibility
             Color(red: 0.3, green: 0.69, blue: 0.31)
+                .ignoresSafeArea()
             
             // Optional background image overlay
             if let bgImage = UIImage(named: "bgg") {
@@ -180,8 +181,10 @@ struct HomeWidgetEntryView: View {
                     .resizable()
                     .scaledToFill()
                     .opacity(0.3)
+                    .ignoresSafeArea()
             }
             
+            // Content with proper padding for large widget
             VStack(spacing: 0) {
                 Spacer()
                     .frame(height: family == .systemLarge ? 20 : 16)
@@ -201,9 +204,23 @@ struct HomeWidgetEntryView: View {
                         NeoPopButton(family: family, text: "Pay Now", emoji: "💳")
                             .frame(height: 40)
                     } else {
-                        VStack(spacing: 8) {
+                        VStack(spacing: 0) {
                             NeoPopButton(family: family, text: "Pay Now", emoji: "💳")
                                 .frame(height: 44)
+                            
+                            Spacer()
+                                .frame(height: 16)
+                            
+                            // Title for AI Chat
+                            HStack {
+                                Text("Need Help?")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.9))
+                                    .shadow(color: Color.black.opacity(0.2), radius: 1, x: 0, y: 1)
+                                Spacer()
+                            }
+                            .padding(.bottom, 6)
+                            
                             NeoPopButton(family: family, text: "Chat with AI", emoji: "🤖")
                                 .frame(height: 44)
                         }
@@ -249,8 +266,9 @@ struct HomeWidgetEntryView: View {
                 
                 Spacer()
             }
+            .padding(family == .systemLarge ? 16 : 0)
         }
-        .edgesIgnoringSafeArea(.all)
+        .ignoresSafeArea()
     }
 }
 
