@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:slideme/auth/authservice.dart';
 import 'package:slideme/auth/login.dart';
@@ -369,6 +370,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           // Get PotatoBook Pro Banner
                           GestureDetector(
                             onTap: () {
+                              HapticFeedback.heavyImpact();
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
