@@ -239,9 +239,7 @@ class _ConnectedUserExpensePageState extends State<ConnectedUserExpensePage> {
           return Scaffold(
             body: Stack(
               children: [
-                // Color background
                 Container(color: const Color(0xFFfde68a)),
-                // Image overlay
                 Container(
                   decoration: const BoxDecoration(
                     image: DecorationImage(
@@ -250,7 +248,6 @@ class _ConnectedUserExpensePageState extends State<ConnectedUserExpensePage> {
                     ),
                   ),
                 ),
-                // Content
                 const Center(child: CircularProgressIndicator()),
               ],
             ),
@@ -266,8 +263,7 @@ class _ConnectedUserExpensePageState extends State<ConnectedUserExpensePage> {
         }
 
         Map<String, int> categorySpent = {};
-        if (data["expenseCategorySpent"] != null ||
-            data["expenseCategorySpent"] != null) {
+        if (data["expenseCategorySpent"] != null) {
           (data["expenseCategorySpent"] as Map<String, dynamic>).forEach((
             key,
             value,
@@ -288,9 +284,7 @@ class _ConnectedUserExpensePageState extends State<ConnectedUserExpensePage> {
         return Scaffold(
           body: Stack(
             children: [
-              // Color background
               Container(color: const Color(0xFFfde68a)),
-              // Image overlay
               Container(
                 decoration: const BoxDecoration(
                   image: DecorationImage(
@@ -299,17 +293,16 @@ class _ConnectedUserExpensePageState extends State<ConnectedUserExpensePage> {
                   ),
                 ),
               ),
-              // Content
               SafeArea(
                 child: Column(
                   children: [
-                    /// AppBar - Fixed height
+                    /// AppBar
                     AppBar(
                       title: Text(
                         "$username's",
                         style: GoogleFonts.poppins(
                           color: Colors.black,
-                          fontSize: 18,
+                          fontSize: screenWidth * 0.045,
                         ),
                       ),
                       titleSpacing: 0,
@@ -317,12 +310,11 @@ class _ConnectedUserExpensePageState extends State<ConnectedUserExpensePage> {
                       elevation: 0,
                       iconTheme: const IconThemeData(color: Colors.black),
                       actions: [
-                        /// Toggle Switch
                         Container(
-                          margin: const EdgeInsets.only(right: 16),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 4,
+                          margin: EdgeInsets.only(right: screenWidth * 0.04),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.01,
+                            vertical: screenHeight * 0.005,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -342,18 +334,18 @@ class _ConnectedUserExpensePageState extends State<ConnectedUserExpensePage> {
                                     ? null
                                     : _navigateToBudgetMode,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: screenWidth * 0.03,
+                                    vertical: screenHeight * 0.007,
                                   ),
                                   child: _isNavigating
                                       ? SizedBox(
-                                          width: 45,
-                                          height: 14,
+                                          width: screenWidth * 0.115,
+                                          height: screenHeight * 0.017,
                                           child: Center(
                                             child: SizedBox(
-                                              width: 10,
-                                              height: 10,
+                                              width: screenWidth * 0.025,
+                                              height: screenWidth * 0.025,
                                               child: CircularProgressIndicator(
                                                 strokeWidth: 2,
                                                 valueColor:
@@ -368,17 +360,17 @@ class _ConnectedUserExpensePageState extends State<ConnectedUserExpensePage> {
                                           "Budget",
                                           style: GoogleFonts.poppins(
                                             color: Colors.grey[600],
-                                            fontSize: 11,
+                                            fontSize: screenWidth * 0.028,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                 ),
                               ),
-                              const SizedBox(width: 4),
+                              SizedBox(width: screenWidth * 0.01),
                               Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: screenWidth * 0.03,
+                                  vertical: screenHeight * 0.007,
                                 ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF4CAF50),
@@ -388,7 +380,7 @@ class _ConnectedUserExpensePageState extends State<ConnectedUserExpensePage> {
                                   "Expense",
                                   style: GoogleFonts.poppins(
                                     color: Colors.white,
-                                    fontSize: 11,
+                                    fontSize: screenWidth * 0.028,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -399,9 +391,9 @@ class _ConnectedUserExpensePageState extends State<ConnectedUserExpensePage> {
                       ],
                     ),
 
-                    /// DAYS LEFT - Fixed height
+                    /// DAYS LEFT - Reduced height
                     Container(
-                      height: screenHeight * 0.11,
+                      height: screenHeight * 0.08,
                       padding: EdgeInsets.symmetric(
                         horizontal: screenWidth * 0.065,
                       ),
@@ -415,7 +407,7 @@ class _ConnectedUserExpensePageState extends State<ConnectedUserExpensePage> {
                               Text(
                                 "Days Left",
                                 style: GoogleFonts.poppins(
-                                  fontSize: screenHeight * 0.014,
+                                  fontSize: screenWidth * 0.028,
                                   color: Colors.grey[600],
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -423,7 +415,7 @@ class _ConnectedUserExpensePageState extends State<ConnectedUserExpensePage> {
                               Text(
                                 "$remainingDays",
                                 style: GoogleFonts.poppins(
-                                  fontSize: screenHeight * 0.044,
+                                  fontSize: screenWidth * 0.075,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.black87,
                                   height: 1.0,
@@ -435,345 +427,311 @@ class _ConnectedUserExpensePageState extends State<ConnectedUserExpensePage> {
                       ),
                     ),
 
-                    /// Content with responsive sizing - Takes remaining space
+                    /// MAIN CONTENT - Takes remaining space
                     Expanded(
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          // Reserve space for analytics container
-                          final analyticsHeight = screenHeight * 0.20;
-                          final availableGridHeight =
-                              constraints.maxHeight -
-                              analyticsHeight -
-                              (screenHeight * 0.02);
-
-                          return Column(
-                            children: [
-                              /// Category Grid - Fixed height with scrolling
-                              SizedBox(
-                                height: availableGridHeight,
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: screenWidth * 0.042,
-                                  ),
-                                  child: categories.isEmpty
-                                      ? Center(
-                                          child: Text(
-                                            "No expense categories set",
-                                            style: GoogleFonts.poppins(
-                                              color: Colors.grey[600],
-                                              fontSize: screenHeight * 0.018,
-                                            ),
+                      child: Column(
+                        children: [
+                          /// CATEGORY GRID - Flexible to fill available space
+                          Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: screenWidth * 0.04,
+                              ),
+                              child: categories.isEmpty
+                                  ? Center(
+                                      child: Text(
+                                        "No expense categories set",
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.grey[600],
+                                          fontSize: screenWidth * 0.035,
+                                        ),
+                                      ),
+                                    )
+                                  : GridView.builder(
+                                      physics: const BouncingScrollPhysics(),
+                                      padding: EdgeInsets.only(
+                                        bottom: screenHeight * 0.01,
+                                      ),
+                                      gridDelegate:
+                                          SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: 2,
+                                            crossAxisSpacing:
+                                                screenWidth * 0.025,
+                                            mainAxisSpacing:
+                                                screenHeight * 0.012,
+                                            childAspectRatio: 1.15,
                                           ),
-                                        )
-                                      : GridView.builder(
-                                          physics:
-                                              const BouncingScrollPhysics(),
-                                          gridDelegate:
-                                              SliverGridDelegateWithFixedCrossAxisCount(
-                                                crossAxisCount: 2,
-                                                crossAxisSpacing:
-                                                    screenWidth * 0.026,
-                                                mainAxisSpacing:
-                                                    screenHeight * 0.015,
-                                                childAspectRatio: 1.1,
-                                              ),
-                                          itemCount: categories.length,
-                                          itemBuilder: (context, index) {
-                                            String categoryKey =
-                                                categories[index];
-                                            int spentAmount =
-                                                categorySpent[categoryKey] ?? 0;
+                                      itemCount: categories.length,
+                                      itemBuilder: (context, index) {
+                                        String categoryKey = categories[index];
+                                        int spentAmount =
+                                            categorySpent[categoryKey] ?? 0;
 
-                                            double progress = totalSpent > 0
-                                                ? (spentAmount / totalSpent)
-                                                      .clamp(0.0, 1.0)
-                                                : 0.0;
+                                        double progress = totalSpent > 0
+                                            ? (spentAmount / totalSpent).clamp(
+                                                0.0,
+                                                1.0,
+                                              )
+                                            : 0.0;
 
-                                            String emoji = extractEmoji(
-                                              categoryKey,
-                                            );
-                                            String categoryName =
-                                                extractCategoryName(
-                                                  categoryKey,
-                                                );
+                                        String emoji = extractEmoji(
+                                          categoryKey,
+                                        );
+                                        String categoryName =
+                                            extractCategoryName(categoryKey);
 
-                                            const Color liquidColor = Color(
-                                              0xFF34C759,
-                                            );
+                                        const Color liquidColor = Color(
+                                          0xFF34C759,
+                                        );
 
-                                            return GestureDetector(
-                                              onTap: () {
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (context) => AlertDialog(
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            16,
-                                                          ),
+                                        return GestureDetector(
+                                          onTap: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                ),
+                                                title: Text(
+                                                  "$emoji $categoryName",
+                                                  style: GoogleFonts.poppins(
+                                                    fontSize:
+                                                        screenWidth * 0.045,
+                                                  ),
+                                                ),
+                                                content: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      "Total Spent: ₹$spentAmount",
                                                     ),
-                                                    title: Text(
-                                                      "$emoji $categoryName",
+                                                    const SizedBox(height: 10),
+                                                    Text(
+                                                      "${((spentAmount / (totalSpent > 0 ? totalSpent : 1)) * 100).toStringAsFixed(1)}% of total expenses",
                                                       style:
                                                           GoogleFonts.poppins(
-                                                            fontSize: 18,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: liquidColor,
                                                           ),
                                                     ),
-                                                    content: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Text(
-                                                          "Total Spent: ₹$spentAmount",
-                                                        ),
-                                                        const SizedBox(
-                                                          height: 10,
-                                                        ),
-                                                        Text(
-                                                          "${((spentAmount / (totalSpent > 0 ? totalSpent : 1)) * 100).toStringAsFixed(1)}% of total expenses",
-                                                          style:
-                                                              GoogleFonts.poppins(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color:
-                                                                    liquidColor,
-                                                              ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () =>
-                                                            Navigator.pop(
-                                                              context,
-                                                            ),
-                                                        child: const Text(
-                                                          "Close",
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              },
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white
-                                                      .withOpacity(0.1),
-                                                  borderRadius:
-                                                      BorderRadius.circular(24),
-                                                  border: Border.all(
-                                                    color: Colors.white
-                                                        .withOpacity(0.3),
-                                                    width: 1.5,
-                                                  ),
+                                                  ],
                                                 ),
-                                                child: ClipRRect(
-                                                  borderRadius:
-                                                      BorderRadius.circular(24),
-                                                  child: Stack(
-                                                    children: [
-                                                      // Liquid progress indicator
-                                                      TweenAnimationBuilder<
-                                                        double
-                                                      >(
-                                                        duration:
-                                                            const Duration(
-                                                              milliseconds: 800,
-                                                            ),
-                                                        curve: Curves.easeInOut,
-                                                        tween: Tween<double>(
-                                                          begin: progress,
-                                                          end: progress,
-                                                        ),
-                                                        builder: (context, value, child) {
-                                                          return LiquidLinearProgressIndicator(
-                                                            value: value,
-                                                            valueColor:
-                                                                AlwaysStoppedAnimation<
-                                                                  Color
-                                                                >(liquidColor),
-                                                            backgroundColor:
-                                                                Colors
-                                                                    .transparent,
-                                                            borderColor: Colors
-                                                                .transparent,
-                                                            borderWidth: 0,
-                                                            borderRadius: 24.0,
-                                                            direction:
-                                                                Axis.vertical,
-                                                            center: Container(),
-                                                          );
-                                                        },
-                                                      ),
-                                                      // Gradient overlay
-                                                      Positioned.fill(
-                                                        child: Container(
-                                                          decoration: BoxDecoration(
-                                                            gradient: LinearGradient(
-                                                              begin: Alignment
-                                                                  .topLeft,
-                                                              end: Alignment
-                                                                  .bottomRight,
-                                                              colors: [
-                                                                Colors.white
-                                                                    .withOpacity(
-                                                                      0.2,
-                                                                    ),
-                                                                Colors.white
-                                                                    .withOpacity(
-                                                                      0.05,
-                                                                    ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      // Emoji
-                                                      Center(
-                                                        child: Text(
-                                                          emoji,
-                                                          style: TextStyle(
-                                                            fontSize:
-                                                                screenHeight *
-                                                                0.063,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(context),
+                                                    child: const Text("Close"),
                                                   ),
-                                                ),
+                                                ],
                                               ),
                                             );
                                           },
-                                        ),
-                                ),
-                              ),
-
-                              SizedBox(height: screenHeight * 0.02),
-
-                              /// ANALYTICS CONTAINER - Fixed at bottom
-                              Container(
-                                margin: EdgeInsets.fromLTRB(
-                                  screenWidth * 0.042,
-                                  0,
-                                  screenWidth * 0.042,
-                                  screenHeight * 0.02,
-                                ),
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: screenWidth * 0.04,
-                                  vertical: screenHeight * 0.02,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.7),
-                                  borderRadius: BorderRadius.circular(30),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.8),
-                                    width: 1.5,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 10),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      "₹$totalSpent",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: screenHeight * 0.03,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                    Text(
-                                      "spent this month",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: screenHeight * 0.013,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                    SizedBox(height: screenHeight * 0.008),
-                                    Container(
-                                      width: double.infinity,
-                                      height: screenHeight * 0.008,
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[200],
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: FractionallySizedBox(
-                                        alignment: Alignment.centerLeft,
-                                        widthFactor: totalSpent > 0 ? 0.5 : 0.0,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF4CAF50),
-                                            borderRadius: BorderRadius.circular(
-                                              4,
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withOpacity(
+                                                0.1,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(24),
+                                              border: Border.all(
+                                                color: Colors.white.withOpacity(
+                                                  0.3,
+                                                ),
+                                                width: 1.5,
+                                              ),
+                                            ),
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(24),
+                                              child: Stack(
+                                                children: [
+                                                  TweenAnimationBuilder<double>(
+                                                    duration: const Duration(
+                                                      milliseconds: 800,
+                                                    ),
+                                                    curve: Curves.easeInOut,
+                                                    tween: Tween<double>(
+                                                      begin: progress,
+                                                      end: progress,
+                                                    ),
+                                                    builder: (context, value, child) {
+                                                      return LiquidLinearProgressIndicator(
+                                                        value: value,
+                                                        valueColor:
+                                                            AlwaysStoppedAnimation<
+                                                              Color
+                                                            >(liquidColor),
+                                                        backgroundColor:
+                                                            Colors.transparent,
+                                                        borderColor:
+                                                            Colors.transparent,
+                                                        borderWidth: 0,
+                                                        borderRadius: 24.0,
+                                                        direction:
+                                                            Axis.vertical,
+                                                        center: Container(),
+                                                      );
+                                                    },
+                                                  ),
+                                                  Positioned.fill(
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        gradient: LinearGradient(
+                                                          begin:
+                                                              Alignment.topLeft,
+                                                          end: Alignment
+                                                              .bottomRight,
+                                                          colors: [
+                                                            Colors.white
+                                                                .withOpacity(
+                                                                  0.2,
+                                                                ),
+                                                            Colors.white
+                                                                .withOpacity(
+                                                                  0.05,
+                                                                ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Center(
+                                                    child: Text(
+                                                      emoji,
+                                                      style: TextStyle(
+                                                        fontSize:
+                                                            screenWidth * 0.12,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ),
-                                        ),
+                                        );
+                                      },
+                                    ),
+                            ),
+                          ),
+
+                          /// ANALYTICS CONTAINER - Compact at bottom
+                          Container(
+                            margin: EdgeInsets.fromLTRB(
+                              screenWidth * 0.04,
+                              0,
+                              screenWidth * 0.04,
+                              screenHeight * 0.015,
+                            ),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.04,
+                              vertical: screenHeight * 0.015,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.7),
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.8),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  "₹$totalSpent",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: screenWidth * 0.055,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                Text(
+                                  "spent this month",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: screenWidth * 0.023,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                SizedBox(height: screenHeight * 0.006),
+                                Container(
+                                  width: double.infinity,
+                                  height: screenHeight * 0.006,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: FractionallySizedBox(
+                                    alignment: Alignment.centerLeft,
+                                    widthFactor: totalSpent > 0 ? 0.5 : 0.0,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF4CAF50),
+                                        borderRadius: BorderRadius.circular(4),
                                       ),
                                     ),
-                                    SizedBox(height: screenHeight * 0.005),
-
-                                    SizedBox(height: screenHeight * 0.013),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
+                                  ),
+                                ),
+                                SizedBox(height: screenHeight * 0.01),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    Column(
                                       children: [
-                                        Column(
-                                          children: [
-                                            Text(
-                                              "₹${categories.isNotEmpty ? (totalSpent / categories.length).round() : 0}",
-                                              style: GoogleFonts.poppins(
-                                                fontSize: screenHeight * 0.018,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black87,
-                                              ),
-                                            ),
-                                            Text(
-                                              "avg/category",
-                                              style: GoogleFonts.poppins(
-                                                fontSize: screenHeight * 0.011,
-                                                color: Colors.grey[600],
-                                              ),
-                                            ),
-                                          ],
+                                        Text(
+                                          "₹${categories.isNotEmpty ? (totalSpent / categories.length).round() : 0}",
+                                          style: GoogleFonts.poppins(
+                                            fontSize: screenWidth * 0.033,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black87,
+                                          ),
                                         ),
-                                        Column(
-                                          children: [
-                                            Text(
-                                              "${categories.length}",
-                                              style: GoogleFonts.poppins(
-                                                fontSize: screenHeight * 0.018,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black87,
-                                              ),
-                                            ),
-                                            Text(
-                                              "categories",
-                                              style: GoogleFonts.poppins(
-                                                fontSize: screenHeight * 0.011,
-                                                color: Colors.grey[600],
-                                              ),
-                                            ),
-                                          ],
+                                        Text(
+                                          "avg/category",
+                                          style: GoogleFonts.poppins(
+                                            fontSize: screenWidth * 0.022,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Column(
+                                      children: [
+                                        Text(
+                                          "${categories.length}",
+                                          style: GoogleFonts.poppins(
+                                            fontSize: screenWidth * 0.033,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                        Text(
+                                          "categories",
+                                          style: GoogleFonts.poppins(
+                                            fontSize: screenWidth * 0.022,
+                                            color: Colors.grey[600],
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
-                          );
-                        },
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
