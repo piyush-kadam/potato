@@ -685,16 +685,6 @@ class _CategoryBudgetPageState extends State<CategoryBudgetPage> {
                                                 ),
                                               ],
                                             ),
-                                            if (!_isProUser)
-                                              Positioned(
-                                                top: 8,
-                                                right: 8,
-                                                child: Icon(
-                                                  Icons.star,
-                                                  color: Colors.amber,
-                                                  size: 20,
-                                                ),
-                                              ),
                                           ],
                                         ),
                                       ),

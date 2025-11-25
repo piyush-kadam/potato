@@ -303,7 +303,7 @@ class _ConnectedUserExpensePageState extends State<ConnectedUserExpensePage> {
               SafeArea(
                 child: Column(
                   children: [
-                    /// AppBar
+                    /// AppBar - Fixed height
                     AppBar(
                       title: Text(
                         "$username's",
@@ -399,410 +399,379 @@ class _ConnectedUserExpensePageState extends State<ConnectedUserExpensePage> {
                       ],
                     ),
 
-                    /// Content with responsive sizing
+                    /// DAYS LEFT - Fixed height
+                    Container(
+                      height: screenHeight * 0.11,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.065,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Days Left",
+                                style: GoogleFonts.poppins(
+                                  fontSize: screenHeight * 0.014,
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Text(
+                                "$remainingDays",
+                                style: GoogleFonts.poppins(
+                                  fontSize: screenHeight * 0.044,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black87,
+                                  height: 1.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    /// Content with responsive sizing - Takes remaining space
                     Expanded(
                       child: LayoutBuilder(
                         builder: (context, constraints) {
-                          return SingleChildScrollView(
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                minHeight: constraints.maxHeight,
-                              ),
-                              child: Column(
-                                children: [
-                                  /// DAYS LEFT
-                                  Padding(
-                                    padding: EdgeInsets.fromLTRB(
-                                      screenWidth * 0.065,
-                                      screenHeight * 0.006,
-                                      screenWidth * 0.065,
-                                      screenHeight * 0.019,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              "Days Left",
-                                              style: GoogleFonts.poppins(
-                                                fontSize: screenHeight * 0.014,
-                                                color: Colors.grey[600],
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                            Text(
-                                              "$remainingDays",
-                                              style: GoogleFonts.poppins(
-                                                fontSize: screenHeight * 0.044,
-                                                fontWeight: FontWeight.w700,
-                                                color: Colors.black87,
-                                                height: 1.0,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
+                          // Reserve space for analytics container
+                          final analyticsHeight = screenHeight * 0.20;
+                          final availableGridHeight =
+                              constraints.maxHeight -
+                              analyticsHeight -
+                              (screenHeight * 0.02);
+
+                          return Column(
+                            children: [
+                              /// Category Grid - Fixed height with scrolling
+                              SizedBox(
+                                height: availableGridHeight,
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: screenWidth * 0.042,
                                   ),
-
-                                  /// Category Grid
-
-                                  // First Category Grid (Expense Mode - Document 4)
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: screenWidth * 0.042,
-                                      vertical: screenHeight * 0.002,
-                                    ),
-                                    child: SizedBox(
-                                      height: screenHeight * 0.58,
-                                      child: categories.isEmpty
-                                          ? Center(
-                                              child: Text(
-                                                "No expense categories set",
-                                                style: GoogleFonts.poppins(
-                                                  color: Colors.grey[600],
-                                                  fontSize:
-                                                      screenHeight * 0.018,
-                                                ),
+                                  child: categories.isEmpty
+                                      ? Center(
+                                          child: Text(
+                                            "No expense categories set",
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.grey[600],
+                                              fontSize: screenHeight * 0.018,
+                                            ),
+                                          ),
+                                        )
+                                      : GridView.builder(
+                                          physics:
+                                              const BouncingScrollPhysics(),
+                                          gridDelegate:
+                                              SliverGridDelegateWithFixedCrossAxisCount(
+                                                crossAxisCount: 2,
+                                                crossAxisSpacing:
+                                                    screenWidth * 0.026,
+                                                mainAxisSpacing:
+                                                    screenHeight * 0.015,
+                                                childAspectRatio: 1.1,
                                               ),
-                                            )
-                                          : GridView.builder(
-                                              physics:
-                                                  const BouncingScrollPhysics(),
-                                              gridDelegate:
-                                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                                    crossAxisCount: 2,
-                                                    crossAxisSpacing:
-                                                        screenWidth * 0.026,
-                                                    mainAxisSpacing:
-                                                        screenHeight * 0.015,
-                                                    childAspectRatio: 1.1,
-                                                  ),
-                                              itemCount: categories.length,
-                                              itemBuilder: (context, index) {
-                                                String categoryKey =
-                                                    categories[index];
-                                                int spentAmount =
-                                                    categorySpent[categoryKey] ??
-                                                    0;
+                                          itemCount: categories.length,
+                                          itemBuilder: (context, index) {
+                                            String categoryKey =
+                                                categories[index];
+                                            int spentAmount =
+                                                categorySpent[categoryKey] ?? 0;
 
-                                                double progress = totalSpent > 0
-                                                    ? (spentAmount / totalSpent)
-                                                          .clamp(0.0, 1.0)
-                                                    : 0.0;
+                                            double progress = totalSpent > 0
+                                                ? (spentAmount / totalSpent)
+                                                      .clamp(0.0, 1.0)
+                                                : 0.0;
 
-                                                String emoji = extractEmoji(
+                                            String emoji = extractEmoji(
+                                              categoryKey,
+                                            );
+                                            String categoryName =
+                                                extractCategoryName(
                                                   categoryKey,
                                                 );
-                                                String categoryName =
-                                                    extractCategoryName(
-                                                      categoryKey,
-                                                    );
 
-                                                const Color liquidColor = Color(
-                                                  0xFF34C759,
-                                                );
+                                            const Color liquidColor = Color(
+                                              0xFF34C759,
+                                            );
 
-                                                return GestureDetector(
-                                                  onTap: () {
-                                                    showDialog(
-                                                      context: context,
-                                                      builder: (context) => AlertDialog(
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                16,
-                                                              ),
+                                            return GestureDetector(
+                                              onTap: () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) => AlertDialog(
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            16,
+                                                          ),
+                                                    ),
+                                                    title: Text(
+                                                      "$emoji $categoryName",
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                            fontSize: 18,
+                                                          ),
+                                                    ),
+                                                    content: Column(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          "Total Spent: ₹$spentAmount",
                                                         ),
-                                                        title: Text(
-                                                          "$emoji $categoryName",
+                                                        const SizedBox(
+                                                          height: 10,
+                                                        ),
+                                                        Text(
+                                                          "${((spentAmount / (totalSpent > 0 ? totalSpent : 1)) * 100).toStringAsFixed(1)}% of total expenses",
                                                           style:
                                                               GoogleFonts.poppins(
-                                                                fontSize: 18,
-                                                              ),
-                                                        ),
-                                                        content: Column(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            Text(
-                                                              "Total Spent: ₹$spentAmount",
-                                                            ),
-                                                            const SizedBox(
-                                                              height: 10,
-                                                            ),
-                                                            Text(
-                                                              "${((spentAmount / (totalSpent > 0 ? totalSpent : 1)) * 100).toStringAsFixed(1)}% of total expenses",
-                                                              style: GoogleFonts.poppins(
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .bold,
                                                                 color:
                                                                     liquidColor,
                                                               ),
-                                                            ),
-                                                          ],
                                                         ),
-                                                        actions: [
-                                                          TextButton(
-                                                            onPressed: () =>
-                                                                Navigator.pop(
-                                                                  context,
-                                                                ),
-                                                            child: const Text(
-                                                              "Close",
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: Container(
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.white
-                                                          .withOpacity(0.1),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            24,
-                                                          ),
-                                                      border: Border.all(
-                                                        color: Colors.white
-                                                            .withOpacity(0.3),
-                                                        width: 1.5,
-                                                      ),
+                                                      ],
                                                     ),
-                                                    child: ClipRRect(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            24,
-                                                          ),
-                                                      child: Stack(
-                                                        children: [
-                                                          // Liquid progress indicator with full opacity
-                                                          TweenAnimationBuilder<
-                                                            double
-                                                          >(
-                                                            duration:
-                                                                const Duration(
-                                                                  milliseconds:
-                                                                      800,
-                                                                ),
-                                                            curve: Curves
-                                                                .easeInOut,
-                                                            tween:
-                                                                Tween<double>(
-                                                                  begin:
-                                                                      progress,
-                                                                  end: progress,
-                                                                ),
-                                                            builder: (context, value, child) {
-                                                              return LiquidLinearProgressIndicator(
-                                                                value: value,
-                                                                valueColor:
-                                                                    AlwaysStoppedAnimation<
-                                                                      Color
-                                                                    >(
-                                                                      liquidColor,
-                                                                    ),
-                                                                backgroundColor:
-                                                                    Colors
-                                                                        .transparent,
-                                                                borderColor: Colors
-                                                                    .transparent,
-                                                                borderWidth: 0,
-                                                                borderRadius:
-                                                                    24.0,
-                                                                direction: Axis
-                                                                    .vertical,
-                                                                center:
-                                                                    Container(),
-                                                              );
-                                                            },
-                                                          ),
-                                                          // Gradient overlay
-                                                          Positioned.fill(
-                                                            child: Container(
-                                                              decoration: BoxDecoration(
-                                                                gradient: LinearGradient(
-                                                                  begin: Alignment
-                                                                      .topLeft,
-                                                                  end: Alignment
-                                                                      .bottomRight,
-                                                                  colors: [
-                                                                    Colors.white
-                                                                        .withOpacity(
-                                                                          0.2,
-                                                                        ),
-                                                                    Colors.white
-                                                                        .withOpacity(
-                                                                          0.05,
-                                                                        ),
-                                                                  ],
-                                                                ),
-                                                              ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.pop(
+                                                              context,
                                                             ),
-                                                          ),
-                                                          // Emoji
-                                                          Center(
-                                                            child: Text(
-                                                              emoji,
-                                                              style: TextStyle(
-                                                                fontSize:
-                                                                    screenHeight *
-                                                                    0.063,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ],
+                                                        child: const Text(
+                                                          "Close",
+                                                        ),
                                                       ),
-                                                    ),
+                                                    ],
                                                   ),
                                                 );
                                               },
-                                            ),
-                                    ),
-                                  ),
-                                  SizedBox(height: screenHeight * 0.02),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white
+                                                      .withOpacity(0.1),
+                                                  borderRadius:
+                                                      BorderRadius.circular(24),
+                                                  border: Border.all(
+                                                    color: Colors.white
+                                                        .withOpacity(0.3),
+                                                    width: 1.5,
+                                                  ),
+                                                ),
+                                                child: ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(24),
+                                                  child: Stack(
+                                                    children: [
+                                                      // Liquid progress indicator
+                                                      TweenAnimationBuilder<
+                                                        double
+                                                      >(
+                                                        duration:
+                                                            const Duration(
+                                                              milliseconds: 800,
+                                                            ),
+                                                        curve: Curves.easeInOut,
+                                                        tween: Tween<double>(
+                                                          begin: progress,
+                                                          end: progress,
+                                                        ),
+                                                        builder: (context, value, child) {
+                                                          return LiquidLinearProgressIndicator(
+                                                            value: value,
+                                                            valueColor:
+                                                                AlwaysStoppedAnimation<
+                                                                  Color
+                                                                >(liquidColor),
+                                                            backgroundColor:
+                                                                Colors
+                                                                    .transparent,
+                                                            borderColor: Colors
+                                                                .transparent,
+                                                            borderWidth: 0,
+                                                            borderRadius: 24.0,
+                                                            direction:
+                                                                Axis.vertical,
+                                                            center: Container(),
+                                                          );
+                                                        },
+                                                      ),
+                                                      // Gradient overlay
+                                                      Positioned.fill(
+                                                        child: Container(
+                                                          decoration: BoxDecoration(
+                                                            gradient: LinearGradient(
+                                                              begin: Alignment
+                                                                  .topLeft,
+                                                              end: Alignment
+                                                                  .bottomRight,
+                                                              colors: [
+                                                                Colors.white
+                                                                    .withOpacity(
+                                                                      0.2,
+                                                                    ),
+                                                                Colors.white
+                                                                    .withOpacity(
+                                                                      0.05,
+                                                                    ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      // Emoji
+                                                      Center(
+                                                        child: Text(
+                                                          emoji,
+                                                          style: TextStyle(
+                                                            fontSize:
+                                                                screenHeight *
+                                                                0.063,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                ),
+                              ),
 
-                                  /// ANALYTICS CONTAINER
-                                  Container(
-                                    margin: EdgeInsets.fromLTRB(
-                                      screenWidth * 0.042,
-                                      0,
-                                      screenWidth * 0.042,
-                                      screenHeight * 0.015,
+                              SizedBox(height: screenHeight * 0.02),
+
+                              /// ANALYTICS CONTAINER - Fixed at bottom
+                              Container(
+                                margin: EdgeInsets.fromLTRB(
+                                  screenWidth * 0.042,
+                                  0,
+                                  screenWidth * 0.042,
+                                  screenHeight * 0.02,
+                                ),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: screenWidth * 0.04,
+                                  vertical: screenHeight * 0.02,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.7),
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.8),
+                                    width: 1.5,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 10),
                                     ),
-                                    padding: EdgeInsets.all(
-                                      screenHeight * 0.01,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.7),
-                                      borderRadius: BorderRadius.circular(30),
-                                      border: Border.all(
-                                        color: Colors.white.withOpacity(0.8),
-                                        width: 1.5,
+                                  ],
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      "₹$totalSpent",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: screenHeight * 0.03,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.black87,
                                       ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.05),
-                                          blurRadius: 20,
-                                          offset: const Offset(0, 10),
-                                        ),
-                                      ],
                                     ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          "₹$totalSpent",
-                                          style: GoogleFonts.poppins(
-                                            fontSize: screenHeight * 0.03,
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                        Text(
-                                          "spent this month",
-                                          style: GoogleFonts.poppins(
-                                            fontSize: screenHeight * 0.013,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                        SizedBox(height: screenHeight * 0.008),
-                                        Container(
-                                          width: double.infinity,
-                                          height: screenHeight * 0.008,
+                                    Text(
+                                      "spent this month",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: screenHeight * 0.013,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                    SizedBox(height: screenHeight * 0.008),
+                                    Container(
+                                      width: double.infinity,
+                                      height: screenHeight * 0.008,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[200],
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: FractionallySizedBox(
+                                        alignment: Alignment.centerLeft,
+                                        widthFactor: totalSpent > 0 ? 0.5 : 0.0,
+                                        child: Container(
                                           decoration: BoxDecoration(
-                                            color: Colors.grey[200],
+                                            color: const Color(0xFF4CAF50),
                                             borderRadius: BorderRadius.circular(
                                               4,
                                             ),
                                           ),
-                                          child: FractionallySizedBox(
-                                            alignment: Alignment.centerLeft,
-                                            widthFactor: totalSpent > 0
-                                                ? 0.5
-                                                : 0.0,
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFF4CAF50),
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(height: screenHeight * 0.005),
+
+                                    SizedBox(height: screenHeight * 0.013),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        Column(
+                                          children: [
+                                            Text(
+                                              "₹${categories.isNotEmpty ? (totalSpent / categories.length).round() : 0}",
+                                              style: GoogleFonts.poppins(
+                                                fontSize: screenHeight * 0.018,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black87,
                                               ),
                                             ),
-                                          ),
-                                        ),
-                                        SizedBox(height: screenHeight * 0.005),
-                                        Text(
-                                          "50% used",
-                                          style: GoogleFonts.poppins(
-                                            fontSize: screenHeight * 0.011,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                        SizedBox(height: screenHeight * 0.013),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceEvenly,
-                                          children: [
-                                            Column(
-                                              children: [
-                                                Text(
-                                                  "₹${categories.isNotEmpty ? (totalSpent / categories.length).round() : 0}",
-                                                  style: GoogleFonts.poppins(
-                                                    fontSize:
-                                                        screenHeight * 0.018,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.black87,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  "avg/category",
-                                                  style: GoogleFonts.poppins(
-                                                    fontSize:
-                                                        screenHeight * 0.011,
-                                                    color: Colors.grey[600],
-                                                  ),
-                                                ),
-                                              ],
+                                            Text(
+                                              "avg/category",
+                                              style: GoogleFonts.poppins(
+                                                fontSize: screenHeight * 0.011,
+                                                color: Colors.grey[600],
+                                              ),
                                             ),
-                                            Column(
-                                              children: [
-                                                Text(
-                                                  "${categories.length}",
-                                                  style: GoogleFonts.poppins(
-                                                    fontSize:
-                                                        screenHeight * 0.018,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.black87,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  "categories",
-                                                  style: GoogleFonts.poppins(
-                                                    fontSize:
-                                                        screenHeight * 0.011,
-                                                    color: Colors.grey[600],
-                                                  ),
-                                                ),
-                                              ],
+                                          ],
+                                        ),
+                                        Column(
+                                          children: [
+                                            Text(
+                                              "${categories.length}",
+                                              style: GoogleFonts.poppins(
+                                                fontSize: screenHeight * 0.018,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                            Text(
+                                              "categories",
+                                              style: GoogleFonts.poppins(
+                                                fontSize: screenHeight * 0.011,
+                                                color: Colors.grey[600],
+                                              ),
                                             ),
                                           ],
                                         ),
                                       ],
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
+                            ],
                           );
                         },
                       ),
