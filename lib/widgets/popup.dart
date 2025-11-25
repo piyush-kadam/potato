@@ -21,6 +21,8 @@ class _PayNowPopupState extends State<PayNowPopup> {
   String? paymentMethod;
   String currencySymbol = '₹'; // Default to Rupee
   bool isLoadingCurrency = true;
+  Map<String, int> categorySpent = {}; // Store spent amounts
+  bool isLoadingSpent = true;
   final TextEditingController _amountController = TextEditingController();
 
   final Map<String, String> _currencyMap = {
@@ -88,6 +90,7 @@ class _PayNowPopupState extends State<PayNowPopup> {
   void initState() {
     super.initState();
     _fetchUserCurrency();
+    _fetchCategorySpent();
   }
 
   Future<void> _fetchUserCurrency() async {
@@ -123,6 +126,46 @@ class _PayNowPopupState extends State<PayNowPopup> {
     }
   }
 
+  Future<void> _fetchCategorySpent() async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) return;
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection("Users")
+          .doc(userId)
+          .get();
+
+      if (userDoc.exists) {
+        final data = userDoc.data();
+
+        Map<String, int> spent = {};
+        if (data?['categorySpent'] != null) {
+          final rawSpent = data!['categorySpent'] as Map<String, dynamic>;
+          rawSpent.forEach((key, value) {
+            if (value is int) {
+              spent[key] = value;
+            } else if (value is double) {
+              spent[key] = value.toInt();
+            } else {
+              spent[key] = int.tryParse(value.toString()) ?? 0;
+            }
+          });
+        }
+
+        setState(() {
+          categorySpent = spent;
+          isLoadingSpent = false;
+        });
+      }
+    } catch (e) {
+      print("Error fetching category spent: $e");
+      setState(() {
+        isLoadingSpent = false;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _amountController.dispose();
@@ -137,6 +180,12 @@ class _PayNowPopupState extends State<PayNowPopup> {
     );
     final match = emojiRegex.firstMatch(categoryName);
     return match?.group(0) ?? '📦';
+  }
+
+  // Calculate remaining budget for a category
+  int _getRemainingBudget(String category, int totalBudget) {
+    int spent = categorySpent[category] ?? 0;
+    return totalBudget - spent;
   }
 
   @override
@@ -455,58 +504,71 @@ class _PayNowPopupState extends State<PayNowPopup> {
           style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
         ),
         const SizedBox(height: 4),
-        GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 3,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 0.9,
-          children: widget.categoryBudgets.entries.map((entry) {
-            bool isSelected = entry.key == selectedCategory;
-            String emoji = extractEmoji(entry.key);
+        isLoadingSpent
+            ? const Center(child: CircularProgressIndicator())
+            : GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 3,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 0.9,
+                children: widget.categoryBudgets.entries.map((entry) {
+                  bool isSelected = entry.key == selectedCategory;
+                  String emoji = extractEmoji(entry.key);
+                  int remainingBudget = _getRemainingBudget(
+                    entry.key,
+                    entry.value,
+                  );
 
-            return GestureDetector(
-              onTap: () => setState(() => selectedCategory = entry.key),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFFE8F5E9) : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: isSelected
-                      ? Border.all(color: const Color(0xFF4CAF50), width: 2)
-                      : null,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(emoji, style: const TextStyle(fontSize: 32)),
-                    const SizedBox(height: 8),
-                    Text(
-                      entry.key,
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 11,
-                        color: Colors.black,
+                  return GestureDetector(
+                    onTap: () => setState(() => selectedCategory = entry.key),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? const Color(0xFFE8F5E9)
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: isSelected
+                            ? Border.all(
+                                color: const Color(0xFF4CAF50),
+                                width: 2,
+                              )
+                            : null,
                       ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      "$currencySymbol${entry.value}",
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: const Color(0xFF4CAF50),
-                        fontWeight: FontWeight.w500,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(emoji, style: const TextStyle(fontSize: 32)),
+                          const SizedBox(height: 8),
+                          Text(
+                            entry.key,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 11,
+                              color: Colors.black,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            "$currencySymbol$remainingBudget",
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: remainingBudget >= 0
+                                  ? const Color(0xFF4CAF50)
+                                  : Colors.red,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  );
+                }).toList(),
               ),
-            );
-          }).toList(),
-        ),
         const SizedBox(height: 10),
       ],
     );

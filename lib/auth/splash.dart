@@ -51,7 +51,7 @@ class _SplashScreenState extends State<SplashScreen>
             _gifController.forward();
 
             // Start sound 1 second after animation begins
-            Timer(const Duration(seconds: 1), () {
+            Timer(const Duration(milliseconds: 700), () {
               _audioPlayer.play(AssetSource("images/splash.mp3"));
             });
 
