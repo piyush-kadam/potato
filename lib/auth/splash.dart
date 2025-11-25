@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:gif/gif.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:slideme/auth/authgate.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -13,6 +14,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
   late GifController _gifController;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
@@ -23,6 +25,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void dispose() {
     _gifController.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -37,15 +40,22 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF5FB567), // Your brand green color
+      backgroundColor: const Color(0xFF5FB567),
       body: SizedBox.expand(
         child: Gif(
           controller: _gifController,
           image: const AssetImage('assets/images/splash.gif'),
           autostart: Autostart.once,
 
-          onFetchCompleted: () {
-            // Navigate 3 seconds after GIF starts
+          onFetchCompleted: () async {
+            _gifController.forward();
+
+            // Start sound 1 second after animation begins
+            Timer(const Duration(seconds: 1), () {
+              _audioPlayer.play(AssetSource("images/splash.mp3"));
+            });
+
+            // Total sync duration still 3 seconds
             Timer(const Duration(seconds: 3), _navigateToAuthGate);
           },
           fit: BoxFit.cover,

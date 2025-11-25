@@ -655,6 +655,7 @@ class _CategoryBudgetPageState extends State<CategoryBudgetPage> {
                                           ),
                                         ),
                                         child: Stack(
+                                          alignment: Alignment.center,
                                           children: [
                                             Column(
                                               mainAxisAlignment:

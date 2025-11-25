@@ -479,7 +479,7 @@ class _HomePageState extends State<HomePage> {
               SafeArea(
                 child: Padding(
                   // 👈 ADD THIS PADDING HERE
-                  padding: const EdgeInsets.only(bottom: 30),
+                  padding: const EdgeInsets.only(bottom: 10),
                   child: Column(
                     children: [
                       /// TOP BAR

@@ -390,7 +390,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
               // Main Content
               SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(bottom: 3),
                   child: Column(
                     children: [
                       /// TOP BAR
