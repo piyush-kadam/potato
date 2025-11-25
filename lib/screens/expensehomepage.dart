@@ -1006,7 +1006,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                                   ),
                                 ),
 
-                                SizedBox(height: screenHeight * 0.01),
+                                SizedBox(height: screenHeight * 0.04),
 
                                 /// ANALYTICS CONTAINER - Fixed at bottom
                                 Container(
