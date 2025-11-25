@@ -394,7 +394,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                     children: [
                       /// TOP BAR - Fixed height
                       Container(
-                        height: screenHeight * 0.10,
+                        height: screenHeight * 0.08,
                         padding: EdgeInsets.symmetric(
                           horizontal: screenWidth * 0.04,
                         ),
@@ -1006,7 +1006,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                                   ),
                                 ),
 
-                                SizedBox(height: screenHeight * 0.04),
+                                SizedBox(height: screenHeight * 0.01),
 
                                 /// ANALYTICS CONTAINER - Fixed at bottom
                                 Container(
@@ -1018,7 +1018,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                                   ),
                                   padding: EdgeInsets.symmetric(
                                     horizontal: screenWidth * 0.04,
-                                    vertical: screenHeight * 0.02,
+                                    vertical: screenHeight * 0.01,
                                   ),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withOpacity(0.7),
