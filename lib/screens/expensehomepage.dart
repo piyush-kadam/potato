@@ -1010,12 +1010,6 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
 
                                 /// ANALYTICS CONTAINER - Fixed at bottom
                                 Container(
-                                  margin: EdgeInsets.fromLTRB(
-                                    screenWidth * 0.04,
-                                    0,
-                                    screenWidth * 0.04,
-                                    screenHeight * 0.02,
-                                  ),
                                   padding: EdgeInsets.symmetric(
                                     horizontal: screenWidth * 0.04,
                                     vertical: screenHeight * 0.02,
