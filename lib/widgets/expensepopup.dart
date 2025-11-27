@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:slideme/screens/alltransaction.dart';
 
 class ExpensePayNowPopup extends StatefulWidget {
   final List<String> categories;
@@ -198,7 +199,7 @@ class _ExpensePayNowPopupState extends State<ExpensePayNowPopup> {
             const SizedBox(height: 16),
             // Title
             Text(
-              "Pay Now",
+              "Add Expense",
               style: GoogleFonts.poppins(
                 fontSize: 22,
                 fontWeight: FontWeight.w600,
@@ -684,6 +685,599 @@ class _ExpensePayNowPopupState extends State<ExpensePayNowPopup> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class ExpenseCategoryDrawer extends StatefulWidget {
+  final String categoryName;
+  final String emoji;
+  final String fullCategoryKey; // Add this to store the exact category key
+  final List<String> categories; // For ExpensePayNowPopup
+
+  const ExpenseCategoryDrawer({
+    super.key,
+    required this.categoryName,
+    required this.emoji,
+    required this.fullCategoryKey, // Make this required
+    required this.categories,
+  });
+
+  @override
+  State<ExpenseCategoryDrawer> createState() => _ExpenseCategoryDrawerState();
+}
+
+class _ExpenseCategoryDrawerState extends State<ExpenseCategoryDrawer> {
+  String selectedMonth = "All";
+  String _currencySymbol = "₹";
+
+  final List<String> months = [
+    "All",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  final Map<String, String> _currencyMap = {
+    'India': '₹',
+    'United States': '\$',
+    'United Kingdom': '£',
+    'Canada': 'C\$',
+    'Australia': 'A\$',
+    'Germany': '€',
+    'France': '€',
+    'Japan': '¥',
+    'China': '¥',
+    'Brazil': 'R\$',
+    'Mexico': 'MX\$',
+    'Spain': '€',
+    'Italy': '€',
+    'South Korea': '₩',
+    'Singapore': 'S\$',
+    'Netherlands': '€',
+    'Sweden': 'kr',
+    'Norway': 'kr',
+    'Denmark': 'kr',
+    'Switzerland': 'CHF',
+    'Russia': '₽',
+    'South Africa': 'R',
+    'New Zealand': 'NZ\$',
+    'Ireland': '€',
+    'United Arab Emirates': 'د.إ',
+    'Saudi Arabia': '﷼',
+    'Turkey': '₺',
+    'Argentina': 'AR\$',
+    'Chile': 'CL\$',
+    'Indonesia': 'Rp',
+    'Thailand': '฿',
+    'Philippines': '₱',
+    'Vietnam': '₫',
+    'Malaysia': 'RM',
+    'Pakistan': '₨',
+    'Bangladesh': '৳',
+    'Nepal': '₨',
+    'Sri Lanka': '₨',
+    'Nigeria': '₦',
+    'Kenya': 'KSh',
+    'Egypt': 'E£',
+    'Israel': '₪',
+    'Portugal': '€',
+    'Poland': 'zł',
+    'Finland': '€',
+    'Greece': '€',
+    'Austria': '€',
+    'Belgium': '€',
+    'Czech Republic': 'Kč',
+    'Hungary': 'Ft',
+    'Romania': 'lei',
+    'Colombia': 'COL\$',
+    'Peru': 'S/',
+    'Ukraine': '₴',
+    'Morocco': 'د.م.',
+    'Qatar': '﷼',
+    'Kuwait': 'د.ك',
+    'Oman': '﷼',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserCountry();
+  }
+
+  Future<void> _fetchUserCountry() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection("Users")
+          .doc(user.uid)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data()!;
+        final country = data["country"] as String?;
+        if (country != null && _currencyMap.containsKey(country)) {
+          setState(() {
+            _currencySymbol = _currencyMap[country]!;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching country: $e");
+    }
+  }
+
+  bool _matchesMonthFilter(Timestamp? timestamp) {
+    if (selectedMonth == "All") return true;
+    if (timestamp == null) return false;
+
+    final date = timestamp.toDate();
+    final monthIndex = months.indexOf(selectedMonth);
+    return date.month == monthIndex;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final categoryKey = "${widget.emoji} ${widget.categoryName}";
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 12),
+          // Drag Handle
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Header with emoji and title
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              children: [
+                Text(widget.emoji, style: const TextStyle(fontSize: 32)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.categoryName,
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        "Expense Category",
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: const Icon(Icons.close, color: Colors.black),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // NO BUDGET DISPLAY SECTION HERE - REMOVED!
+
+          // Add Expense Button
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  HapticFeedback.heavyImpact();
+                  final result = await showDialog(
+                    context: context,
+                    builder: (_) =>
+                        ExpensePayNowPopup(categories: widget.categories),
+                  );
+                  if (result != null && result['success'] == true) {
+                    // Refresh will happen automatically via StreamBuilder
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4CAF50),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.add, color: Colors.white, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Add Expense",
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Recent Transactions Section with Month Filter
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.access_time,
+                      size: 18,
+                      color: Colors.black,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "Recent Transactions",
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                    // Month Dropdown
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: selectedMonth,
+                          isDense: true,
+                          icon: const Icon(Icons.keyboard_arrow_down, size: 16),
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.black87,
+                          ),
+                          items: months.map((String month) {
+                            return DropdownMenuItem<String>(
+                              value: month,
+                              child: Text(month),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedMonth = newValue!;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Transaction List
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection("Users")
+                      .doc(FirebaseAuth.instance.currentUser!.uid)
+                      .collection("transactions")
+                      .orderBy("timestamp", descending: true)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Column(
+                          children: [
+                            const Text("⚠️", style: TextStyle(fontSize: 48)),
+                            const SizedBox(height: 12),
+                            Text(
+                              "Error loading transactions",
+                              style: GoogleFonts.poppins(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return Center(
+                        child: Column(
+                          children: [
+                            const Text("💸", style: TextStyle(fontSize: 48)),
+                            const SizedBox(height: 12),
+                            Text(
+                              "No transactions yet",
+                              style: GoogleFonts.poppins(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Add your first expense to get started",
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    // Filter transactions for this category and selected month
+                    final categoryTransactions = snapshot.data!.docs.where((
+                      doc,
+                    ) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final docCategory = data['category'] as String?;
+                      final timestamp = data['date'] as Timestamp?;
+
+                      return docCategory == categoryKey &&
+                          _matchesMonthFilter(timestamp);
+                    }).toList();
+
+                    if (categoryTransactions.isEmpty) {
+                      return Center(
+                        child: Column(
+                          children: [
+                            const Text("💸", style: TextStyle(fontSize: 48)),
+                            const SizedBox(height: 12),
+                            Text(
+                              "No transactions found",
+                              style: GoogleFonts.poppins(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              selectedMonth == "All"
+                                  ? "Add your first expense to get started"
+                                  : "No transactions for this month",
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    // Take only first 3 transactions
+                    final displayTransactions = categoryTransactions
+                        .take(3)
+                        .toList();
+
+                    return Column(
+                      children: [
+                        ...displayTransactions.map((doc) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          final amount = data['amount'] as int? ?? 0;
+                          final method =
+                              data['paymentMethod'] as String? ?? 'Payment';
+                          final timestamp = data['date'] as Timestamp?;
+
+                          if (amount == 0) return const SizedBox.shrink();
+
+                          String formattedDate = "Just now";
+                          if (timestamp != null) {
+                            final date = timestamp.toDate();
+                            final now = DateTime.now();
+                            final difference = now.difference(date);
+
+                            if (difference.inDays > 0) {
+                              final months = [
+                                'Jan',
+                                'Feb',
+                                'Mar',
+                                'Apr',
+                                'May',
+                                'Jun',
+                                'Jul',
+                                'Aug',
+                                'Sep',
+                                'Oct',
+                                'Nov',
+                                'Dec',
+                              ];
+                              formattedDate =
+                                  "${months[date.month - 1]} ${date.day}, ${date.year}";
+                            } else if (difference.inHours > 0) {
+                              formattedDate = "${difference.inHours}h ago";
+                            } else if (difference.inMinutes > 0) {
+                              formattedDate = "${difference.inMinutes}m ago";
+                            }
+                          }
+
+                          String methodIcon = "💳";
+                          if (method.toLowerCase().contains("cash")) {
+                            methodIcon = "💵";
+                          } else if (method.toLowerCase().contains("upi")) {
+                            methodIcon = "📱";
+                          } else if (method.toLowerCase().contains("card")) {
+                            methodIcon = "💳";
+                          }
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF9F9F9),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.grey[200]!,
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: const Color(
+                                      0xFF4CAF50,
+                                    ).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      methodIcon,
+                                      style: const TextStyle(fontSize: 20),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        method,
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                      Text(
+                                        formattedDate,
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  "$_currencySymbol${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.red[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        // View All Transactions Button (if needed in future)
+                        if (categoryTransactions.isNotEmpty)
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AllTransactionsPage(
+                                    initialCategory: categoryKey,
+                                  ),
+                                ),
+                              );
+                              // Navigate to all transactions page
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(top: 8),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF4CAF50).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFF4CAF50,
+                                  ).withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "View All Transactions",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      color: const Color(0xFF4CAF50),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Icon(
+                                    Icons.arrow_forward,
+                                    size: 16,
+                                    color: Color(0xFF4CAF50),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
+        ],
       ),
     );
   }

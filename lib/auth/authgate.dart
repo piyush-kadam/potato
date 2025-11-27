@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:slideme/auth/age.dart';
 import 'package:slideme/auth/country.dart';
 import 'package:slideme/auth/mode.dart';
-
 import 'package:slideme/auth/signup.dart';
 import 'package:slideme/auth/gphone.dart';
 import 'package:slideme/screens/category.dart';
@@ -18,6 +17,9 @@ class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
   Future<Widget> _getStartPage(User user) async {
+    // ⚠️ ADD A SMALL DELAY to ensure Firestore write completes
+    await Future.delayed(const Duration(milliseconds: 500));
+
     final doc = await FirebaseFirestore.instance
         .collection("Users")
         .doc(user.uid)
@@ -51,15 +53,13 @@ class AuthGate extends StatelessWidget {
     }
 
     // MODE CHECK
-    // MODE CHECK
     if (!data.containsKey("trackingMode")) {
-      return const ModeSelectionPage(); // fallback if mode missing
+      return const ModeSelectionPage();
     }
 
     final String mode = data["trackingMode"];
 
     if (mode == "budget") {
-      // Only run budget flow
       if (!data.containsKey("monthlyBudget") || data["monthlyBudget"] == null) {
         return const BudgetPage();
       }
@@ -71,7 +71,6 @@ class AuthGate extends StatelessWidget {
 
       return const MainPageWithSlider();
     } else if (mode == "expense") {
-      // Only run expense flow
       if (!data.containsKey("expenseCategories") ||
           data["expenseCategories"] == null) {
         return const ExpenseCategoryPage();
@@ -80,7 +79,6 @@ class AuthGate extends StatelessWidget {
       return const ExpensePageWithSlider();
     }
 
-    // fallback
     return const MainPageWithSlider();
   }
 
@@ -102,9 +100,9 @@ class AuthGate extends StatelessWidget {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snap.hasError) {
-                  return const Center(child: Text("Something went wrong"));
+                  return Center(child: Text("Error: ${snap.error}"));
                 }
-                return snap.data!;
+                return snap.data ?? SignUpPage(onTap: () {}); // ✅ Fallback
               },
             );
           } else {

@@ -239,7 +239,7 @@ class _PayNowPopupState extends State<PayNowPopup> {
             const SizedBox(height: 16),
             // Title
             Text(
-              "Pay Now",
+              "Add Expense",
               style: GoogleFonts.poppins(
                 fontSize: 22,
                 fontWeight: FontWeight.w600,

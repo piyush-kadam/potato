@@ -48,31 +48,21 @@ class _SignUpPageState extends State<SignUpPage> {
     setState(() => isLoading = true);
 
     try {
-      final userCredential = await _authService.signInWithGoogle();
+      await _authService.signInWithGoogle();
 
-      if (userCredential != null) {
-        final userDoc = FirebaseFirestore.instance
-            .collection('Users')
-            .doc(userCredential.user!.uid);
-        final snapshot = await userDoc.get();
+      // ✅ REMOVE all this code:
+      // if (userCredential != null) {
+      //   final userDoc = ...
+      //   final snapshot = ...
+      //   if (!snapshot.exists) { ... }
+      // }
 
-        if (!snapshot.exists) {
-          await userDoc.set({
-            'uid': userCredential.user!.uid,
-            'email': userCredential.user!.email,
-            'authMethod': 'google',
-            'phoneVerified': false,
-          });
-        }
-        // REMOVED: Manual navigation - let AuthGate handle it
-      }
+      // AuthGate will automatically handle navigation via StreamBuilder
     } catch (e) {
       _showError("Google sign-in failed: ${e.toString()}");
-    } finally {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
+      setState(() => isLoading = false); // ✅ Only reset on error
     }
+    // ✅ DON'T reset isLoading on success - let AuthGate take over
   }
 
   void _signInWithApple() async {

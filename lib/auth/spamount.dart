@@ -14,7 +14,7 @@ class SpendAmountPage extends StatefulWidget {
 
 class _SpendAmountPageState extends State<SpendAmountPage>
     with TickerProviderStateMixin {
-  double _amount = 25000;
+  double _amount = 0;
   String _currencySymbol = "₹";
   bool _isLoading = true;
 
@@ -296,13 +296,15 @@ class _SpendAmountPageState extends State<SpendAmountPage>
                           const SizedBox(height: 5),
 
                           const SizedBox(height: 30),
+
+                          // Replace the slider section with this:
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 18),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "${_currencySymbol}5,000",
+                                  "${_currencySymbol}0",
                                   style: GoogleFonts.poppins(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 13,
@@ -312,9 +314,9 @@ class _SpendAmountPageState extends State<SpendAmountPage>
                                 Expanded(
                                   child: Slider(
                                     value: _amount,
-                                    min: 5000,
+                                    min: 0,
                                     max: 200000,
-                                    divisions: ((200000 - 5000) / 1000).round(),
+                                    divisions: 200,
                                     activeColor: const Color(0xff4A8C51),
                                     inactiveColor: Colors.white.withOpacity(
                                       0.25,
@@ -338,6 +340,10 @@ class _SpendAmountPageState extends State<SpendAmountPage>
                               ],
                             ),
                           ),
+
+                          // Also update the initial amount at the top of the class:
+                          // Change from: double _amount = 25000;
+                          // To: double _amount = 0;
                         ],
                       ),
                     ),

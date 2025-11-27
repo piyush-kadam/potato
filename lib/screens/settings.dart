@@ -564,11 +564,13 @@ class _SettingsPageState extends State<SettingsPage> {
                               await AuthService().signOut();
 
                               if (context.mounted) {
-                                Navigator.of(context).push(
+                                Navigator.of(context).pushAndRemoveUntil(
                                   MaterialPageRoute(
                                     builder: (context) =>
                                         LoginPage(onTap: () {}),
                                   ),
+                                  (route) =>
+                                      false, // Remove all previous routes
                                 );
                               }
                             } catch (e) {

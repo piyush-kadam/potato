@@ -20,10 +20,15 @@ class AuthService {
     final docSnapshot = await docRef.get();
     if (!docSnapshot.exists) {
       await docRef.set({
+        'uid': user.uid,
         'email': user.email,
+        'authMethod': 'google',
+        'phoneVerified': false, // ✅ ADD THIS!
         'createdAt': FieldValue.serverTimestamp(),
-        // Add other default fields as needed
       });
+
+      // ✅ Wait for write to complete
+      await Future.delayed(const Duration(milliseconds: 300));
     }
   }
 

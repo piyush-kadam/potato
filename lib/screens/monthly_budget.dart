@@ -15,7 +15,7 @@ class BudgetPage extends StatefulWidget {
 
 class _BudgetPageState extends State<BudgetPage>
     with SingleTickerProviderStateMixin {
-  double _budget = 25000;
+  double _budget = 0;
   final TextEditingController _budgetController = TextEditingController();
   bool _manualEntry = false;
   bool _isSaving = false;
@@ -299,9 +299,9 @@ class _BudgetPageState extends State<BudgetPage>
                               ).withOpacity(0.15),
                             ),
                             child: Slider(
-                              min: 5000,
+                              min: 0,
                               max: 200000,
-                              divisions: 195,
+                              divisions: 200,
                               value: _budget,
                               onChanged: (value) {
                                 setState(() {

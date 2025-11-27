@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:liquid_progress_indicator_v2/liquid_progress_indicator.dart';
 import 'package:slideme/auth/subscription.dart';
+import 'package:slideme/screens/alltransaction.dart';
 import 'package:slideme/screens/category.dart';
 import 'package:slideme/screens/chatbot.dart';
 import 'package:slideme/screens/monthly_budget.dart';
@@ -611,7 +612,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    "$currencySymbol Pay now",
+                                    "$currencySymbol Add Expense",
                                     style: GoogleFonts.poppins(
                                       fontWeight: FontWeight.w600,
                                       fontSize: (screenWidth * 0.033).clamp(
@@ -638,7 +639,9 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                                   horizontal: screenWidth * 0.04,
                                 ),
                                 child: GridView.builder(
-                                  physics: const BouncingScrollPhysics(),
+                                  physics: sortedCategories.length > 5
+                                      ? const BouncingScrollPhysics()
+                                      : const NeverScrollableScrollPhysics(),
                                   gridDelegate:
                                       SliverGridDelegateWithFixedCrossAxisCount(
                                         crossAxisCount: 2,
@@ -678,20 +681,25 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                                       );
 
                                       return GestureDetector(
-                                        onTap: () async {
-                                          var result = await showDialog(
+                                        onTap: () {
+                                          showModalBottomSheet(
                                             context: context,
-                                            builder: (_) => ExpensePayNowPopup(
-                                              categories: sortedCategories,
-                                            ),
+                                            isScrollControlled: true,
+                                            backgroundColor: Colors.transparent,
+                                            builder: (context) =>
+                                                ExpenseCategoryDrawer(
+                                                  categoryName:
+                                                      extractCategoryName(
+                                                        categoryKey,
+                                                      ),
+                                                  emoji: extractEmoji(
+                                                    categoryKey,
+                                                  ),
+                                                  fullCategoryKey:
+                                                      categoryKey, // Pass the exact category key
+                                                  categories: sortedCategories,
+                                                ),
                                           );
-
-                                          if (result != null &&
-                                              result['success'] == true) {
-                                            print(
-                                              "✅ Payment recorded successfully",
-                                            );
-                                          }
                                         },
                                         child: Container(
                                           decoration: BoxDecoration(

@@ -200,7 +200,7 @@ struct HomeWidgetEntryView: View {
                                 .frame(height: 32)
                         }
 
-                        NeoPopButton(family: family, text: "Pay Now", emoji: "💳")
+                        NeoPopButton(family: family, text: "Add Expense", emoji: "💳")
                             .frame(height: 36)
                     }
                     .padding(.horizontal, 12)
@@ -242,7 +242,7 @@ struct HomeWidgetEntryView: View {
                         }
 
                         VStack(spacing: 0) {
-                            NeoPopButton(family: family, text: "Pay Now", emoji: "💳")
+                            NeoPopButton(family: family, text: "Add Expense", emoji: "💳")
                                 .frame(height: 38)
 
                             Spacer().frame(height: 10)

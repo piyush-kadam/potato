@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:icons_plus/icons_plus.dart';
 
 class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({super.key});
@@ -26,7 +27,6 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       final offerings = await Purchases.getOfferings();
       print('RevenueCat: Offerings object: $offerings');
 
-      // Print all keys and what's inside
       print('RevenueCat: offerings.all keys = ${offerings.all.keys}');
       offerings.all.forEach((k, v) {
         print(
@@ -34,7 +34,6 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
         );
       });
 
-      // Prefer offerings.current, but if it's null fallback to first in offerings.all
       Offering? chosenOffering = offerings.current;
       if (chosenOffering == null && offerings.all.isNotEmpty) {
         chosenOffering = offerings.all.values.first;
@@ -45,23 +44,15 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
 
       if (chosenOffering != null &&
           chosenOffering.availablePackages.isNotEmpty) {
-        // choose monthly default if available
-        Package? defaultPackage;
         for (var pkg in chosenOffering.availablePackages) {
           print(
             'RevenueCat: package -> ${pkg.identifier} (${pkg.packageType}) productId=${pkg.storeProduct.identifier}',
           );
-          if (pkg.packageType == PackageType.monthly ||
-              pkg.identifier.toLowerCase().contains('month')) {
-            defaultPackage = pkg;
-            break;
-          }
         }
 
         setState(() {
           _offerings = offerings;
-          _selectedPackage =
-              defaultPackage ?? chosenOffering!.availablePackages.first;
+          _selectedPackage = chosenOffering!.availablePackages.first;
           _isLoading = false;
         });
       } else {
@@ -83,11 +74,9 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       CustomerInfo customerInfo =
           (await Purchases.purchasePackage(_selectedPackage!)) as CustomerInfo;
 
-      // Check if the purchase was successful
       if (customerInfo.entitlements.all.isNotEmpty) {
         if (!mounted) return;
 
-        // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Welcome to MyPotato Pro! 🎉'),
@@ -96,7 +85,6 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           ),
         );
 
-        // Navigate back after a short delay
         await Future.delayed(Duration(seconds: 1));
         if (mounted) {
           Navigator.pop(context);
@@ -120,405 +108,448 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     }
   }
 
-  String _getPackageLabel(Package package) {
-    if (package.packageType == PackageType.lifetime) {
-      return 'LIFETIME';
-    } else if (package.packageType == PackageType.annual) {
-      return 'MONTHS';
-    } else if (package.packageType == PackageType.monthly) {
-      return 'MONTHS';
-    }
-
-    // Fallback based on identifier
-    String id = package.identifier.toLowerCase();
-    if (id.contains('lifetime')) return 'LIFETIME';
-    if (id.contains('year') || id.contains('annual')) return 'MONTHS';
-    if (id.contains('month')) return 'MONTHS';
-
-    return 'DAYS';
-  }
-
-  String _getPackageDuration(Package package) {
-    if (package.packageType == PackageType.lifetime) {
-      return '∞';
-    } else if (package.packageType == PackageType.annual) {
-      return '12';
-    } else if (package.packageType == PackageType.monthly) {
-      return '12';
-    }
-
-    // Fallback
-    String id = package.identifier.toLowerCase();
-    if (id.contains('lifetime')) return '∞';
-    if (id.contains('year') || id.contains('annual')) return '12';
-    if (id.contains('month')) return '12';
-
-    return '30';
-  }
-
-  bool _shouldShowBadge(Package package) {
-    // Show "Save 45%" badge on monthly/annual packages (middle option)
-    return package.packageType == PackageType.monthly ||
-        package.packageType == PackageType.annual;
-  }
-
-  Color _getPackageColor(Package package, bool isSelected) {
-    if (!isSelected) {
-      return Colors.white;
-    }
-
-    if (package.packageType == PackageType.lifetime) {
-      return const Color(0xFFFFC107); // Yellow/Gold
-    } else if (package.packageType == PackageType.annual ||
-        package.packageType == PackageType.monthly) {
-      return const Color(0xFFFF6B6B); // Coral/Red
-    }
-
-    return const Color(0xFF4CAF50); // Green for default
-  }
-
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: const Color(0xff5FB567),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            )
           : Stack(
               children: [
-                // Background decorative circles
-                Positioned(
-                  top: -50,
-                  right: -50,
-                  child: Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFFE8F5E9).withOpacity(0.5),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 100,
-                  left: -80,
-                  child: Container(
-                    width: 180,
-                    height: 180,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFFFFF9C4).withOpacity(0.5),
-                    ),
-                  ),
-                ),
-
+                // Main scrollable content
                 SafeArea(
-                  child: Column(
-                    children: [
-                      // Close button
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: Padding(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        // Header with close button
+                        Padding(
                           padding: const EdgeInsets.all(16.0),
-                          child: GestureDetector(
-                            onTap: () => Navigator.pop(context),
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              GestureDetector(
+                                onTap: () => Navigator.pop(context),
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    shape: BoxShape.circle,
                                   ),
-                                ],
+                                  child: Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                                ),
                               ),
-                              child: Icon(
-                                Icons.close,
-                                color: Colors.grey[700],
-                                size: 20,
+                              Text(
+                                'PRO Content',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
+                              GestureDetector(
+                                onTap: () async {
+                                  try {
+                                    await Purchases.restorePurchases();
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Purchases restored'),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    print('Restore failed: $e');
+                                  }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.refresh,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
 
-                      const SizedBox(height: 20),
+                        const SizedBox(height: 20),
 
-                      // Mascot
-                      Container(
-                        width: 140,
-                        height: 140,
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFB2DFDB),
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: Image.asset(
-                          'assets/images/mascot3.png',
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(
-                                Icons.local_fire_department,
-                                size: 80,
-                                color: Colors.orange,
-                              ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Title
-                      RichText(
-                        text: TextSpan(
-                          style: GoogleFonts.poppins(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
+                        // Mascot Image
+                        Container(
+                          width: 120,
+                          height: 120,
+                          child: Image.asset(
+                            'assets/images/mascot4.png',
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(
+                                  Icons.emoji_emotions,
+                                  size: 80,
+                                  color: Colors.white,
+                                ),
                           ),
-                          children: [
-                            TextSpan(
-                              text: 'MyPotato ',
-                              style: TextStyle(color: const Color(0xFFFF6B6B)),
-                            ),
-                            TextSpan(
-                              text: 'Pro',
-                              style: TextStyle(color: Colors.black87),
-                            ),
-                          ],
                         ),
-                      ),
 
-                      const SizedBox(height: 40),
+                        const SizedBox(height: 30),
 
-                      // Subscription options
-                      if (_offerings?.current?.availablePackages != null)
+                        // PRO Features Grid
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: _offerings!.current!.availablePackages.map((
-                              package,
-                            ) {
-                              final isSelected =
-                                  package.identifier ==
-                                  _selectedPackage?.identifier;
-                              final packageColor = _getPackageColor(
-                                package,
-                                isSelected,
-                              );
-                              final showBadge = _shouldShowBadge(package);
+                          child: GridView.count(
+                            shrinkWrap: true,
+                            crossAxisCount: 4,
+                            mainAxisSpacing: 20,
+                            crossAxisSpacing: 16,
+                            childAspectRatio: 0.75,
+                            physics: const NeverScrollableScrollPhysics(),
+                            children: [
+                              _buildFeatureItem(
+                                Icon(
+                                  Icons.mic,
+                                  color: const Color(0xFF5856D6),
+                                  size: 28,
+                                ),
+                                'Siri',
+                              ),
+                              _buildFeatureItem(
+                                Icon(
+                                  Bootstrap.bell_fill,
+                                  color: const Color(0xFFFF3B30),
+                                  size: 28,
+                                ),
+                                'Push\nNotifications',
+                              ),
+                              _buildFeatureItem(
+                                Icon(
+                                  Bootstrap.grid_3x3_gap_fill,
+                                  color: const Color(0xFFFF9500),
+                                  size: 28,
+                                ),
+                                'Unlimited\nCategories',
+                              ),
+                              _buildFeatureItem(
+                                Icon(
+                                  Bootstrap.wallet2,
+                                  color: const Color(0xFF34C759),
+                                  size: 28,
+                                ),
+                                'Budget +\nExpense',
+                              ),
+                              _buildFeatureItem(
+                                Icon(
+                                  Bootstrap.people_fill,
+                                  color: const Color(0xFF007AFF),
+                                  size: 28,
+                                ),
+                                'Multiperson\nTracking',
+                              ),
+                              _buildFeatureItem(
+                                Icon(
+                                  Bootstrap.graph_up,
+                                  color: const Color(0xFFAF52DE),
+                                  size: 28,
+                                ),
+                                'Download\nAnalytics',
+                              ),
+                              _buildFeatureItem(
+                                Icon(
+                                  Bootstrap.x_circle_fill,
+                                  color: const Color(0xFFFF2D55),
+                                  size: 28,
+                                ),
+                                'No Ads',
+                              ),
+                              _buildFeatureItem(
+                                Icon(
+                                  Bootstrap.three_dots,
+                                  color: const Color(0xFF00C7BE),
+                                  size: 28,
+                                ),
+                                'More\nFeatures',
+                              ),
+                            ],
+                          ),
+                        ),
 
-                              return Expanded(
-                                child: GestureDetector(
+                        const SizedBox(height: 300),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Bottom drawer section
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(30),
+                        topRight: Radius.circular(30),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 20,
+                          offset: const Offset(0, -5),
+                        ),
+                      ],
+                    ),
+                    child: SafeArea(
+                      top: false,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24.0,
+                          vertical: 24.0,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Subscription packages
+                            if (_offerings?.current?.availablePackages != null)
+                              ...(_offerings!.current!.availablePackages.map((
+                                package,
+                              ) {
+                                final isSelected =
+                                    package.identifier ==
+                                    _selectedPackage?.identifier;
+                                final priceString =
+                                    package.storeProduct.priceString;
+
+                                return GestureDetector(
                                   onTap: () {
                                     setState(() {
                                       _selectedPackage = package;
                                     });
                                   },
                                   child: Container(
-                                    margin: const EdgeInsets.symmetric(
-                                      horizontal: 6,
+                                    margin: const EdgeInsets.only(bottom: 12),
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? const Color(0xffF0F9F1)
+                                          : Colors.grey[100],
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? const Color(0xff5FB567)
+                                            : Colors.transparent,
+                                        width: 2,
+                                      ),
                                     ),
-                                    child: Stack(
-                                      clipBehavior: Clip.none,
+                                    child: Row(
                                       children: [
                                         Container(
-                                          height: 140,
+                                          width: 24,
+                                          height: 24,
                                           decoration: BoxDecoration(
-                                            color: packageColor,
-                                            borderRadius: BorderRadius.circular(
-                                              20,
-                                            ),
+                                            shape: BoxShape.circle,
                                             border: Border.all(
                                               color: isSelected
-                                                  ? packageColor
-                                                  : Colors.grey.shade300,
-                                              width: isSelected ? 3 : 2,
+                                                  ? const Color(0xff5FB567)
+                                                  : Colors.grey,
+                                              width: 2,
                                             ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: isSelected
-                                                    ? packageColor.withOpacity(
-                                                        0.3,
-                                                      )
-                                                    : Colors.black.withOpacity(
-                                                        0.05,
-                                                      ),
-                                                blurRadius: isSelected ? 15 : 8,
-                                                offset: const Offset(0, 4),
-                                              ),
-                                            ],
+                                            color: isSelected
+                                                ? const Color(0xff5FB567)
+                                                : Colors.transparent,
                                           ),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Text(
-                                                _getPackageDuration(package),
-                                                style: GoogleFonts.poppins(
-                                                  fontSize: 36,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: isSelected
-                                                      ? Colors.white
-                                                      : Colors.black87,
-                                                ),
-                                              ),
-                                              Text(
-                                                _getPackageLabel(package),
-                                                style: GoogleFonts.poppins(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: isSelected
-                                                      ? Colors.white
-                                                      : Colors.black54,
-                                                  letterSpacing: 0.5,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                package
-                                                    .storeProduct
-                                                    .priceString,
-                                                style: GoogleFonts.poppins(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: isSelected
-                                                      ? Colors.white
-                                                      : Colors.black87,
-                                                ),
-                                              ),
-                                            ],
+                                          child: isSelected
+                                              ? const Icon(
+                                                  Icons.check,
+                                                  color: Colors.white,
+                                                  size: 16,
+                                                )
+                                              : null,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            package.identifier,
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.black87,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
-                                        if (showBadge)
-                                          Positioned(
-                                            top: -12,
-                                            left: 0,
-                                            right: 0,
-                                            child: Center(
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 12,
-                                                      vertical: 4,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: Colors.black
-                                                          .withOpacity(0.1),
-                                                      blurRadius: 8,
-                                                      offset: const Offset(
-                                                        0,
-                                                        2,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                child: Text(
-                                                  'Save 45%',
-                                                  style: GoogleFonts.poppins(
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: const Color(
-                                                      0xFFFF6B6B,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          priceString,
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black87,
                                           ),
+                                        ),
                                       ],
                                     ),
                                   ),
+                                );
+                              }).toList()),
+
+                            const SizedBox(height: 16),
+
+                            // Subscribe button
+                            SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: _isPurchasing ? null : _onPurchase,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xff0A84FF),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(28),
+                                  ),
+                                  elevation: 0,
                                 ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-
-                      const SizedBox(height: 40),
-
-                      // Subscribe button
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: ElevatedButton(
-                            onPressed: _isPurchasing ? null : _onPurchase,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _selectedPackage != null
-                                  ? _getPackageColor(_selectedPackage!, true)
-                                  : Colors.grey,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(28),
-                              ),
-                              elevation: 8,
-                              shadowColor: _selectedPackage != null
-                                  ? _getPackageColor(
-                                      _selectedPackage!,
-                                      true,
-                                    ).withOpacity(0.4)
-                                  : Colors.grey.withOpacity(0.4),
-                            ),
-                            child: _isPurchasing
-                                ? const SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
+                                child: _isPurchasing
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
+                                        ),
+                                      )
+                                    : Text(
+                                        'Subscribe Now',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            // Terms text
+                            Text(
+                              'The subscription fee is charged to your iTunes account when you confirm your purchase. Subscription automatically renews unless auto-renew is turned off at least 24 hours prior to the current subscription period.',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.poppins(
+                                fontSize: 9,
+                                color: Colors.grey[600],
+                                height: 1.3,
+                              ),
+                            ),
+
+                            const SizedBox(height: 8),
+
+                            // Links
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                TextButton(
+                                  onPressed: () {},
+                                  style: TextButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
                                     ),
-                                  )
-                                : Text(
-                                    'Subscribe',
+                                    minimumSize: Size.zero,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  child: Text(
+                                    'Privacy Policy',
                                     style: GoogleFonts.poppins(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.5,
+                                      fontSize: 10,
+                                      color: Colors.grey[700],
+                                      decoration: TextDecoration.underline,
                                     ),
                                   ),
-                          ),
+                                ),
+                                Text(
+                                  ' • ',
+                                  style: TextStyle(color: Colors.grey[600]),
+                                ),
+                                TextButton(
+                                  onPressed: () {},
+                                  style: TextButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    minimumSize: Size.zero,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  child: Text(
+                                    'Terms of Use',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 10,
+                                      color: Colors.grey[700],
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-
-                      const Spacer(),
-
-                      // Cancel anytime text
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 32.0),
-                        child: Text(
-                          'Cancel anytime',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: Colors.grey[500],
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _buildFeatureItem(Widget icon, String label) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(child: icon),
+        ),
+        const SizedBox(height: 6),
+        Flexible(
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: 9,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+              height: 1.2,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -728,7 +728,7 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                     SizedBox(width: screenWidth * 0.01),
                                     Text(
-                                      "Pay now",
+                                      "Add Expense",
                                       style: GoogleFonts.poppins(
                                         fontWeight: FontWeight.w600,
                                         fontSize: screenWidth * 0.033,
