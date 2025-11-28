@@ -48,6 +48,9 @@ dependencies:
   pinput: ^6.0.0
   audioplayers: ^6.5.1
   icons_plus: ^5.0.0
+  chewie: ^1.13.0
+  flutter_siri_shortcuts: ^0.0.1
+  flutter_app_intents: ^0.7.0
 
 dev_dependencies:
   flutter_test:
@@ -76,6 +79,7 @@ flutter_native_splash:
     fullscreen: true
 
 flutter_launcher_icons:
-  android: true
-  ios: true
+  android: "launcher_icon"
+  ios: "AppIcon"
   image_path: "assets/images/potato.jpg"
+  remove_alpha_ios: true

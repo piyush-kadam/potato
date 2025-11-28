@@ -112,5 +112,17 @@
     <key>UNUserNotificationCenterUsageDescription</key>
     <string>This app sends notifications to remind you daily.</string>
 
+    <!-- 🚨 SIRI SHORTCUTS SUPPORT - NEW SECTION -->
+    <key>NSUserActivityTypes</key>
+    <array>
+        <string>com.potato.slideme.openApp</string>
+        <string>com.potato.slideme.openAnalytics</string>
+        <string>com.potato.slideme.openSettings</string>
+    </array>
+
+    <!-- 🚨 SIRI USAGE DESCRIPTION -->
+    <key>NSSiriUsageDescription</key>
+    <string>Use Siri to quickly open Potato Book and navigate to different sections</string>
+
 </dict>
 </plist>
