@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:slideme/auth/authgate.dart';
 import 'package:slideme/auth/authservice.dart';
 import 'package:slideme/auth/login.dart';
 import 'package:slideme/auth/subscription.dart';
@@ -509,6 +510,10 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       const SizedBox(height: 15),
+
+                      // In your logout GestureDetector, replace the onTap callback with this:
+                      // In your logout GestureDetector, replace the onTap callback with this:
+                      // In your logout GestureDetector, replace the onTap callback with this:
                       GestureDetector(
                         onTap: () async {
                           final shouldLogout = await showDialog<bool>(
@@ -551,33 +556,20 @@ class _SettingsPageState extends State<SettingsPage> {
 
                           if (shouldLogout == true) {
                             try {
-                              if (context.mounted) {
-                                showDialog(
-                                  context: context,
-                                  barrierDismissible: false,
-                                  builder: (context) => const Center(
-                                    child: CircularProgressIndicator(),
-                                  ),
-                                );
-                              }
-
+                              // Sign out first
                               await AuthService().signOut();
 
+                              // Force navigate to AuthGate and clear all routes
                               if (context.mounted) {
                                 Navigator.of(context).pushAndRemoveUntil(
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        LoginPage(onTap: () {}),
+                                    builder: (context) => const AuthGate(),
                                   ),
-                                  (route) =>
-                                      false, // Remove all previous routes
+                                  (route) => false,
                                 );
                               }
                             } catch (e) {
-                              if (context.mounted) {
-                                Navigator.pop(context);
-                              }
-
+                              // Show error message only if something goes wrong
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(

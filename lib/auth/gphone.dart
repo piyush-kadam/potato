@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:neopop/widgets/buttons/neopop_button/neopop_button.dart';
@@ -8,8 +9,8 @@ import 'package:slideme/auth/otp.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class GPhoneInputPage extends StatefulWidget {
-  final bool isAfterGoogleSignIn; // Flag to check if after Google sign-in
-  final String? userId; // User ID from Google sign-in
+  final bool isAfterGoogleSignIn;
+  final String? userId;
 
   const GPhoneInputPage({
     super.key,
@@ -25,6 +26,7 @@ class _GPhoneInputPageState extends State<GPhoneInputPage>
     with TickerProviderStateMixin {
   final _phoneController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   bool _isLoading = false;
   String _selectedCountryCode = '+91';
   bool _isPhoneNumberValid = false;
@@ -32,7 +34,6 @@ class _GPhoneInputPageState extends State<GPhoneInputPage>
   late AnimationController _buttonAnimationController;
   late Animation<double> _buttonScaleAnimation;
 
-  // Individual content animations - INCREASED DURATION for more noticeable fade
   late AnimationController _contentAnimationController;
   late Animation<double> _backButtonAnimation;
   late Animation<double> _labelAnimation;
@@ -54,13 +55,11 @@ class _GPhoneInputPageState extends State<GPhoneInputPage>
       ),
     );
 
-    // INCREASED DURATION from 1000ms to 1800ms for more noticeable fade
     _contentAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1800),
       vsync: this,
     );
 
-    // Extended intervals with slower fade curves
     _backButtonAnimation = CurvedAnimation(
       parent: _contentAnimationController,
       curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
@@ -86,12 +85,10 @@ class _GPhoneInputPageState extends State<GPhoneInputPage>
       curve: const Interval(0.65, 1.0, curve: Curves.easeOut),
     );
 
-    // Start animation after mount
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _contentAnimationController.forward();
     });
 
-    // Listen to phone number changes
     _phoneController.addListener(() {
       final phone = _phoneController.text.trim();
       final isValid = phone.length == 10;
@@ -109,6 +106,53 @@ class _GPhoneInputPageState extends State<GPhoneInputPage>
     _contentAnimationController.dispose();
     _phoneController.dispose();
     super.dispose();
+  }
+
+  // Cleanup function to delete user data and sign out
+  Future<void> _handleBackNavigation() async {
+    try {
+      // Show loading indicator
+      setState(() => _isLoading = true);
+
+      final currentUser = _auth.currentUser;
+
+      // If user signed in with Google, clean up
+      if (widget.isAfterGoogleSignIn && currentUser != null) {
+        // Delete Firestore document if userId is provided
+        if (widget.userId != null) {
+          await _firestore.collection('users').doc(widget.userId).delete();
+        }
+
+        // Delete the Firebase Auth user
+        await currentUser.delete();
+
+        // Sign out to ensure clean state
+        await _auth.signOut();
+      }
+
+      // Navigate back to sign-up page
+      if (mounted) {
+        // Pop all routes and go back to the signup page
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    } catch (e) {
+      // If deletion fails (e.g., requires recent login), just sign out
+      try {
+        await _auth.signOut();
+      } catch (signOutError) {
+        debugPrint('Sign out error: $signOutError');
+      }
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showSnackBar(
+          'Could not complete cleanup. Please try again.',
+          isError: true,
+        );
+        // Still navigate back
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    }
   }
 
   void _sendOTP() async {
@@ -356,18 +400,29 @@ class _GPhoneInputPageState extends State<GPhoneInputPage>
                     child: Row(
                       children: [
                         GestureDetector(
-                          onTap: () => Navigator.pop(context),
+                          onTap: _isLoading ? null : _handleBackNavigation,
                           child: Container(
                             padding: EdgeInsets.all(8 * scaleFactor),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.2),
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(
-                              Icons.arrow_back,
-                              color: Colors.white,
-                              size: 24 * scaleFactor,
-                            ),
+                            child: _isLoading
+                                ? SizedBox(
+                                    width: 24 * scaleFactor,
+                                    height: 24 * scaleFactor,
+                                    child: CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.arrow_back,
+                                    color: Colors.white,
+                                    size: 24 * scaleFactor,
+                                  ),
                           ),
                         ),
                         SizedBox(width: 12 * scaleFactor),

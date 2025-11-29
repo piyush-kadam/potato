@@ -20,15 +20,10 @@ class AuthService {
     final docSnapshot = await docRef.get();
     if (!docSnapshot.exists) {
       await docRef.set({
-        'uid': user.uid,
         'email': user.email,
-        'authMethod': 'google',
-        'phoneVerified': false, // ✅ ADD THIS!
         'createdAt': FieldValue.serverTimestamp(),
+        // Add other default fields as needed
       });
-
-      // ✅ Wait for write to complete
-      await Future.delayed(const Duration(milliseconds: 300));
     }
   }
 
@@ -219,11 +214,18 @@ class AuthService {
     }
   }
 
-  // Sign Out
   Future<void> signOut() async {
     try {
-      await googleSignIn.signOut();
+      // Sign out from Firebase first
       await auth.signOut();
+
+      // Then try to sign out from Google (if signed in)
+      try {
+        await googleSignIn.signOut();
+      } catch (e) {
+        // Ignore Google sign out errors (user might not be signed in with Google)
+        print("Google sign out error (can be ignored): $e");
+      }
     } catch (e) {
       throw Exception("Error signing out: $e");
     }
